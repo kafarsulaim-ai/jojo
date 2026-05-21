@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#fff7e8">
+    <title>jojo测九型老师数据台</title>
+    <script>
+      if (window.location.protocol === "file:") {
+        window.location.replace("https://jojo.xjrwith.cn/admin.html");
+      }
+    </script>
+    <link rel="icon" href="/jojo-icon.svg" type="image/svg+xml">
+    <link rel="icon" href="/jojo-icon.png" type="image/png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body class="admin-page">
+    <header class="admin-topbar">
+      <a class="brand-lockup" href="/">
+        <span class="brand-mark" aria-hidden="true">
+          <img src="/jojo-logo.png" alt="">
+        </span>
+        <span>jojo测九型</span>
+      </a>
+      <a class="admin-link" href="/">返回测试页</a>
+    </header>
+
+    <main class="admin-shell">
+        <section class="admin-auth-shell" id="authShell">
+          <section class="admin-auth-card">
+            <img src="/jojo-logo.png" alt="jojo测九型">
+            <h1>老师数据台</h1>
+            <div class="admin-auth-actions">
+              <button class="primary-action compact" id="teacherWechatLoginButton" type="button">微信授权登录</button>
+            </div>
+          <form class="admin-auth-panel admin-invite-panel" id="registerForm" autocomplete="on">
+            <label>
+              <span>邀请码</span>
+              <input id="inviteCodeInput" autocomplete="one-time-code" placeholder="例如 INV-ABCDEFGH">
+            </label>
+            <label>
+              <span>老师姓名</span>
+              <input id="registerNameInput" autocomplete="name" placeholder="例如 阎老师">
+            </label>
+            <label hidden>
+              <span>登录账号</span>
+              <input id="registerLoginInput" autocomplete="username" placeholder="自动生成">
+            </label>
+            <label hidden>
+              <span>设置密码</span>
+              <input id="registerPasswordInput" type="password" autocomplete="new-password" placeholder="自动生成">
+            </label>
+            <button class="ghost-action compact" type="submit">开通老师入口</button>
+            <p class="muted" id="registerMessage"></p>
+          </form>
+          <form class="admin-auth-panel admin-password-panel" id="loginForm" autocomplete="on" hidden>
+            <label>
+              <span>登录账号</span>
+              <input id="loginAccountInput" autocomplete="username" placeholder="邮箱 / 手机号 / 账号">
+            </label>
+            <label>
+              <span>密码</span>
+              <input id="loginPasswordInput" type="password" autocomplete="current-password" placeholder="输入密码">
+            </label>
+            <button class="primary-action compact" type="submit">密码登录</button>
+            <p class="muted" id="loginMessage"></p>
+          </form>
+          <button class="admin-text-button" id="showPasswordLoginButton" type="button">账号密码登录</button>
+        </section>
+      </section>
+
+      <section class="admin-dashboard" id="dashboardShell" hidden>
+        <section class="admin-heading admin-dashboard-head">
+          <div>
+            <h1>老师数据台</h1>
+          </div>
+          <div class="admin-account-bar">
+            <span id="currentAccountLabel">未登录</span>
+            <button class="ghost-action compact admin-entry-button" id="adminEntryButton" type="button" hidden>老师管理</button>
+            <button class="ghost-action compact" id="logoutButton" type="button">退出</button>
+          </div>
+        </section>
+
+        <nav class="admin-tabs" id="adminTabs" aria-label="后台模块">
+          <button class="active" type="button" data-tab="overview">老师数据台</button>
+          <button type="button" data-tab="users">用户列表</button>
+          <button type="button" data-tab="teachers" id="teachersTab">老师管理</button>
+          <button type="button" data-tab="settings" id="settingsTab">联系方式</button>
+        </nav>
+
+        <section class="admin-panel active" data-panel="overview">
+          <section class="teacher-home-grid">
+            <section class="teacher-main-panel">
+              <div class="admin-section-head">
+                <div>
+                  <h2>用户诊断</h2>
+                </div>
+              </div>
+              <form class="teacher-diagnosis-form" id="teacherDiagnosisForm" autocomplete="off">
+                <label>
+                  <span>用户昵称</span>
+                  <input id="diagnosisNicknameInput" placeholder="用户昵称">
+                </label>
+                <label>
+                  <span>测试编号</span>
+                  <input id="diagnosisCodeInput" maxlength="12" placeholder="M7KQ2AB">
+                </label>
+                <button class="primary-action compact" type="submit">查看</button>
+                <p class="muted" id="diagnosisMessage"></p>
+              </form>
+              <div class="teacher-stats-row" id="teacherStatsRow">
+                <div><span>诊断</span><strong>-</strong></div>
+                <div><span>用户</span><strong>-</strong></div>
+                <div><span>查看</span><strong>-</strong></div>
+              </div>
+            </section>
+
+            <details class="admin-fold teacher-profile-fold">
+              <summary>老师资料</summary>
+              <section class="teacher-profile-panel">
+                <div class="teacher-profile-head">
+                  <span class="teacher-avatar" id="teacherAvatarPreview"><img src="/jojo-icon.svg" alt=""></span>
+                  <div>
+                    <h2 id="teacherProfileName">老师</h2>
+                  </div>
+                </div>
+                <form class="teacher-profile-form" id="teacherProfileForm">
+                  <label>
+                    <span>头像</span>
+                    <input id="teacherAvatarFileInput" type="file" accept="image/*">
+                  </label>
+                  <label>
+                    <span>姓名</span>
+                    <input id="teacherNameInput" maxlength="60" placeholder="老师姓名">
+                  </label>
+                  <label>
+                    <span>简介</span>
+                    <input id="teacherBioInput" maxlength="160" placeholder="一句话介绍">
+                  </label>
+                  <button class="ghost-action compact" type="submit">保存</button>
+                  <button class="ghost-action compact admin-bind-wechat" id="bindTeacherWechatButton" type="button">绑定当前微信</button>
+                  <p class="muted" id="teacherProfileMessage"></p>
+                </form>
+              </section>
+            </details>
+          </section>
+
+          <section class="admin-quick-entry" id="adminQuickEntry" hidden>
+            <div>
+              <h2>老师管理</h2>
+            </div>
+            <div class="admin-quick-actions">
+              <button class="ghost-action compact" type="button" data-admin-jump="teachers">老师管理</button>
+              <button class="ghost-action compact" type="button" data-admin-jump="users">用户列表</button>
+              <button class="ghost-action compact" type="button" data-admin-jump="settings">联系方式</button>
+            </div>
+          </section>
+
+          <details class="admin-fold recent-views-section" open>
+            <summary>查看记录</summary>
+            <div class="admin-table-wrap">
+              <table class="data-table teacher-recent-table">
+                <thead>
+                  <tr><th>查看时间</th><th>用户</th><th>测试</th><th>测试时间</th></tr>
+                </thead>
+                <tbody id="teacherRecentTableBody">
+                  <tr><td colspan="4">暂无查看记录</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
+
+          <details class="admin-fold">
+            <summary>测试记录</summary>
+            <form class="admin-controls" id="adminForm" aria-label="查询" autocomplete="off">
+              <label>
+                <span>编号</span>
+                <input id="codeSearchInput" placeholder="M7KQ2AB">
+              </label>
+              <label>
+                <span>测试</span>
+                <select id="modeFilterInput">
+                  <option value="">全部</option>
+                  <option value="main90">主型90题</option>
+                  <option value="main180">主型180题</option>
+                  <option value="subtype_adult">成人副型</option>
+                  <option value="subtype_child">少儿副型</option>
+                  <option value="team_subtype">团队副型</option>
+                </select>
+              </label>
+              <label>
+                <span>团队码</span>
+                <input id="teamFilterInput" placeholder="HN4GZNX">
+              </label>
+              <label>
+                <span>关键词</span>
+                <input id="keywordSearchInput" placeholder="昵称 / 联系方式">
+              </label>
+              <button class="primary-action compact" id="loadResultsButton" type="button">查询</button>
+              <a class="ghost-link" id="exportLink" href="/api/admin/export.csv">CSV</a>
+            </form>
+
+            <section class="quality-panel" id="qualityPanel" aria-label="样本质量观察">
+              <div class="quality-card"><span>样本</span><strong>-</strong><small>筛选内</small></div>
+              <div class="quality-card"><span>质量</span><strong>-</strong><small>需复核</small></div>
+              <div class="quality-card"><span>稳定性</span><strong>-</strong><small>前三接近</small></div>
+            </section>
+
+            <section class="admin-workspace">
+              <div class="results-list" id="resultsList"></div>
+              <article class="result-detail" id="resultDetail">
+                <p class="muted">输入编号后查询。</p>
+              </article>
+            </section>
+          </details>
+        </section>
+
+        <section class="admin-panel" data-panel="teachers">
+          <section class="admin-management-grid">
+            <form class="admin-section" id="inviteForm" autocomplete="off">
+              <h2>生成邀请码</h2>
+              <label>
+                <span>备注</span>
+                <input id="inviteNoteInput" placeholder="新老师 / 合作咨询师">
+              </label>
+              <label>
+                <span>有效期</span>
+                <input id="inviteDaysInput" type="number" min="1" max="60" value="30">
+              </label>
+              <button class="primary-action compact" type="submit">生成邀请码</button>
+              <p class="muted" id="inviteMessage"></p>
+            </form>
+
+            <section class="admin-section">
+              <h2>邀请码</h2>
+              <div class="admin-invite-output" id="inviteOutput">生成后显示。</div>
+            </section>
+          </section>
+
+          <section class="admin-section admin-section-full">
+            <div class="admin-section-head">
+              <div>
+                <h2>老师列表</h2>
+              </div>
+              <button class="ghost-action compact" id="refreshTeachersButton" type="button">刷新</button>
+            </div>
+            <div class="admin-table-wrap">
+              <table class="data-table admin-manage-table">
+                <thead>
+                  <tr><th>老师</th><th>角色</th><th>状态</th><th>邀请码</th><th>最近登录</th><th>操作</th></tr>
+                </thead>
+                <tbody id="teachersTableBody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="admin-section admin-section-full">
+            <div class="admin-section-head">
+              <div>
+                <h2>邀请记录</h2>
+              </div>
+            </div>
+            <div class="admin-table-wrap">
+              <table class="data-table admin-manage-table">
+                <thead>
+                  <tr><th>邀请码</th><th>状态</th><th>备注</th><th>有效期</th><th>使用</th><th>操作</th></tr>
+                </thead>
+                <tbody id="invitesTableBody"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section class="admin-panel" data-panel="users">
+          <form class="admin-controls admin-user-controls" id="userSearchForm" autocomplete="off">
+            <label>
+              <span>关键词</span>
+              <input id="userKeywordInput" placeholder="姓名 / 联系方式 / 编号">
+            </label>
+            <button class="primary-action compact" type="submit">查询</button>
+            <button class="ghost-action compact" id="refreshUsersButton" type="button">刷新</button>
+          </form>
+          <section class="admin-workspace">
+            <div class="results-list" id="usersList"></div>
+            <article class="result-detail" id="userDetail">
+              <p class="muted">选择用户查看记录。</p>
+            </article>
+          </section>
+        </section>
+
+        <section class="admin-panel" data-panel="settings">
+          <section class="admin-section admin-section-full">
+            <div class="admin-section-head">
+              <div>
+                <h2>联系方式</h2>
+              </div>
+            </div>
+            <form class="site-settings-form" id="siteSettingsForm">
+              <label class="qr-upload-box">
+                <span>微信群二维码</span>
+                <input id="groupQrFileInput" type="file" accept="image/*">
+              </label>
+              <label>
+                <span>标题</span>
+                <input id="groupQrCaptionInput" maxlength="40" placeholder="扫码加入群聊">
+              </label>
+              <div class="group-qr-preview" id="groupQrPreview">
+                <span>还没有二维码</span>
+              </div>
+              <button class="primary-action compact" type="submit">保存设置</button>
+              <p class="muted" id="siteSettingsMessage"></p>
+            </form>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <script src="/admin.js"></script>
+  </body>
+</html>

@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#fff7e8">
+    <title>jojo测九型</title>
+    <link rel="icon" href="/jojo-icon.svg" type="image/svg+xml">
+    <link rel="icon" href="/jojo-icon.png" type="image/png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="stylesheet" href="/styles.css?v=20260521-result-visual-v2">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar" aria-label="jojo测九型">
+        <a class="brand-lockup" href="/" aria-label="返回开始">
+          <span class="brand-mark" aria-hidden="true">
+            <img src="/jojo-logo.png" alt="">
+          </span>
+          <span class="brand-product">测九型</span>
+        </a>
+        <div class="top-progress" id="topProgress" hidden>
+          <span id="topProgressText">0%</span>
+          <span class="top-progress-track"><span id="topProgressBar"></span></span>
+        </div>
+      </header>
+
+      <main>
+        <section class="screen screen-start active" id="startScreen">
+          <div class="start-visual" aria-hidden="true">
+            <div class="jojo-signal">
+              <img src="/jojo-icon.svg" alt="">
+              <span></span>
+              <span></span>
+            </div>
+            <svg class="constellation" viewBox="0 0 720 720" role="img">
+              <defs>
+                <path id="orbitTextPath" d="M360,92 a268,268 0 1,1 -1,0"></path>
+              </defs>
+              <circle class="ring ring-one" cx="360" cy="360" r="270"></circle>
+              <circle class="ring ring-two" cx="360" cy="360" r="204"></circle>
+              <circle class="ring ring-three" cx="360" cy="360" r="126"></circle>
+              <path class="star-line slow-line" d="M360 90 L533 153 L626 313 L594 493 L452 615 L268 615 L126 493 L94 313 L187 153 Z"></path>
+              <path class="star-line inner-line" d="M533 153 L268 615 L626 313 L187 153 L452 615 L94 313 Z"></path>
+              <path class="star-line triangle-line" d="M360 90 L594 493 L126 493 Z"></path>
+              <g class="nodes">
+                <circle cx="360" cy="90" r="9"></circle>
+                <circle cx="533" cy="153" r="9"></circle>
+                <circle cx="626" cy="313" r="9"></circle>
+                <circle cx="594" cy="493" r="9"></circle>
+                <circle cx="452" cy="615" r="9"></circle>
+                <circle cx="268" cy="615" r="9"></circle>
+                <circle cx="126" cy="493" r="9"></circle>
+                <circle cx="94" cy="313" r="9"></circle>
+                <circle cx="187" cy="153" r="9"></circle>
+              </g>
+            </svg>
+          </div>
+
+          <div class="start-copy">
+            <p class="eyebrow" id="startEyebrow">选择测试入口</p>
+            <h1>jojo测九型</h1>
+            <p class="start-line" id="startLine">先选地图。</p>
+
+            <div class="team-invite" id="teamInvite" hidden>
+              <strong id="teamInviteName">团队测试</strong>
+              <span id="teamInviteMeta">本次结果可计入团队总图</span>
+              <label class="inline-choice">
+                <input id="joinTeamInput" type="checkbox" checked>
+                <span>加入该团队测试</span>
+              </label>
+            </div>
+
+            <div class="mode-grid" id="modeGrid" aria-label="选择测试类型">
+              <button class="mode-card active" type="button" data-mode="main90">
+                <span class="mode-path">主型</span>
+                <strong>快速版</strong>
+              </button>
+              <button class="mode-card" type="button" data-mode="main180">
+                <span class="mode-path">主型</span>
+                <strong>深测版</strong>
+              </button>
+              <button class="mode-card" type="button" data-mode="subtype_adult">
+                <span class="mode-path">副型</span>
+                <strong>个人版</strong>
+              </button>
+              <button class="mode-card" type="button" data-mode="subtype_child">
+                <span class="mode-path">亲子</span>
+                <strong>少儿版</strong>
+              </button>
+              <button class="mode-card" type="button" data-mode="team">
+                <span class="mode-path">团队</span>
+                <strong>创建链接</strong>
+              </button>
+            </div>
+
+            <form class="team-create" id="teamCreateForm" hidden>
+              <label>
+                <span>填写团队名称</span>
+                <input id="teamNameInput" maxlength="60" placeholder="例如：春季销售团队复盘">
+              </label>
+              <div class="team-kind-control" role="radiogroup" aria-label="团队测试类型">
+                <label>
+                  <input type="radio" name="teamKind" value="main" checked>
+                  <span>
+                    <strong>团队主型</strong>
+                    <small>90题，汇总1-9号团队总图</small>
+                  </span>
+                </label>
+                <label>
+                  <input type="radio" name="teamKind" value="subtype">
+                  <span>
+                    <strong>团队副型</strong>
+                    <small>60题匿名汇总，适合高级复盘</small>
+                  </span>
+                </label>
+              </div>
+              <button class="primary-action" id="createTeamButton" type="submit">
+                <span>创建团队链接</span>
+                <span aria-hidden="true">→</span>
+              </button>
+              <div class="team-created" id="teamCreated" hidden></div>
+            </form>
+
+            <form class="profile-form" id="profileForm">
+              <label class="profile-inline-field" hidden>
+                <span>昵称</span>
+                <input id="nicknameInput" name="nickname" maxlength="50" autocomplete="nickname" placeholder="可不填">
+              </label>
+              <label class="profile-inline-field" hidden>
+                <span>联系方式</span>
+                <input id="contactInput" name="contact" maxlength="80" autocomplete="tel" placeholder="方便老师回访，可不填">
+              </label>
+              <input id="sourceInput" name="source" type="hidden" value="H5">
+              <input id="modeInput" name="mode" type="hidden" value="main90">
+              <input id="teamCodeInput" name="team_code" type="hidden" value="">
+              <button class="primary-action" id="startButton" type="submit">
+                <span>开始主型90题</span>
+                <span aria-hidden="true">→</span>
+              </button>
+            </form>
+
+            <p class="fine-print" hidden>第一反应就好。</p>
+            <div class="info-links" aria-label="专业说明入口" hidden>
+              <button type="button" id="methodButton">方法说明</button>
+              <button type="button" id="calibrationButton">题库校准</button>
+              <button type="button" id="noticeButton">非诊断声明</button>
+            </div>
+            <nav class="home-utility-nav" aria-label="更多入口">
+              <button type="button" id="historyButton">历史测试</button>
+              <button type="button" id="groupChatButton">添加群聊</button>
+              <a href="/admin.html">老师入口</a>
+            </nav>
+          </div>
+        </section>
+
+        <section class="screen screen-test" id="testScreen" aria-live="polite">
+          <div class="question-shell">
+            <div class="question-meta">
+              <span id="questionCount">第 1 / 90 题</span>
+              <span id="answeredCount">已完成 0%</span>
+            </div>
+            <div class="progress-track" aria-hidden="true">
+              <span id="mainProgressBar"></span>
+            </div>
+            <div class="group-progress group-progress-top" id="groupProgressTop" aria-label="分组进度"></div>
+            <div class="question-stage" id="questionStage">
+              <strong id="questionGroupLine">轻轻开始，先别分析自己</strong>
+            </div>
+            <div class="group-progress group-progress-bottom" id="groupProgressBottom" aria-hidden="true"></div>
+
+            <article class="question-panel" id="questionPanel">
+              <p class="question-kicker" id="questionKicker">选择最接近日常状态的一项</p>
+              <h2 id="questionText">题目加载中</h2>
+              <div class="answer-grid" id="answerGrid" role="group" aria-label="作答选项">
+                <button type="button" data-value="1">否</button>
+                <button type="button" data-value="3">不确定</button>
+                <button type="button" data-value="5">是</button>
+              </div>
+            </article>
+
+            <div class="test-actions">
+              <button class="ghost-action" id="backButton" type="button">上一题</button>
+              <button class="ghost-action" id="pauseButton" type="button">暂停保存</button>
+              <button class="ghost-action sound-toggle" id="soundToggleButton" type="button" aria-pressed="true">音效</button>
+              <span id="autosaveText"></span>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen screen-result" id="resultScreen">
+          <div class="result-poster">
+            <div class="result-copy">
+              <p class="eyebrow">你的地图</p>
+              <div class="result-title-line">
+                <span class="result-number" id="resultTypeNumber">9</span>
+                <h2 id="resultTitle">地图生成中</h2>
+              </div>
+              <p class="result-line" id="resultLine"></p>
+              <div class="result-hero-meta" id="resultHeroMeta"></div>
+            </div>
+            <div class="result-map-wrap">
+              <div class="result-map-halo" aria-hidden="true"></div>
+              <div class="result-map" id="resultMap" aria-label="jojo测九型结果图形"></div>
+            </div>
+          </div>
+
+          <section class="share-deck" id="shareDeck" aria-label="三张结果分享卡">
+            <article class="share-card share-card-primary" id="shareCard" aria-label="结果主卡">
+              <div class="share-watermark" id="shareNumber" aria-hidden="true">9</div>
+              <div class="share-top">
+                <span class="share-brand"><img src="/jojo-icon.svg" alt="">jojo测九型</span>
+                <span>01 / 03</span>
+              </div>
+              <div class="share-body">
+                <div class="share-core">
+                  <p class="share-label" id="sharePrimaryKicker">我的主调</p>
+                  <h3 id="shareTitle">生成中</h3>
+                  <p id="shareLine"></p>
+                  <div class="share-chips" id="shareChips"></div>
+                </div>
+                <div class="share-mini-map" id="shareMiniMap"></div>
+              </div>
+              <div class="share-footer">
+                <span id="shareTopTypes"></span>
+                <span class="hidden-code" id="hiddenCode">ref ------</span>
+              </div>
+            </article>
+
+            <article class="share-card share-card-evidence" id="shareEvidenceCard" aria-label="简要分析卡">
+              <div class="share-watermark" id="shareEvidenceWatermark" aria-hidden="true">jo</div>
+              <div class="share-top">
+                <span class="share-brand"><img src="/jojo-icon.svg" alt="">jojo测九型</span>
+                <span>02 / 03</span>
+              </div>
+              <div class="share-core share-card-stack">
+                <p class="share-label" id="shareEvidenceKicker">简要分析</p>
+                <h3 id="shareEvidenceTitle">这结果像什么</h3>
+                <p id="shareEvidenceLine"></p>
+                <div class="poster-analysis" id="shareEvidenceVisual"></div>
+              </div>
+              <div class="share-footer">
+                <span id="shareEvidenceFoot"></span>
+                <span class="hidden-code" id="shareEvidenceCode">ref ------</span>
+              </div>
+            </article>
+
+            <article class="share-card share-card-next" id="shareNextCard" aria-label="下一步与进群卡">
+              <div class="share-watermark" id="shareNextWatermark" aria-hidden="true">go</div>
+              <div class="share-top">
+                <span class="share-brand"><img src="/jojo-icon.svg" alt="">jojo测九型</span>
+                <span>03 / 03</span>
+              </div>
+              <div class="share-core share-card-stack">
+                <p class="share-label" id="shareNextKicker">下一步</p>
+                <h3 id="shareNextTitle">继续补全地图</h3>
+                <p id="shareNextLine"></p>
+                <div class="poster-qr-block" id="shareNextQr"></div>
+              </div>
+              <div class="share-footer">
+                <span id="shareNextFoot"></span>
+                <span class="hidden-code" id="shareNextCode">ref ------</span>
+              </div>
+            </article>
+          </section>
+
+          <div class="result-digest">
+            <div class="result-snapshot" id="resultSnapshot"></div>
+            <div id="topTypes" class="top-types"></div>
+            <div id="evidenceBars" class="evidence-bars"></div>
+            <div class="report-panel" id="reportPanel"></div>
+            <div class="calibration-note" id="calibrationNote"></div>
+            <div class="next-step-panel" id="nextStepPanel" hidden>
+              <div>
+                <strong id="nextStepTitle">继续完成副型</strong>
+                <span id="nextStepText">补充30题副型后，将自动生成综合报告。</span>
+              </div>
+              <button class="primary-action compact" id="followupSubtypeButton" type="button">继续测副型</button>
+            </div>
+            <div class="result-actions">
+              <button class="primary-action compact" id="copyCodeButton" type="button">复制编号</button>
+              <button class="ghost-action compact" id="shareSaveButton" type="button">保存三张卡</button>
+              <button class="ghost-action compact" id="restartButton" type="button">重新测试</button>
+              <button class="ghost-action compact" id="combineFromResultButton" type="button" hidden>生成综合报告</button>
+              <a class="ghost-link compact" id="teamSummaryLink" href="#" hidden>查看团队总图</a>
+              <span class="quiet-code" id="verificationCode">------</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen screen-history" id="historyScreen">
+          <div class="history-shell">
+            <div class="history-head">
+              <img src="/jojo-logo.png" alt="jojo测九型">
+              <div>
+                <h1>历史测试</h1>
+              </div>
+            </div>
+            <div class="resume-card history-resume-card" id="resumeCard" hidden>
+              <div class="resume-copy">
+                <span>上次答题</span>
+                <strong id="resumeTitle">可继续测试</strong>
+                <small id="resumeMeta">已自动保存</small>
+              </div>
+              <div class="resume-actions">
+                <button class="primary-action compact" id="resumeContinueButton" type="button">继续</button>
+                <button class="ghost-action compact" id="resumeDiscardButton" type="button">放弃</button>
+              </div>
+            </div>
+            <form class="lookup-form" id="lookupForm" hidden>
+              <label>
+                <span>星图编号</span>
+                <input id="lookupCodeInput" maxlength="12" placeholder="例如 M7KQ2AB">
+              </label>
+              <button class="primary-action compact" type="submit">查找结果</button>
+            </form>
+            <form class="combine-panel" id="combinedForm" hidden>
+              <div>
+                <strong>生成综合报告</strong>
+                <span>输入一次主型编号和一次副型编号，合成一份完整观察。</span>
+              </div>
+              <div class="combined-inputs">
+                <label>
+                  <span>主型编号</span>
+                  <input id="combinedMainInput" maxlength="12" placeholder="主型结果编号">
+                </label>
+                <label>
+                  <span>副型编号</span>
+                  <input id="combinedSubtypeInput" maxlength="12" placeholder="副型结果编号">
+                </label>
+              </div>
+              <button class="primary-action compact" type="submit">生成综合报告</button>
+            </form>
+            <div class="wechat-panel" id="wechatPanel" hidden>
+              <div class="wechat-profile" id="wechatProfile">
+                <span class="wechat-avatar" id="wechatAvatar" aria-hidden="true"><img src="/jojo-icon.svg" alt=""></span>
+                <div>
+                  <strong id="wechatStatusTitle">登录查看记录</strong>
+                  <span id="wechatStatusText"></span>
+                </div>
+              </div>
+              <div class="wechat-actions">
+                <button class="primary-action compact" id="wechatLoginButton" type="button">微信授权登录</button>
+                <button class="ghost-action compact" id="wechatLogoutButton" type="button" hidden>退出微信</button>
+              </div>
+            </div>
+            <div class="passkey-panel" id="passkeyPanel" hidden>
+              <div>
+                <strong>免密找回</strong>
+                <span id="passkeyStatus">正在检查Passkey状态</span>
+              </div>
+              <div class="passkey-actions">
+                <button class="ghost-action compact" id="passkeyRegisterButton" type="button"><span>启用Passkey</span></button>
+                <button class="ghost-action compact" id="passkeyLoginButton" type="button">用Passkey找回</button>
+              </div>
+            </div>
+            <div class="history-list" id="historyList"></div>
+            <div class="result-actions">
+              <button class="ghost-action compact" id="historyBackButton" type="button">返回首页</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen screen-combined" id="combinedScreen">
+          <div class="combined-shell">
+            <p class="eyebrow">综合报告</p>
+            <h1 id="combinedTitle">主型 × 副型</h1>
+            <p class="start-line" id="combinedNote"></p>
+            <div id="combinedContent"></div>
+            <div class="result-actions">
+              <button class="primary-action compact" id="combinedPrintButton" type="button">保存PDF</button>
+              <button class="ghost-action compact" id="combinedBackButton" type="button">返回记录</button>
+              <span class="quiet-code" id="combinedCodes"></span>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen screen-info" id="infoScreen">
+          <div class="info-shell">
+            <p class="eyebrow" id="infoEyebrow">专业说明</p>
+            <h1 id="infoTitle">jojo如何生成这张地图</h1>
+            <p class="start-line" id="infoLead"></p>
+            <div class="info-grid" id="infoContent"></div>
+            <div class="result-actions">
+              <button class="ghost-action compact" id="infoBackButton" type="button">返回首页</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen screen-team" id="teamScreen">
+          <div class="team-summary-shell">
+            <p class="eyebrow">团队九型总图</p>
+            <h1 id="teamSummaryTitle">团队结果</h1>
+            <p class="start-line" id="teamSummaryNote"></p>
+            <div class="team-summary-meta" id="teamSummaryMeta"></div>
+            <div class="team-summary-grid" id="teamSummaryGrid"></div>
+            <div class="evidence-bars" id="teamEvidenceBars"></div>
+            <div class="result-actions">
+              <a class="primary-action compact" href="/">返回首页</a>
+              <a class="ghost-link compact" id="teamImageLink" href="#" target="_blank" rel="noreferrer" hidden>导出图片</a>
+              <button class="ghost-action compact" id="teamPrintButton" type="button" hidden>保存PDF</button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="modal-backdrop" id="groupChatModal" hidden>
+      <div class="modal-panel group-chat-panel" role="dialog" aria-modal="true" aria-labelledby="groupChatTitle">
+        <span class="modal-badge marker-logo" aria-hidden="true"><img src="/jojo-icon.svg" alt=""></span>
+        <span class="modal-kicker">添加群聊</span>
+        <h2 id="groupChatTitle">扫码加入群聊</h2>
+        <div class="group-chat-qr" id="groupChatQr">
+          <span>二维码待更新</span>
+        </div>
+        <p id="groupChatCaption">长按加入</p>
+        <button class="ghost-action compact" id="groupChatCloseButton" type="button">关闭</button>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="teamCreatedModal" hidden>
+      <div class="modal-panel team-created-panel" role="dialog" aria-modal="true" aria-labelledby="teamCreatedTitle">
+        <span class="modal-badge marker-logo" aria-hidden="true"><img src="/jojo-icon.svg" alt=""></span>
+        <span class="modal-kicker">团队链接已创建</span>
+        <h2 id="teamCreatedTitle">复制链接给团队</h2>
+        <p id="teamCreatedBody">复制链接给团队</p>
+        <input id="teamInviteUrlInput" readonly value="" aria-label="团队邀请链接">
+        <div class="team-modal-actions">
+          <button class="primary-action compact" id="teamCopyInviteButton" type="button">复制链接给团队</button>
+          <button class="ghost-action compact" id="teamStartTestButton" type="button">开始测试</button>
+          <a class="ghost-link compact" id="teamCreatedSummaryLink" href="#" target="_blank" rel="noreferrer">查看团队总图</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="teamReuseModal" hidden>
+      <div class="modal-panel team-created-panel" role="dialog" aria-modal="true" aria-labelledby="teamReuseTitle">
+        <span class="modal-badge marker-logo" aria-hidden="true"><img src="/jojo-icon.svg" alt=""></span>
+        <span class="modal-kicker">近期结果可用</span>
+        <h2 id="teamReuseTitle">用上次主型结果加入团队？</h2>
+        <p id="teamReuseBody">10天内做过主型测试，可以直接计入本次团队总图。</p>
+        <div class="team-modal-actions">
+          <button class="primary-action compact" id="teamReuseConfirmButton" type="button">直接计入团队</button>
+          <button class="ghost-action compact" id="teamReuseRetestButton" type="button">重新测试</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop encouragement-backdrop" id="encouragementModal" hidden>
+      <div class="modal-panel encouragement-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-ticket-head">
+          <span class="modal-badge" id="modalBadge" aria-hidden="true"></span>
+          <span class="modal-kicker" id="modalKicker">第 1 组完成</span>
+        </div>
+        <div class="modal-orbit-mark" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <h2 id="modalTitle">进度很稳</h2>
+        <p id="modalBody">继续按第一反应来就好。</p>
+        <div class="modal-progress-card">
+          <div class="modal-progress-head">
+            <span id="modalMeta">已完成 10 题</span>
+            <strong id="modalPercent">10%</strong>
+          </div>
+          <div class="modal-progress" aria-hidden="true"><span id="modalProgressBar"></span></div>
+        </div>
+        <button class="primary-action compact" id="modalContinue" type="button">继续</button>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="recoveryModal" hidden>
+      <div class="modal-panel marker-panel" role="dialog" aria-modal="true" aria-labelledby="recoveryTitle">
+        <span class="modal-badge marker-logo" aria-hidden="true"><img src="/jojo-icon.svg" alt=""></span>
+        <span class="modal-kicker" id="recoveryKicker" hidden>保存记录</span>
+        <h2 class="sr-only" id="recoveryTitle">选择进入方式</h2>
+        <p id="recoveryBody" hidden></p>
+        <div class="marker-actions">
+          <button class="primary-action compact" id="markerWechatButton" type="button" hidden>微信授权登录</button>
+          <button class="ghost-action compact" id="markerSkipButton" type="button">跳过，直接测</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="generating-overlay" id="generatingOverlay" hidden>
+      <div class="generating-panel" role="status" aria-live="polite">
+        <div class="generating-orbit" aria-hidden="true">
+          <img src="/jojo-icon.svg" alt="">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <p class="generating-kicker">正在生成</p>
+        <h2 id="generatingTitle">jojo正在把答案揉成一张地图</h2>
+        <div class="generating-steps" aria-hidden="true">
+          <span id="generatingStepOne">收好答案</span>
+          <span id="generatingStepTwo">整理线索</span>
+          <span id="generatingStepThree">生成主调</span>
+        </div>
+      </div>
+    </div>
+
+    <script src="/app.js?v=20260521-result-visual-v2"></script>
+  </body>
+</html>

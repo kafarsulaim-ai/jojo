@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="jojo测九型图标">
+  <defs>
+    <linearGradient id="bg" x1="68" y1="48" x2="448" y2="464" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fffaf4"/>
+      <stop offset=".58" stop-color="#fff7ef"/>
+      <stop offset="1" stop-color="#fff1e2"/>
+    </linearGradient>
+    <linearGradient id="head" x1="132" y1="104" x2="372" y2="356" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#37d8d2"/>
+      <stop offset=".58" stop-color="#22c7c0"/>
+      <stop offset="1" stop-color="#1498a2"/>
+    </linearGradient>
+    <linearGradient id="body" x1="164" y1="300" x2="348" y2="406" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#e8fffc"/>
+      <stop offset="1" stop-color="#b9efe8"/>
+    </linearGradient>
+    <linearGradient id="eye" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#184c58"/>
+      <stop offset="1" stop-color="#123843"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="16" y="16" width="480" height="480" rx="128" fill="url(#bg)"/>
+  <path d="M176 332C176 310 201 292 256 292C311 292 336 310 336 332C336 377 309 405 256 405C203 405 176 377 176 332Z" fill="url(#body)"/>
+  <circle cx="256" cy="228" r="136" fill="url(#head)"/>
+  <circle cx="256" cy="238" r="100" fill="#fffaf4"/>
+  <circle cx="210" cy="222" r="11" fill="#ffffff" opacity=".72"/>
+  <ellipse cx="224" cy="240" rx="15" ry="29" fill="url(#eye)"/>
+  <ellipse cx="288" cy="240" rx="15" ry="29" fill="url(#eye)"/>
+  <path d="M238 282C245 289 251 293 256 293C261 293 267 289 274 282" fill="none" stroke="#174651" stroke-width="10" stroke-linecap="round"/>
+  <rect x="171" y="56" width="22" height="70" rx="11" transform="rotate(-28 182 91)" fill="#45d7ca"/>
+  <rect x="228" y="42" width="22" height="82" rx="11" transform="rotate(-10 239 83)" fill="#ff6d62"/>
+  <rect x="284" y="46" width="22" height="76" rx="11" transform="rotate(12 295 84)" fill="#ffc93f"/>
+</svg>

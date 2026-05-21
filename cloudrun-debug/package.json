@@ -1,0 +1,9 @@
+{
+  "name": "jojo-cloudrun-debug",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Cloud Run relay service for JOJO WeChat login",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

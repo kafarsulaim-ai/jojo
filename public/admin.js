@@ -1,0 +1,1139 @@
+const TYPE_NAMES = {
+  1: "人间校准仪",
+  2: "爱意外卖员",
+  3: "人生项目经理",
+  4: "情绪收藏家",
+  5: "信息囤积者",
+  6: "安全预案师",
+  7: "快乐逃生员",
+  8: "人间防护罩",
+  9: "氛围修复师"
+};
+
+const SUBTYPE_NAMES = {
+  social: "社群型",
+  one_to_one: "一对一型",
+  self_preservation: "自保型"
+};
+
+const USER_IDENTITY_LABELS = {
+  account: "注册用户",
+  contact: "联系方式归并",
+  nickname: "昵称归并",
+  anonymous: "匿名记录"
+};
+
+const state = {
+  account: null,
+  permissions: {},
+  results: [],
+  selectedCode: null,
+  requestId: 0,
+  teachers: [],
+  invites: [],
+  users: [],
+  selectedUserId: null,
+  siteSettings: {},
+  groupQrImage: "",
+  teacherDashboard: null,
+  teacherAvatarImage: ""
+};
+
+const $ = (id) => document.getElementById(id);
+
+function isSubtypeMode(mode) {
+  return Boolean(mode?.startsWith("subtype") || mode === "team_subtype");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const savedInvite = sessionStorage.getItem("jojoTeacherInviteCode") || "";
+  const savedTeacherName = sessionStorage.getItem("jojoTeacherName") || "";
+  if (savedInvite) $("inviteCodeInput").value = savedInvite;
+  if (savedTeacherName) $("registerNameInput").value = savedTeacherName;
+  $("loginForm").addEventListener("submit", handleLogin);
+  $("registerForm").addEventListener("submit", handleRegister);
+  $("teacherWechatLoginButton").addEventListener("click", startTeacherWechatAuth);
+  $("showPasswordLoginButton").addEventListener("click", togglePasswordLogin);
+  $("teacherDiagnosisForm").addEventListener("submit", submitTeacherDiagnosis);
+  $("teacherProfileForm").addEventListener("submit", saveTeacherProfile);
+  $("bindTeacherWechatButton").addEventListener("click", bindTeacherWechat);
+  $("teacherAvatarFileInput").addEventListener("change", onTeacherAvatarFileChange);
+  $("logoutButton").addEventListener("click", handleLogout);
+  $("adminEntryButton").addEventListener("click", () => switchTab("teachers"));
+  $("adminQuickEntry").addEventListener("click", onAdminQuickJump);
+  $("adminForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    loadResults();
+  });
+  $("loadResultsButton").addEventListener("click", loadResults);
+  $("codeSearchInput").addEventListener("keydown", (event) => {
+    if (event.key === "Enter") loadResults();
+  });
+  $("codeSearchInput").addEventListener("input", updateExportLink);
+  $("teamFilterInput").addEventListener("keydown", (event) => {
+    if (event.key === "Enter") loadResults();
+  });
+  $("teamFilterInput").addEventListener("input", updateExportLink);
+  $("keywordSearchInput").addEventListener("keydown", (event) => {
+    if (event.key === "Enter") loadResults();
+  });
+  $("keywordSearchInput").addEventListener("input", updateExportLink);
+  $("modeFilterInput").addEventListener("change", () => {
+    updateExportLink();
+    loadResults();
+  });
+  $("adminTabs").addEventListener("click", onTabClick);
+  $("inviteForm").addEventListener("submit", createInvite);
+  $("teachersTableBody").addEventListener("click", onTeacherAction);
+  $("invitesTableBody").addEventListener("click", onInviteAction);
+  $("inviteOutput").addEventListener("click", onInviteAction);
+  $("refreshTeachersButton").addEventListener("click", loadTeacherData);
+  $("userSearchForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    loadUsers();
+  });
+  $("refreshUsersButton").addEventListener("click", loadUsers);
+  $("usersList").addEventListener("click", onUserClick);
+  $("siteSettingsForm").addEventListener("submit", saveSiteSettings);
+  $("groupQrFileInput").addEventListener("change", onGroupQrFileChange);
+  const invite = new URLSearchParams(window.location.search).get("invite");
+  if (invite) $("inviteCodeInput").value = invite.toUpperCase();
+  updateExportLink();
+  bootAdmin();
+});
+
+async function bootAdmin() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("wechat") === "ok" && params.get("bind") === "1") {
+      const data = await finishWechatBindWithState(params);
+      if (data?.account) {
+        window.history.replaceState(null, "", "/admin.html");
+        setAccount(data);
+        showDashboard();
+        await loadDashboardData();
+        return;
+      }
+    }
+    if (params.get("wechat") === "ok") {
+      const data = await tryWechatAdminLogin();
+      if (data?.account) {
+        window.history.replaceState(null, "", "/admin.html");
+        setAccount(data);
+        showDashboard();
+        await completePendingWechatBind(params);
+        await loadDashboardData();
+        return;
+      }
+    }
+    const data = await adminFetch("/api/admin/auth/me", { allowUnauthorized: true });
+    if (!data?.account) throw new Error("unauthorized");
+    setAccount(data);
+    showDashboard();
+    await completePendingWechatBind(params);
+    await loadDashboardData();
+  } catch {
+    showAuth();
+  }
+}
+
+async function adminFetch(url, options = {}) {
+  const fetchOptions = {
+    method: options.method || "GET",
+    credentials: "same-origin",
+    headers: options.body ? { "Content-Type": "application/json" } : undefined,
+    body: options.body ? JSON.stringify(options.body) : undefined
+  };
+  const response = await fetch(url, fetchOptions);
+  const text = await response.text();
+  let data = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = { error: text };
+  }
+  if (!response.ok) {
+    if (response.status === 401 && !options.allowUnauthorized) showAuth();
+    const err = new Error(data.error || "request_failed");
+    err.status = response.status;
+    Object.assign(err, data);
+    throw err;
+  }
+  return data;
+}
+
+function setAccount(data) {
+  state.account = data.account;
+  state.permissions = data.permissions || {};
+  const role = state.account.role === "super_admin" ? "管理员" : "老师";
+  $("currentAccountLabel").textContent = `${state.account.name} · ${role}`;
+  $("adminEntryButton").hidden = !state.permissions.can_manage_teachers;
+  $("adminQuickEntry").hidden = true;
+  $("teachersTab").hidden = !state.permissions.can_manage_teachers;
+  $("settingsTab").hidden = !state.permissions.can_manage_teachers;
+  renderTeacherProfile();
+}
+
+function showAuth() {
+  state.account = null;
+  state.permissions = {};
+  $("authShell").hidden = false;
+  $("dashboardShell").hidden = true;
+  $("loginForm").hidden = true;
+  if ($("inviteCodeInput").value.trim()) $("registerNameInput").focus();
+  else $("teacherWechatLoginButton").focus();
+}
+
+function showDashboard() {
+  $("authShell").hidden = true;
+  $("dashboardShell").hidden = false;
+  if (!state.permissions.can_manage_teachers && ["teachers", "settings"].includes(activeTab())) switchTab("overview");
+}
+
+async function loadDashboardData() {
+  await Promise.all([
+    loadTeacherDashboard(),
+    loadResults(),
+    state.permissions.can_manage_teachers ? loadTeacherData() : Promise.resolve(),
+    loadUsers(),
+    state.permissions.can_manage_teachers ? loadSiteSettings() : Promise.resolve()
+  ]);
+}
+
+function togglePasswordLogin() {
+  const form = $("loginForm");
+  form.hidden = !form.hidden;
+  if (!form.hidden) $("loginAccountInput").focus();
+}
+
+async function tryWechatAdminLogin() {
+  try {
+    return await adminFetch("/api/admin/auth/wechat", {
+      method: "POST",
+      allowUnauthorized: true,
+      body: {
+        invite_code: $("inviteCodeInput").value.trim(),
+        name: $("registerNameInput").value.trim()
+      }
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function startTeacherWechatAuth() {
+  const invite = $("inviteCodeInput").value.trim();
+  const name = $("registerNameInput").value.trim();
+  sessionStorage.setItem("jojoTeacherInviteCode", invite);
+  sessionStorage.setItem("jojoTeacherName", name);
+  const params = new URLSearchParams({
+    redirect: "/admin.html?wechat=ok",
+    device: ensureAdminDeviceToken()
+  });
+  if (invite) params.set("admin_invite", invite);
+  window.location.href = `/auth/wechat/start?${params.toString()}`;
+}
+
+function ensureAdminDeviceToken() {
+  const key = "jojoAdminDeviceToken";
+  const existing = localStorage.getItem(key);
+  if (existing) return existing;
+  const token = window.crypto?.randomUUID
+    ? window.crypto.randomUUID().replace(/-/g, "")
+    : `AD${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
+  localStorage.setItem(key, token);
+  return token;
+}
+
+async function handleLogin(event) {
+  event.preventDefault();
+  setMessage("loginMessage", "正在登录...");
+  try {
+    const data = await adminFetch("/api/admin/auth/login", {
+      method: "POST",
+      body: {
+        login_id: $("loginAccountInput").value.trim(),
+        password: $("loginPasswordInput").value
+      }
+    });
+    setAccount(data);
+    showDashboard();
+    setMessage("loginMessage", "");
+    await loadDashboardData();
+  } catch (err) {
+    setMessage("loginMessage", err.message || "登录失败");
+  }
+}
+
+async function handleRegister(event) {
+  event.preventDefault();
+  setMessage("registerMessage", "正在开通...");
+  const generatedLogin = `teacher-${Date.now().toString(36)}@jojo.local`;
+  const generatedPassword = window.crypto?.randomUUID
+    ? window.crypto.randomUUID().replace(/-/g, "").slice(0, 14)
+    : `jojo${Date.now().toString(36)}`;
+  try {
+    const data = await adminFetch("/api/admin/auth/wechat", {
+      method: "POST",
+      body: {
+        invite_code: $("inviteCodeInput").value.trim(),
+        name: $("registerNameInput").value.trim(),
+        login_id: $("registerLoginInput").value.trim() || generatedLogin,
+        password: $("registerPasswordInput").value || generatedPassword
+      }
+    });
+    setAccount(data);
+    showDashboard();
+    setMessage("registerMessage", "");
+    await loadDashboardData();
+  } catch (err) {
+    if (err.status === 401 || err.message === "wechat_not_authorized") {
+      sessionStorage.setItem("jojoTeacherInviteCode", $("inviteCodeInput").value.trim());
+      sessionStorage.setItem("jojoTeacherName", $("registerNameInput").value.trim());
+      startTeacherWechatAuth();
+      return;
+    }
+    setMessage("registerMessage", err.message || "开通失败");
+  }
+}
+
+async function handleLogout() {
+  await adminFetch("/api/admin/auth/logout", { method: "POST" }).catch(() => {});
+  state.results = [];
+  state.teachers = [];
+  state.invites = [];
+  state.users = [];
+  state.teacherDashboard = null;
+  showAuth();
+}
+
+function setMessage(id, text) {
+  const element = $(id);
+  if (element) element.textContent = text || "";
+}
+
+async function loadTeacherDashboard() {
+  if (!state.account) return;
+  try {
+    const data = await adminFetch("/api/admin/dashboard");
+    state.teacherDashboard = data;
+    if (data.profile) {
+      state.account = { ...state.account, ...data.profile };
+      renderTeacherProfile();
+    }
+    renderTeacherDashboard(data);
+  } catch {
+    renderTeacherDashboard(null);
+  }
+}
+
+function renderTeacherDashboard(data) {
+  const stats = data?.stats || {};
+  $("teacherStatsRow").innerHTML = `
+    <div><span>诊断</span><strong>${escapeHtml(stats.diagnosis_count ?? 0)}</strong></div>
+    <div><span>用户</span><strong>${escapeHtml(stats.diagnosed_people_count ?? 0)}</strong></div>
+    <div><span>查看</span><strong>${escapeHtml(stats.view_count ?? 0)}</strong></div>
+  `;
+  const items = data?.recent_views || data?.recent_diagnoses || [];
+  if (!items.length) {
+    $("teacherRecentTableBody").innerHTML = `<tr><td colspan="4">暂无查看记录</td></tr>`;
+    return;
+  }
+  $("teacherRecentTableBody").innerHTML = items.map((item) => `
+    <tr>
+      <td>${escapeHtml(formatDateTime(item.viewed_at || item.created_at))}</td>
+      <td>${escapeHtml(item.user_nickname || item.diagnosis_nickname || "未填写")}</td>
+      <td>${escapeHtml(modeText(item.test_mode))}</td>
+      <td>${escapeHtml(formatDateTime(item.test_time))}</td>
+    </tr>
+  `).join("");
+}
+
+function renderTeacherProfile() {
+  if (!state.account) return;
+  const avatar = state.teacherAvatarImage || state.account.avatar_url || "/jojo-icon.svg";
+  $("teacherAvatarPreview").innerHTML = `<img src="${escapeHtml(avatar)}" alt="">`;
+  $("teacherProfileName").textContent = state.account.name || "老师";
+  $("teacherNameInput").value = state.account.name || "";
+  $("teacherBioInput").value = state.account.bio || "";
+  $("bindTeacherWechatButton").textContent = state.account.wechat_bound ? "微信已绑定" : "绑定当前微信";
+}
+
+function onTeacherAvatarFileChange(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    setMessage("teacherProfileMessage", "请选择图片文件");
+    return;
+  }
+  if (file.size > 1_500_000) {
+    setMessage("teacherProfileMessage", "图片请控制在1.5MB以内");
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    state.teacherAvatarImage = String(reader.result || "");
+    renderTeacherProfile();
+    setMessage("teacherProfileMessage", "");
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveTeacherProfile(event) {
+  event.preventDefault();
+  setMessage("teacherProfileMessage", "正在保存...");
+  try {
+    const data = await adminFetch("/api/admin/profile", {
+      method: "POST",
+      body: {
+        avatar_url: state.teacherAvatarImage || state.account?.avatar_url || "",
+        name: $("teacherNameInput").value.trim(),
+        bio: $("teacherBioInput").value.trim()
+      }
+    });
+    state.account = data.account || state.account;
+    state.teacherAvatarImage = "";
+    renderTeacherProfile();
+    setMessage("teacherProfileMessage", "已保存");
+  } catch (err) {
+    setMessage("teacherProfileMessage", err.message || "保存失败");
+  }
+}
+
+async function bindTeacherWechat() {
+  if (!state.account) return;
+  if (state.account.wechat_bound) {
+    setMessage("teacherProfileMessage", "当前账号已绑定微信");
+    return;
+  }
+  setMessage("teacherProfileMessage", "正在绑定微信...");
+  try {
+    const data = await adminFetch("/api/admin/auth/bind-wechat", { method: "POST", body: {} });
+    state.account = data.account || state.account;
+    renderTeacherProfile();
+    setMessage("teacherProfileMessage", "已绑定，以后微信登录会直接进入");
+  } catch (err) {
+    if (err.message === "wechat_not_authorized" || err.status === 401) {
+      sessionStorage.setItem("jojoTeacherInviteCode", $("inviteCodeInput").value.trim());
+      sessionStorage.setItem("jojoTeacherName", $("teacherNameInput").value.trim() || state.account.name || "");
+      sessionStorage.setItem("jojoBindAdminWechat", "1");
+      if (err.bind_state) sessionStorage.setItem("jojoBindAdminWechatState", err.bind_state);
+      const params = new URLSearchParams({
+        redirect: `/admin.html?wechat=ok&bind=1${err.bind_state ? `&bind_state=${encodeURIComponent(err.bind_state)}` : ""}`,
+        device: ensureAdminDeviceToken()
+      });
+      window.location.href = `/auth/wechat/start?${params.toString()}`;
+      return;
+    }
+    setMessage("teacherProfileMessage", err.message || "绑定失败");
+  }
+}
+
+async function completePendingWechatBind(params = new URLSearchParams()) {
+  const shouldBind = params.get("bind") === "1" || sessionStorage.getItem("jojoBindAdminWechat") === "1";
+  if (!shouldBind || !state.account || state.account.wechat_bound) return;
+  try {
+    const data = await finishWechatBindWithState(params)
+      || await adminFetch("/api/admin/auth/bind-wechat", { method: "POST", body: {} });
+    state.account = data.account || state.account;
+    sessionStorage.removeItem("jojoBindAdminWechat");
+    sessionStorage.removeItem("jojoBindAdminWechatState");
+    window.history.replaceState(null, "", "/admin.html");
+    renderTeacherProfile();
+    setMessage("teacherProfileMessage", "微信已绑定，以后可直接进入");
+  } catch (err) {
+    setMessage("teacherProfileMessage", err.message || "微信绑定未完成");
+  }
+}
+
+async function finishWechatBindWithState(params = new URLSearchParams()) {
+  const bindState = params.get("bind_state") || sessionStorage.getItem("jojoBindAdminWechatState") || "";
+  if (!bindState) return null;
+  return adminFetch("/api/admin/auth/finish-bind-wechat", {
+    method: "POST",
+    allowUnauthorized: true,
+    body: { bind_state: bindState }
+  });
+}
+
+async function submitTeacherDiagnosis(event) {
+  event.preventDefault();
+  const nickname = $("diagnosisNicknameInput").value.trim();
+  const code = $("diagnosisCodeInput").value.trim().toUpperCase();
+  if (!nickname || !code) {
+    setMessage("diagnosisMessage", "请填写用户昵称和测试编号");
+    return;
+  }
+  setMessage("diagnosisMessage", "正在查询...");
+  try {
+    const data = await adminFetch("/api/admin/activity/diagnose", {
+      method: "POST",
+      body: {
+        user_nickname: nickname,
+        verification_code: code
+      }
+    });
+    setMessage("diagnosisMessage", "已记录，本次结果已打开");
+    $("codeSearchInput").value = code;
+    updateExportLink();
+    if (data.result) {
+      state.results = [data.result];
+      renderQualitySummary({ total: 1, flagged: data.result.quality_flags?.length ? 1 : 0, modes: [], top_flags: [] });
+      renderList();
+      renderDetail(data.result);
+    } else {
+      await loadResults();
+    }
+    await loadTeacherDashboard();
+  } catch (err) {
+    setMessage("diagnosisMessage", err.status === 404 ? "没有查到这个测试编号" : (err.message || "查询失败"));
+  }
+}
+
+function onTabClick(event) {
+  const button = event.target.closest("button[data-tab]");
+  if (!button || button.hidden) return;
+  switchTab(button.dataset.tab);
+}
+
+function onAdminQuickJump(event) {
+  const button = event.target.closest("button[data-admin-jump]");
+  if (!button) return;
+  switchTab(button.dataset.adminJump);
+}
+
+function activeTab() {
+  return document.querySelector(".admin-tabs button.active")?.dataset.tab || "overview";
+}
+
+function switchTab(tab) {
+  if (["teachers", "settings"].includes(tab) && !state.permissions.can_manage_teachers) tab = "overview";
+  document.querySelectorAll(".admin-tabs button[data-tab]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.tab === tab);
+  });
+  document.querySelectorAll(".admin-panel[data-panel]").forEach((panel) => {
+    panel.classList.toggle("active", panel.dataset.panel === tab);
+  });
+  if (tab === "teachers" && !state.teachers.length) loadTeacherData();
+  if (tab === "users" && !state.users.length) loadUsers();
+  if (tab === "settings") loadSiteSettings();
+}
+
+async function loadSiteSettings() {
+  if (!state.permissions.can_manage_teachers) return;
+  try {
+    const data = await adminFetch("/api/admin/site-settings");
+    state.siteSettings = data.settings || {};
+    state.groupQrImage = state.siteSettings.group_chat_qr_image_url || "";
+    $("groupQrCaptionInput").value = state.siteSettings.group_chat_qr_caption || "扫码加入群聊";
+    renderGroupQrPreview();
+  } catch (err) {
+    setMessage("siteSettingsMessage", err.message || "设置加载失败");
+  }
+}
+
+function onGroupQrFileChange(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    setMessage("siteSettingsMessage", "请选择图片文件");
+    return;
+  }
+  if (file.size > 1_500_000) {
+    setMessage("siteSettingsMessage", "图片请控制在1.5MB以内");
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    state.groupQrImage = String(reader.result || "");
+    renderGroupQrPreview();
+    setMessage("siteSettingsMessage", "");
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderGroupQrPreview() {
+  const image = state.groupQrImage || "";
+  $("groupQrPreview").innerHTML = image
+    ? `<img src="${escapeHtml(image)}" alt="微信群聊二维码预览">`
+    : `<span>还没有二维码</span>`;
+}
+
+async function saveSiteSettings(event) {
+  event.preventDefault();
+  setMessage("siteSettingsMessage", "正在保存...");
+  try {
+    const data = await adminFetch("/api/admin/site-settings", {
+      method: "POST",
+      body: {
+        group_chat_qr_image_url: state.groupQrImage,
+        group_chat_qr_caption: $("groupQrCaptionInput").value.trim() || "扫码加入群聊"
+      }
+    });
+    state.siteSettings = data.settings || {};
+    state.groupQrImage = state.siteSettings.group_chat_qr_image_url || "";
+    renderGroupQrPreview();
+    setMessage("siteSettingsMessage", "已保存");
+  } catch (err) {
+    setMessage("siteSettingsMessage", err.message || "保存失败");
+  }
+}
+
+async function loadResults() {
+  const requestId = ++state.requestId;
+  const code = $("codeSearchInput").value.trim().toUpperCase();
+  const mode = $("modeFilterInput").value;
+  const team = $("teamFilterInput").value.trim().toUpperCase();
+  const keyword = $("keywordSearchInput").value.trim();
+  updateExportLink();
+
+  const params = new URLSearchParams();
+  if (code) params.set("code", code);
+  if (mode) params.set("mode", mode);
+  if (team) params.set("team", team);
+  if (keyword) params.set("keyword", keyword);
+
+  $("resultsList").innerHTML = `<div class="result-list-item"><span>正在查询</span></div>`;
+  $("resultDetail").innerHTML = `<p class="muted">正在查询匹配记录...</p>`;
+  try {
+    const data = await adminFetch(`/api/admin/results?${params.toString()}`);
+    if (requestId !== state.requestId) return;
+    state.results = data.results || [];
+    renderQualitySummary(data.quality);
+    renderList();
+    const exactMatch = code ? state.results.find((item) => item.verification_code === code) : null;
+    const previousSelection = state.selectedCode ? state.results.find((item) => item.verification_code === state.selectedCode) : null;
+    renderDetail(exactMatch || previousSelection || state.results[0]);
+    if (code) {
+      adminTrackEvent("admin_code_lookup", {
+        has_result: state.results.length > 0,
+        result_count: state.results.length,
+        mode,
+        team_present: Boolean(team)
+      });
+    }
+  } catch (err) {
+    if (requestId !== state.requestId) return;
+    $("resultsList").innerHTML = `<div class="result-list-item"><strong>查询失败</strong><span>${escapeHtml(err.message || "请稍后重试")}</span></div>`;
+    $("resultDetail").innerHTML = `<p class="muted">没有可展示的数据。</p>`;
+  }
+}
+
+function updateExportLink() {
+  const params = new URLSearchParams();
+  if ($("codeSearchInput")?.value.trim()) params.set("code", $("codeSearchInput").value.trim().toUpperCase());
+  if ($("modeFilterInput")?.value) params.set("mode", $("modeFilterInput").value);
+  if ($("teamFilterInput")?.value.trim()) params.set("team", $("teamFilterInput").value.trim().toUpperCase());
+  if ($("keywordSearchInput")?.value.trim()) params.set("keyword", $("keywordSearchInput").value.trim());
+  const suffix = params.toString();
+  $("exportLink").href = suffix ? `/api/admin/export.csv?${suffix}` : "/api/admin/export.csv";
+}
+
+function renderList() {
+  if (!state.results.length) {
+    $("resultsList").innerHTML = `<div class="result-list-item"><strong>暂无记录</strong><span>请确认地图编号</span></div>`;
+    $("resultDetail").innerHTML = `<p class="muted">没有查到匹配结果。</p>`;
+    return;
+  }
+  $("resultsList").innerHTML = state.results.map((item) => {
+    const primary = primaryLabel(item);
+    const nickname = item.user?.nickname || "未填写昵称";
+    return `
+      <button class="result-list-item ${item.verification_code === state.selectedCode ? "active" : ""}" type="button" data-code="${escapeHtml(item.verification_code)}">
+        <strong>${escapeHtml(item.verification_code)} · ${escapeHtml(primary)}</strong>
+        <span>${escapeHtml(nickname)} · ${escapeHtml(modeLabel(item))} · ${formatDate(item.created_at)}</span>
+      </button>
+    `;
+  }).join("");
+  document.querySelectorAll(".result-list-item[data-code]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const item = state.results.find((result) => result.verification_code === button.dataset.code);
+      renderDetail(item);
+    });
+  });
+}
+
+function renderQualitySummary(summary) {
+  const panel = $("qualityPanel");
+  if (!panel) return;
+  const data = summary || { total: 0, flagged: 0, modes: [], top_flags: [] };
+  const flaggedRate = data.total ? Math.round((data.flagged / data.total) * 100) : 0;
+  const main90 = (data.modes || []).find((item) => item.mode === "main90");
+  const main180 = (data.modes || []).find((item) => item.mode === "main180" || item.mode === "main270");
+  const stability = [
+    main90 ? `90题接近 ${Math.round(main90.close_top_rate || 0)}%` : "",
+    main180 ? `180题接近 ${Math.round(main180.close_top_rate || 0)}%` : ""
+  ].filter(Boolean).join(" · ") || "等待样本";
+  const topFlags = (data.top_flags || []).map((item) => `${flagLabel(item.flag)} ${item.count}`).join(" / ") || "暂无高频标记";
+  panel.innerHTML = `
+    <div class="quality-card"><span>样本</span><strong>${escapeHtml(data.total || 0)}</strong><small>筛选内</small></div>
+    <div class="quality-card"><span>质量标记</span><strong>${escapeHtml(flaggedRate)}%</strong><small>${escapeHtml(topFlags)}</small></div>
+    <div class="quality-card"><span>稳定性</span><strong>${escapeHtml(stability)}</strong><small>前三接近需复核</small></div>
+  `;
+}
+
+function flagLabel(flag) {
+  return {
+    straight_line_risk: "连续同选",
+    uncertainty_risk: "不确定多",
+    moderate_uncertainty_risk: "不确定略多",
+    over_agree_risk: "认同偏高",
+    soft_agree_risk: "轻认同偏高",
+    over_deny_risk: "否认偏高",
+    low_variance_risk: "波动低",
+    close_top_three_risk: "前三接近",
+    virtue_bias_risk: "美德化",
+    competence_persona_risk: "能力角色",
+    prosocial_persona_risk: "友好角色",
+    reverse_consistency_risk: "正反差异",
+    scenario_mismatch_risk: "情境差异",
+    close_subtype_risk: "副型接近"
+  }[flag] || flag;
+}
+
+function adminTrackEvent(event, properties = {}) {
+  fetch("/api/event", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      event,
+      path: window.location.pathname || "/admin.html",
+      mode: $("modeFilterInput").value || "admin",
+      session_id: "admin",
+      analytics_session: "admin",
+      device_token: "admin",
+      client_ts: new Date().toISOString(),
+      properties
+    }),
+    keepalive: true
+  }).catch(() => {});
+}
+
+async function loadTeacherData() {
+  if (!state.permissions.can_manage_teachers) return;
+  try {
+    const [teachersData, invitesData] = await Promise.all([
+      adminFetch("/api/admin/teachers"),
+      adminFetch("/api/admin/invites")
+    ]);
+    state.teachers = teachersData.teachers || [];
+    state.invites = invitesData.invites || [];
+    renderTeachers();
+    renderInvites();
+  } catch (err) {
+    $("teachersTableBody").innerHTML = `<tr><td colspan="6">${escapeHtml(err.message || "加载失败")}</td></tr>`;
+    $("invitesTableBody").innerHTML = `<tr><td colspan="6">${escapeHtml(err.message || "加载失败")}</td></tr>`;
+  }
+}
+
+async function createInvite(event) {
+  event.preventDefault();
+  setMessage("inviteMessage", "正在生成...");
+  try {
+    const data = await adminFetch("/api/admin/invites", {
+      method: "POST",
+      body: {
+        role: "teacher",
+        note: $("inviteNoteInput").value.trim(),
+        expires_in_days: Number($("inviteDaysInput").value || 30)
+      }
+    });
+    const invite = data.invite;
+    const url = new URL(invite.join_url, window.location.origin).href;
+    $("inviteOutput").innerHTML = `
+      <strong>${escapeHtml(invite.code)}</strong>
+      <small>${escapeHtml(url)}</small>
+      <button class="ghost-action compact" type="button" data-copy="${escapeHtml(url)}">复制邀请链接</button>
+    `;
+    setMessage("inviteMessage", "已生成，可复制给老师。");
+    $("inviteNoteInput").value = "";
+    await loadTeacherData();
+  } catch (err) {
+    setMessage("inviteMessage", err.message || "生成失败");
+  }
+}
+
+function renderTeachers() {
+  if (!state.teachers.length) {
+    $("teachersTableBody").innerHTML = `<tr><td colspan="6">暂无老师账号</td></tr>`;
+    return;
+  }
+  $("teachersTableBody").innerHTML = state.teachers.map((teacher) => {
+    const isSelf = teacher.id === state.account?.id;
+    const canOperate = teacher.role !== "super_admin" || isSelf;
+    const canPromote = state.account?.role === "super_admin" && teacher.id !== state.account?.id;
+    const statusAction = teacher.status === "disabled" ? "启用" : "禁用";
+    const roleAction = teacher.role === "super_admin" ? "取消管理员" : "设为管理员";
+    return `
+      <tr>
+        <td><strong>${escapeHtml(teacher.name)}</strong>${isSelf ? `<small>当前账号</small>` : ""}</td>
+        <td>${roleLabel(teacher.role)}</td>
+        <td>${statusLabel(teacher.status)}</td>
+        <td>${escapeHtml(teacher.invite_count || 0)}</td>
+        <td>${teacher.last_login_at ? formatDate(teacher.last_login_at) : "-"}</td>
+        <td>
+          ${canPromote ? `<button class="ghost-link table-action" type="button" data-teacher="${escapeHtml(teacher.id)}" data-action="role">${roleAction}</button>` : ""}
+          ${canOperate && !isSelf ? `<button class="ghost-link table-action" type="button" data-teacher="${escapeHtml(teacher.id)}" data-action="status">${statusAction}</button>` : ""}
+          ${canOperate ? `<button class="ghost-link table-action" type="button" data-teacher="${escapeHtml(teacher.id)}" data-action="password">改密</button>` : ""}
+          ${canOperate && !isSelf ? `<button class="ghost-link table-action" type="button" data-teacher="${escapeHtml(teacher.id)}" data-action="remove">移除</button>` : ""}
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function renderInvites() {
+  if (!state.invites.length) {
+    $("invitesTableBody").innerHTML = `<tr><td colspan="6">暂无邀请码</td></tr>`;
+    return;
+  }
+  $("invitesTableBody").innerHTML = state.invites.map((invite) => {
+    const url = new URL(invite.join_url, window.location.origin).href;
+    return `
+      <tr>
+        <td><strong>${escapeHtml(invite.code)}</strong></td>
+        <td>${inviteStatusLabel(invite)}</td>
+        <td>${escapeHtml(invite.note || "-")}</td>
+        <td>${formatDate(invite.expires_at)}</td>
+        <td>${escapeHtml(invite.use_count || 0)} / ${escapeHtml(invite.max_uses || 1)}</td>
+        <td><button class="ghost-link table-action" type="button" data-copy="${escapeHtml(url)}">复制链接</button></td>
+      </tr>
+    `;
+  }).join("");
+}
+
+async function onTeacherAction(event) {
+  const button = event.target.closest("button[data-teacher]");
+  if (!button) return;
+  const id = button.dataset.teacher;
+  const action = button.dataset.action;
+  const teacher = state.teachers.find((item) => item.id === id);
+  if (!teacher) return;
+  const body = {};
+  if (action === "status") {
+    body.status = teacher.status === "disabled" ? "active" : "disabled";
+  }
+  if (action === "role") {
+    body.role = teacher.role === "super_admin" ? "teacher" : "super_admin";
+  }
+  if (action === "password") {
+    const password = window.prompt(`为 ${teacher.name} 设置新密码，至少6位`);
+    if (!password) return;
+    body.password = password;
+  }
+  if (action === "remove") {
+    if (!window.confirm(`确定要移除 ${teacher.name} 吗？`)) return;
+    await adminFetch(`/api/admin/teachers/${encodeURIComponent(id)}`, { method: "DELETE" });
+    await loadTeacherData();
+    return;
+  }
+  await adminFetch(`/api/admin/teachers/${encodeURIComponent(id)}`, { method: "PATCH", body });
+  await loadTeacherData();
+}
+
+function onInviteAction(event) {
+  const button = event.target.closest("button[data-copy]");
+  if (!button) return;
+  navigator.clipboard?.writeText(button.dataset.copy).then(() => {
+    const old = button.textContent;
+    button.textContent = "已复制";
+    window.setTimeout(() => {
+      button.textContent = old;
+    }, 1200);
+  });
+}
+
+async function loadUsers() {
+  const keyword = $("userKeywordInput").value.trim();
+  const params = new URLSearchParams();
+  if (keyword) params.set("keyword", keyword);
+  $("usersList").innerHTML = `<div class="result-list-item"><span>正在加载用户</span></div>`;
+  try {
+    const data = await adminFetch(`/api/admin/users?${params.toString()}`);
+    state.users = data.users || [];
+    renderUsers();
+    if (state.users.length) {
+      const selected = state.users.find((item) => item.id === state.selectedUserId) || state.users[0];
+      loadUserDetail(selected.id);
+    } else {
+    $("userDetail").innerHTML = `<p class="muted">暂无用户。</p>`;
+    }
+  } catch (err) {
+    $("usersList").innerHTML = `<div class="result-list-item"><strong>加载失败</strong><span>${escapeHtml(err.message || "")}</span></div>`;
+  }
+}
+
+function renderUsers() {
+  if (!state.users.length) {
+    $("usersList").innerHTML = `<div class="result-list-item"><strong>暂无用户</strong><span>换个关键词试试。</span></div>`;
+    return;
+  }
+  $("usersList").innerHTML = state.users.map((user) => `
+    <button class="result-list-item ${user.id === state.selectedUserId ? "active" : ""}" type="button" data-user="${escapeHtml(user.id)}">
+      <strong>${escapeHtml(user.name)} · ${escapeHtml(user.result_count || 0)}次</strong>
+      <span>${escapeHtml(user.contact || "未留联系方式")} · ${escapeHtml(user.last_result_code || "暂无编号")}</span>
+    </button>
+  `).join("");
+}
+
+function onUserClick(event) {
+  const button = event.target.closest("button[data-user]");
+  if (!button) return;
+  loadUserDetail(button.dataset.user);
+}
+
+async function loadUserDetail(id) {
+  state.selectedUserId = id;
+  renderUsers();
+  $("userDetail").innerHTML = `<p class="muted">正在加载用户记录...</p>`;
+  try {
+    const data = await adminFetch(`/api/admin/users/${encodeURIComponent(id)}`);
+    const results = data.results || [];
+    const identityLabel = USER_IDENTITY_LABELS[data.user?.identity_kind] || "测试用户";
+    $("userDetail").innerHTML = `
+      <div class="detail-header">
+        <div>
+          <h2>${escapeHtml(data.user?.name || "测试用户")}</h2>
+          <p class="muted">${identityLabel} · 注册 ${formatDate(data.user?.created_at)}</p>
+        </div>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-cell"><span>联系方式</span><strong>${escapeHtml(data.user?.contact || "未留")}</strong></div>
+        <div class="detail-cell"><span>用户ID</span><strong>${escapeHtml(data.user?.id || "-")}</strong></div>
+        <div class="detail-cell"><span>测试次数</span><strong>${escapeHtml(results.length || 0)}</strong></div>
+        <div class="detail-cell"><span>最近更新</span><strong>${data.user?.updated_at ? formatDate(data.user.updated_at) : "-"}</strong></div>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>编号</th><th>测试</th><th>结果</th><th>团队</th><th>时间</th></tr></thead>
+        <tbody>
+          ${results.map((item) => `
+            <tr>
+              <td>${escapeHtml(item.verification_code)}</td>
+              <td>${escapeHtml(item.mode_label || item.test_mode || "-")}</td>
+              <td>${escapeHtml(item.title || item.primary_type || "-")}</td>
+              <td>${escapeHtml(item.team?.name || "-")}</td>
+              <td>${formatDate(item.created_at)}</td>
+            </tr>
+          `).join("") || `<tr><td colspan="5">暂无测试记录</td></tr>`}
+        </tbody>
+      </table>
+    `;
+  } catch (err) {
+    $("userDetail").innerHTML = `<p class="muted">${escapeHtml(err.message || "加载失败")}</p>`;
+  }
+}
+
+function renderDetail(item) {
+  if (!item) return;
+  state.selectedCode = item.verification_code;
+  if (isSubtypeMode(item.test_mode)) {
+    renderSubtypeDetail(item);
+    return;
+  }
+  const top = item.top_types || [];
+  const flags = item.quality_flags || [];
+  const scores = [1,2,3,4,5,6,7,8,9].map((element) => item.scores?.[element] || item.scores?.[String(element)] || { element });
+  $("resultDetail").innerHTML = `
+    <div class="detail-header">
+      <div>
+        <h2>${escapeHtml(item.verification_code)}</h2>
+        <p class="muted">${escapeHtml(formatDate(item.created_at))}</p>
+      </div>
+      <button class="ghost-action compact" id="copyJsonButton" type="button">复制JSON</button>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-cell"><span>昵称</span><strong>${escapeHtml(item.user?.nickname || "未填写")}</strong></div>
+      <div class="detail-cell"><span>联系方式</span><strong>${escapeHtml(item.user?.contact || "未填写")}</strong></div>
+      <div class="detail-cell"><span>测试模式</span><strong>${escapeHtml(modeLabel(item))}</strong></div>
+      <div class="detail-cell"><span>前三元素</span><strong>${escapeHtml(top.map((x) => `${x.element}号`).join(" / ") || "-")}</strong></div>
+      <div class="detail-cell"><span>团队</span><strong>${escapeHtml(item.team?.name || "未加入")}</strong></div>
+      <div class="detail-cell"><span>质量标记</span><strong>${escapeHtml(flags.length ? flags.length : "无")}</strong></div>
+      <div class="detail-cell"><span>答题数</span><strong>${escapeHtml(item.answers?.length || 0)}</strong></div>
+    </div>
+    <p class="muted">${escapeHtml(flags.join(" / ") || "本次无明显作答质量风险标记。")}</p>
+    <table class="data-table">
+      <thead><tr><th>元素</th><th>名称</th><th>主分</th><th>百分比</th><th>是</th><th>不确定</th><th>否</th><th>防御均分</th><th>正向均分</th><th>反向均分</th><th>情境均分</th></tr></thead>
+      <tbody>
+        ${scores.map((score) => `
+          <tr>
+            <td>${score.element}</td>
+            <td>${escapeHtml(TYPE_NAMES[score.element] || "")}</td>
+            <td>${cell(score.type_score)}</td>
+            <td>${cell(score.type_percent)}%</td>
+            <td>${cell(score.yes)}</td>
+            <td>${cell(score.uncertain)}</td>
+            <td>${cell(score.no)}</td>
+            <td>${cell(score.defense_score)}</td>
+            <td>${cell(score.direct_average)}</td>
+            <td>${cell(score.reverse_average)}</td>
+            <td>${cell(score.scenario_average)}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+    <table class="data-table">
+      <thead><tr><th>题号</th><th>元素</th><th>题型</th><th>维度</th><th>原始分</th><th>计分后</th></tr></thead>
+      <tbody>
+        ${(item.answers || []).map((answer) => `
+          <tr>
+            <td>${escapeHtml(answer.question_id)}</td>
+            <td>${escapeHtml(answer.element)}</td>
+            <td>${escapeHtml(answer.form)}</td>
+            <td>${escapeHtml(answer.dimension)}</td>
+            <td>${escapeHtml(answer.raw_answer)}</td>
+            <td>${escapeHtml(answer.scored_value)}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+  $("copyJsonButton").addEventListener("click", () => copyJson(item));
+  renderList();
+}
+
+function renderSubtypeDetail(item) {
+  const flags = item.quality_flags || [];
+  const ranked = item.subtype_ranked || Object.values(item.subtype_scores || {}).sort((a, b) => b.percent - a.percent);
+  $("resultDetail").innerHTML = `
+    <div class="detail-header">
+      <div>
+        <h2>${escapeHtml(item.verification_code)}</h2>
+        <p class="muted">${escapeHtml(formatDate(item.created_at))}</p>
+      </div>
+      <button class="ghost-action compact" id="copyJsonButton" type="button">复制JSON</button>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-cell"><span>昵称</span><strong>${escapeHtml(item.user?.nickname || "未填写")}</strong></div>
+      <div class="detail-cell"><span>联系方式</span><strong>${escapeHtml(item.user?.contact || "未填写")}</strong></div>
+      <div class="detail-cell"><span>测试模式</span><strong>${escapeHtml(modeLabel(item))}</strong></div>
+      <div class="detail-cell"><span>副型排序</span><strong>${escapeHtml(ranked.map((x) => SUBTYPE_NAMES[x.key] || x.label || x.key).join(" / ") || "-")}</strong></div>
+      <div class="detail-cell"><span>置信提示</span><strong>${escapeHtml(item.subtype_confidence || "-")}</strong></div>
+      <div class="detail-cell"><span>答题数</span><strong>${escapeHtml(item.answers?.length || 0)}</strong></div>
+    </div>
+    <p class="muted">${escapeHtml(flags.join(" / ") || "本次无明显作答质量风险标记。")}</p>
+    <table class="data-table">
+      <thead><tr><th>副型</th><th>百分比</th><th>原始均分</th><th>答题数</th></tr></thead>
+      <tbody>
+        ${ranked.map((score) => `
+          <tr>
+            <td>${escapeHtml(SUBTYPE_NAMES[score.key] || score.label || score.key)}</td>
+            <td>${cell(score.percent)}%</td>
+            <td>${cell(score.raw_average)}</td>
+            <td>${cell(score.count)}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+    <table class="data-table">
+      <thead><tr><th>题号</th><th>副型柱</th><th>原始分</th></tr></thead>
+      <tbody>
+        ${(item.answers || []).map((answer) => `
+          <tr>
+            <td>${escapeHtml(answer.question_id)}</td>
+            <td>${escapeHtml(SUBTYPE_NAMES[answer.column] || answer.column)}</td>
+            <td>${escapeHtml(answer.raw_answer)}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+  $("copyJsonButton").addEventListener("click", () => copyJson(item));
+  renderList();
+}
+
+function primaryLabel(item) {
+  if (isSubtypeMode(item.test_mode)) {
+    return SUBTYPE_NAMES[item.share?.primary_type] || item.share?.title || "副型结果";
+  }
+  const primary = item.share?.primary_type || item.top_types?.[0]?.element || "";
+  return primary ? `${primary}号` : "-";
+}
+
+function modeLabel(item) {
+  const labels = {
+    main90: "主型90题",
+    main180: "主型180题",
+    main270: "主型180题",
+    subtype_adult: "成人副型",
+    subtype_child: "少儿副型",
+    team_subtype: "团队副型"
+  };
+  return labels[item.test_mode] || item.mode_label || item.test_mode || "主型90题";
+}
+
+function roleLabel(role) {
+  return role === "super_admin" ? "管理员" : "老师";
+}
+
+function statusLabel(status) {
+  return status === "disabled" ? "停用" : "正常";
+}
+
+function inviteStatusLabel(invite) {
+  if (invite.status === "used") return "已使用";
+  if (invite.status === "revoked") return "已撤销";
+  if (invite.expires_at && Date.now() > Date.parse(invite.expires_at)) return "已过期";
+  return "可注册";
+}
+
+function formatDateTime(value) {
+  if (!value) return "-";
+  try {
+    return new Intl.DateTimeFormat("zh-CN", {
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit"
+    }).format(new Date(value));
+  } catch {
+    return value || "-";
+  }
+}
+
+function modeText(mode) {
+  const labels = {
+    main90: "主型90题",
+    main180: "主型180题",
+    main270: "主型180题",
+    subtype_adult: "成人副型",
+    subtype_child: "少儿副型",
+    team_subtype: "团队副型"
+  };
+  return labels[mode] || mode || "-";
+}
+
+function copyJson(item) {
+  navigator.clipboard?.writeText(JSON.stringify(item, null, 2)).then(() => {
+    $("copyJsonButton").textContent = "已复制";
+    window.setTimeout(() => {
+      $("copyJsonButton").textContent = "复制JSON";
+    }, 1200);
+  });
+}
+
+function formatDate(value) {
+  if (!value) return "";
+  try {
+    return new Intl.DateTimeFormat("zh-CN", {
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit"
+    }).format(new Date(value));
+  } catch {
+    return value;
+  }
+}
+
+function cell(value) {
+  return value == null || value === "" ? "-" : escapeHtml(value);
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}

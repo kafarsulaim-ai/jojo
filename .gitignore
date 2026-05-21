@@ -1,0 +1,20 @@
+node_modules/
+.DS_Store
+
+# Runtime data. Keep local production/test records out of GitHub.
+data/*.json
+data/*.jsonl
+!data/.gitkeep
+!data/site_settings.example.json
+
+# Local backup snapshots.
+public/.logo-cleanup-backup/
+
+# QA artifacts.
+.playwright-cli/
+output/
+
+# Local environment / secrets.
+.env
+.env.*
+*.local

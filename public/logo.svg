@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="九型人格地图">
+  <defs>
+    <linearGradient id="edge" x1="18" y1="14" x2="78" y2="82" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#35C7D0"/>
+      <stop offset=".48" stop-color="#E0BE67"/>
+      <stop offset="1" stop-color="#F16A78"/>
+    </linearGradient>
+    <linearGradient id="plate" x1="17" y1="11" x2="79" y2="86" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#20333A"/>
+      <stop offset="1" stop-color="#10191E"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="32%" cy="24%" r="72%">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity=".18"/>
+      <stop offset=".52" stop-color="#FFFFFF" stop-opacity=".04"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="7" y="7" width="82" height="82" rx="23" fill="url(#plate)"/>
+  <rect x="7" y="7" width="82" height="82" rx="23" fill="url(#glow)"/>
+  <path d="M48 19.5 66.3 26.2 76.6 42.7 72.9 61.8 58.1 74.7 37.9 74.7 23.1 61.8 19.4 42.7 29.7 26.2Z" fill="none" stroke="url(#edge)" stroke-width="3.2" stroke-linejoin="round"/>
+  <path d="M66.3 26.2 37.9 74.7 76.6 42.7 29.7 26.2 58.1 74.7 19.4 42.7" fill="none" stroke="#FFF2D8" stroke-opacity=".24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M48 19.5 72.9 61.8 23.1 61.8Z" fill="none" stroke="#FFF2D8" stroke-opacity=".16" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="48" cy="48" r="13.5" fill="none" stroke="#FFF2D8" stroke-opacity=".2" stroke-width="1.4"/>
+  <path d="M48 35.5 53.2 48 48 60.5 42.8 48Z" fill="url(#edge)"/>
+  <circle cx="48" cy="19.5" r="2.8" fill="#FFF2D8"/>
+  <circle cx="66.3" cy="26.2" r="2.6" fill="#35C7D0"/>
+  <circle cx="76.6" cy="42.7" r="2.6" fill="#E0BE67"/>
+  <circle cx="72.9" cy="61.8" r="2.6" fill="#F16A78"/>
+  <circle cx="58.1" cy="74.7" r="2.6" fill="#FFF2D8"/>
+  <circle cx="37.9" cy="74.7" r="2.6" fill="#35C7D0"/>
+  <circle cx="23.1" cy="61.8" r="2.6" fill="#E0BE67"/>
+  <circle cx="19.4" cy="42.7" r="2.6" fill="#F16A78"/>
+  <circle cx="29.7" cy="26.2" r="2.6" fill="#FFF2D8"/>
+</svg>

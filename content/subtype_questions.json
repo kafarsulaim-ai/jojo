@@ -1,0 +1,905 @@
+{
+  "subtype_adult": {
+    "title": "个人副型测试",
+    "description": "30题，观察你更常把注意力放在社群位置、深度连接，还是资源与稳定上。",
+    "columns": {
+      "social": "社群型",
+      "one_to_one": "一对一 / 亲密型",
+      "self_preservation": "自保型"
+    },
+    "questions": [
+      {
+        "id": "S1-01",
+        "column": "social",
+        "text": "进入一个新圈子时，我会自然留意谁更有影响力、大家更听谁的。"
+      },
+      {
+        "id": "S1-02",
+        "column": "social",
+        "text": "如果我所在的团队被认可，我也会觉得自己更有归属感。"
+      },
+      {
+        "id": "S1-03",
+        "column": "social",
+        "text": "我会关心自己在群体里扮演什么角色，以及别人是否需要我。"
+      },
+      {
+        "id": "S1-04",
+        "column": "social",
+        "text": "做决定前，我常会想：这会不会影响我在圈子里的关系和评价。"
+      },
+      {
+        "id": "S1-05",
+        "column": "social",
+        "text": "我愿意为一个我认同的团队投入时间，哪怕短期看不到个人回报。"
+      },
+      {
+        "id": "S1-06",
+        "column": "social",
+        "text": "我能较快看出一个组织里的潜规则、气氛和相处分寸。"
+      },
+      {
+        "id": "S1-07",
+        "column": "social",
+        "text": "比起一个人默默做好，我更希望自己的贡献能被集体看见。"
+      },
+      {
+        "id": "S1-08",
+        "column": "social",
+        "text": "我会主动经营人脉、社群或合作关系，因为这些会让我感觉更有力量。"
+      },
+      {
+        "id": "S1-09",
+        "column": "social",
+        "text": "当团队需要有人出来协调、串联或撑场面时，我通常不会完全置身事外。"
+      },
+      {
+        "id": "S1-10",
+        "column": "social",
+        "text": "如果我被重要圈子排除在外，我会明显感到不舒服或失落。"
+      },
+      {
+        "id": "S2-01",
+        "column": "one_to_one",
+        "text": "在人群里，我常会被某一个特别有感觉的人吸引，而不是平均关注每个人。"
+      },
+      {
+        "id": "S2-02",
+        "column": "one_to_one",
+        "text": "我更在意关系有没有深度，而不是认识多少人。"
+      },
+      {
+        "id": "S2-03",
+        "column": "one_to_one",
+        "text": "如果一段关系没有火花、吸引力或特别感，我会觉得少了点什么。"
+      },
+      {
+        "id": "S2-04",
+        "column": "one_to_one",
+        "text": "遇到真正打动我的人或事，我容易投入得很快、很深。"
+      },
+      {
+        "id": "S2-05",
+        "column": "one_to_one",
+        "text": "我不太满足于礼貌、稳定但表面的关系，我想要更真实的连接。"
+      },
+      {
+        "id": "S2-06",
+        "column": "one_to_one",
+        "text": "我会记住某个重要的人身上的细节，并且很容易被这些细节影响。"
+      },
+      {
+        "id": "S2-07",
+        "column": "one_to_one",
+        "text": "当我对某件事有强烈感觉时，即使别人不理解，我也很难完全放下。"
+      },
+      {
+        "id": "S2-08",
+        "column": "one_to_one",
+        "text": "我容易被强烈的体验吸引，比如深聊、冒险、创作、竞争或突破。"
+      },
+      {
+        "id": "S2-09",
+        "column": "one_to_one",
+        "text": "在重要关系里，我希望自己是特别的，而不是可有可无的。"
+      },
+      {
+        "id": "S2-10",
+        "column": "one_to_one",
+        "text": "当热情被点燃时，我会觉得自己整个人都活过来了。"
+      },
+      {
+        "id": "S3-01",
+        "column": "self_preservation",
+        "text": "我很容易注意到身体是否舒服，比如温度、饥饿、疲劳、睡眠和疼痛。"
+      },
+      {
+        "id": "S3-02",
+        "column": "self_preservation",
+        "text": "做事前，我会先想资源够不够：时间、钱、精力、工具和备用办法。"
+      },
+      {
+        "id": "S3-03",
+        "column": "self_preservation",
+        "text": "我需要清楚的边界和个人空间，否则很容易觉得被消耗。"
+      },
+      {
+        "id": "S3-04",
+        "column": "self_preservation",
+        "text": "比起临场发挥，我更喜欢提前知道安排，心里有数才安心。"
+      },
+      {
+        "id": "S3-05",
+        "column": "self_preservation",
+        "text": "我会下意识地保留一些存量，比如钱、物资、资料、技能或可用人手。"
+      },
+      {
+        "id": "S3-06",
+        "column": "self_preservation",
+        "text": "我更相信实际行动和可落地的帮助，不太喜欢只停留在口头表达。"
+      },
+      {
+        "id": "S3-07",
+        "column": "self_preservation",
+        "text": "如果计划突然改变，我会先评估它会不会打乱我的节奏和安全感。"
+      },
+      {
+        "id": "S3-08",
+        "column": "self_preservation",
+        "text": "我会关注一件事后续会带来什么结果，尤其是可能造成损失的部分。"
+      },
+      {
+        "id": "S3-09",
+        "column": "self_preservation",
+        "text": "在照顾别人之前，我通常会先确认自己有没有足够余力。"
+      },
+      {
+        "id": "S3-10",
+        "column": "self_preservation",
+        "text": "对我来说，把日子过稳、把基础守住，是很重要的事。"
+      }
+    ]
+  },
+  "subtype_child": {
+    "title": "少儿副型测试",
+    "description": "60题合并题库，每次平衡抽取30题，观察孩子更关注集体、深度伙伴，还是稳定与边界。",
+    "columns": {
+      "social": "社群型",
+      "one_to_one": "一对一 / 亲密型",
+      "self_preservation": "自保型"
+    },
+    "questions": [
+      {
+        "id": "C1-01",
+        "column": "social",
+        "text": "到一个新班级或新小组时，我会先观察大家怎么相处、谁比较能带动气氛。"
+      },
+      {
+        "id": "C1-02",
+        "column": "social",
+        "text": "如果老师或同学说我为集体帮上了忙，我会觉得很有成就感。"
+      },
+      {
+        "id": "C1-03",
+        "column": "social",
+        "text": "我会在意自己是不是被小组接纳，也会想知道自己在大家心里是什么位置。"
+      },
+      {
+        "id": "C1-04",
+        "column": "social",
+        "text": "班级活动或团队比赛时，我常会想自己可以负责哪一块。"
+      },
+      {
+        "id": "C1-05",
+        "column": "social",
+        "text": "如果别人没有叫我参加某个小圈子的事，我会明显有点在意。"
+      },
+      {
+        "id": "C1-06",
+        "column": "social",
+        "text": "我比较容易发现同学之间的关系变化，比如谁和谁更熟、谁最近不太开心。"
+      },
+      {
+        "id": "C1-07",
+        "column": "social",
+        "text": "遇到需要协调、传话或组织大家的事，我不一定会躲开。"
+      },
+      {
+        "id": "C1-08",
+        "column": "social",
+        "text": "我希望自己在集体里是有用的，而不是只顾自己完成任务。"
+      },
+      {
+        "id": "C1-09",
+        "column": "social",
+        "text": "做选择时，我会想到这件事会不会影响同学、老师或小组对我的看法。"
+      },
+      {
+        "id": "C1-10",
+        "column": "social",
+        "text": "我喜欢有归属感的地方，比如固定小组、社团、队伍或熟悉的朋友圈。"
+      },
+      {
+        "id": "C1-11",
+        "column": "social",
+        "text": "在班级、学校、兴趣班这些集体里，我通常能交到朋友，和大家在一起也比较开心。"
+      },
+      {
+        "id": "C1-12",
+        "column": "social",
+        "text": "如果我能为一个集体做贡献，并被大家认可或表扬，我会很开心。"
+      },
+      {
+        "id": "C1-13",
+        "column": "social",
+        "text": "我会留意一个集体里谁和谁关系好、谁更有影响力、谁想带头。"
+      },
+      {
+        "id": "C1-14",
+        "column": "social",
+        "text": "我喜欢加入让我觉得有面子、有归属感的团队或小圈子。"
+      },
+      {
+        "id": "C1-15",
+        "column": "social",
+        "text": "我会在意伙伴们怎么看我，比如衣服、朋友、爱好或选择。"
+      },
+      {
+        "id": "C1-16",
+        "column": "social",
+        "text": "我会想自己的行为会不会影响整个集体，也会尽量适应大家的需要。"
+      },
+      {
+        "id": "C1-17",
+        "column": "social",
+        "text": "如果我愿意，我能比较快地和别人熟起来，也希望别人觉得我好相处。"
+      },
+      {
+        "id": "C1-18",
+        "column": "social",
+        "text": "当集体和个人想法不一样时，我有时会先配合大家。"
+      },
+      {
+        "id": "C1-19",
+        "column": "social",
+        "text": "做任务时，我喜欢叫上大家一起分工合作，而不是只靠自己。"
+      },
+      {
+        "id": "C1-20",
+        "column": "social",
+        "text": "当我想加入一个圈子时，我会想办法知道自己该和谁熟起来。"
+      },
+      {
+        "id": "C2-01",
+        "column": "one_to_one",
+        "text": "我更想有一两个特别懂我的好朋友，而不是只和很多人普通熟。"
+      },
+      {
+        "id": "C2-02",
+        "column": "one_to_one",
+        "text": "在人多的地方，我常会特别注意某一个让我感兴趣的人。"
+      },
+      {
+        "id": "C2-03",
+        "column": "one_to_one",
+        "text": "遇到很喜欢的人、作品或活动时，我会一下子投入很多热情。"
+      },
+      {
+        "id": "C2-04",
+        "column": "one_to_one",
+        "text": "我不太喜欢一直只是礼貌相处，我希望好朋友之间能说真实想法。"
+      },
+      {
+        "id": "C2-05",
+        "column": "one_to_one",
+        "text": "如果一件事让我很有感觉，我会想马上去做，很难等很久。"
+      },
+      {
+        "id": "C2-06",
+        "column": "one_to_one",
+        "text": "我会记住重要朋友的小细节，比如他说过的话、喜欢的东西或小习惯。"
+      },
+      {
+        "id": "C2-07",
+        "column": "one_to_one",
+        "text": "太普通、太没有变化的活动，会让我觉得少了点吸引力。"
+      },
+      {
+        "id": "C2-08",
+        "column": "one_to_one",
+        "text": "我喜欢能让我心跳加快或特别投入的体验，比如比赛、表演、深聊或挑战。"
+      },
+      {
+        "id": "C2-09",
+        "column": "one_to_one",
+        "text": "在重要朋友面前，我希望自己是特别的，不想只是很多人里的一个。"
+      },
+      {
+        "id": "C2-10",
+        "column": "one_to_one",
+        "text": "当我真的被点燃时，会比平时更主动、更专注，也更难被劝停。"
+      },
+      {
+        "id": "C2-11",
+        "column": "one_to_one",
+        "text": "我更期待有一两个很懂我的好朋友，而不是只有很多普通朋友。"
+      },
+      {
+        "id": "C2-12",
+        "column": "one_to_one",
+        "text": "在很多人的场合里，我常会悄悄关注一两个最吸引我的人。"
+      },
+      {
+        "id": "C2-13",
+        "column": "one_to_one",
+        "text": "只要是真正让我有感觉的事，我会很想投入进去，哪怕别人不太理解。"
+      },
+      {
+        "id": "C2-14",
+        "column": "one_to_one",
+        "text": "太平淡、太一成不变的日子会让我觉得没意思。"
+      },
+      {
+        "id": "C2-15",
+        "column": "one_to_one",
+        "text": "我有时会突然很想做某件事，甚至想先放下别的安排。"
+      },
+      {
+        "id": "C2-16",
+        "column": "one_to_one",
+        "text": "做事情时，我要么特别投入，要么就很难提起兴趣。"
+      },
+      {
+        "id": "C2-17",
+        "column": "one_to_one",
+        "text": "别人希望我按常规来时，如果我不想这样做，会觉得有点勉强。"
+      },
+      {
+        "id": "C2-18",
+        "column": "one_to_one",
+        "text": "我喜欢有强烈体验感的活动，比如刺激的项目、深度聊天、特别喜欢的作品。"
+      },
+      {
+        "id": "C2-19",
+        "column": "one_to_one",
+        "text": "对于喜欢的人、偶像、作品或爱好，我有时会投入得很深。"
+      },
+      {
+        "id": "C2-20",
+        "column": "one_to_one",
+        "text": "如果没有感觉，我会觉得自己很难真正投入学习、活动或关系。"
+      },
+      {
+        "id": "C3-01",
+        "column": "self_preservation",
+        "text": "我很容易注意到自己冷不冷、饿不饿、累不累，身体不舒服时会很受影响。"
+      },
+      {
+        "id": "C3-02",
+        "column": "self_preservation",
+        "text": "做作业或活动前，我希望先知道时间、要求、工具和大概流程。"
+      },
+      {
+        "id": "C3-03",
+        "column": "self_preservation",
+        "text": "我需要自己的空间或安静时间，不然会觉得脑子很乱或很累。"
+      },
+      {
+        "id": "C3-04",
+        "column": "self_preservation",
+        "text": "如果计划突然变了，我会先想这会不会打乱我的安排。"
+      },
+      {
+        "id": "C3-05",
+        "column": "self_preservation",
+        "text": "我会保管一些以后可能用得上的东西，比如文具、资料、零花钱或小工具。"
+      },
+      {
+        "id": "C3-06",
+        "column": "self_preservation",
+        "text": "比起只说好听的话，我更喜欢别人给出实际帮助，我自己也常这样帮人。"
+      },
+      {
+        "id": "C3-07",
+        "column": "self_preservation",
+        "text": "我会关注一件事会不会有风险，比如浪费时间、花太多钱或最后完不成。"
+      },
+      {
+        "id": "C3-08",
+        "column": "self_preservation",
+        "text": "如果任务还没处理好，我心里会挂着，很难完全放松去玩。"
+      },
+      {
+        "id": "C3-09",
+        "column": "self_preservation",
+        "text": "我会先确认自己有没有精力，再决定要不要答应别人更多要求。"
+      },
+      {
+        "id": "C3-10",
+        "column": "self_preservation",
+        "text": "对我来说，稳定的作息、熟悉的环境和可靠的准备会让我更安心。"
+      },
+      {
+        "id": "C3-11",
+        "column": "self_preservation",
+        "text": "我很容易注意到自己饿不饿、困不困、冷不冷、热不热或身体舒不舒服。"
+      },
+      {
+        "id": "C3-12",
+        "column": "self_preservation",
+        "text": "我喜欢一个人安静做事，这样更容易集中精神。"
+      },
+      {
+        "id": "C3-13",
+        "column": "self_preservation",
+        "text": "我不太喜欢突然改变计划，比如临时加任务、改时间或动我的东西。"
+      },
+      {
+        "id": "C3-14",
+        "column": "self_preservation",
+        "text": "朋友遇到问题时，我常会直接想办法帮他解决，而不只是安慰。"
+      },
+      {
+        "id": "C3-15",
+        "column": "self_preservation",
+        "text": "我觉得做比说更真诚，我更愿意用实际行动支持别人。"
+      },
+      {
+        "id": "C3-16",
+        "column": "self_preservation",
+        "text": "我喜欢储备东西，比如文具、资料、玩具、课程、零花钱或以后可能用到的东西。"
+      },
+      {
+        "id": "C3-17",
+        "column": "self_preservation",
+        "text": "我希望提前知道接下来要做什么，好安排自己的时间和节奏。"
+      },
+      {
+        "id": "C3-18",
+        "column": "self_preservation",
+        "text": "如果有任务没完成，我心里会一直惦记，很难完全放松。"
+      },
+      {
+        "id": "C3-19",
+        "column": "self_preservation",
+        "text": "花钱时，我会关注值不值、够不够、会不会浪费。"
+      },
+      {
+        "id": "C3-20",
+        "column": "self_preservation",
+        "text": "我会先关注自己、家人和少数重要朋友，确认自己有余力再照顾更多人。"
+      }
+    ]
+  },
+  "team_subtype": {
+    "title": "团队副型测试",
+    "description": "60题匿名团队题库，观察团队更常从社群、一对一，还是自保入口进入协作、压力和关系。",
+    "columns": {
+      "social": "社群型",
+      "one_to_one": "一对一 / 亲密型",
+      "self_preservation": "自保型"
+    },
+    "questions": [
+      {
+        "id": "TS1-01",
+        "column": "social",
+        "form": "direct",
+        "text": "团队里很容易形成核心小圈子，大家也知道谁更有影响力。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS1-02",
+        "column": "social",
+        "form": "direct",
+        "text": "我们团队做事时，会在意这件事能否被公司、客户或合作方看见。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS1-03",
+        "column": "social",
+        "form": "direct",
+        "text": "团队成员通常会关注自己在团队中的角色、贡献有没有被看见。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS1-04",
+        "column": "social",
+        "form": "direct",
+        "text": "遇到新任务时，我们会先看它和团队目标、公司期待或团队荣誉有什么关系。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS1-05",
+        "column": "social",
+        "form": "direct",
+        "text": "团队中有人被边缘化或没有参与感时，整体氛围会受到明显影响。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS1-06",
+        "column": "social",
+        "form": "direct",
+        "text": "我们团队比较看重信息同步、互相串联和一起推进。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS1-07",
+        "column": "social",
+        "form": "direct",
+        "text": "团队成员会留意其他部门、合作方或公司大环境如何看待我们。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS1-08",
+        "column": "social",
+        "form": "direct",
+        "text": "当团队被公开认可时，成员的投入感和凝聚感会明显提升。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS1-09",
+        "column": "social",
+        "form": "direct",
+        "text": "我们团队容易因为共同身份、共同目标或共同名字而更有行动力。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS1-10",
+        "column": "social",
+        "form": "direct",
+        "text": "团队里常有人主动承担协调、串联、代表团队发声的角色。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS1-11",
+        "column": "social",
+        "form": "reverse",
+        "text": "我们团队做事通常只看每个人把任务做完，不太关注团队归属感。",
+        "score_rule": "reverse"
+      },
+      {
+        "id": "TS1-12",
+        "column": "social",
+        "form": "reverse",
+        "text": "外界如何评价这个团队，对成员状态影响不大。",
+        "score_rule": "reverse"
+      },
+      {
+        "id": "TS1-13",
+        "column": "social",
+        "form": "reverse",
+        "text": "团队成员一般不太在意自己是否被集体看见或接纳。",
+        "score_rule": "reverse"
+      },
+      {
+        "id": "TS1-14",
+        "column": "social",
+        "form": "reverse",
+        "text": "我们团队很少花精力经营跨部门关系或外部人脉。",
+        "score_rule": "reverse"
+      },
+      {
+        "id": "TS1-15",
+        "column": "social",
+        "form": "reverse",
+        "text": "即使团队目标和公司期待不清楚，大家也通常不受影响。",
+        "score_rule": "reverse"
+      },
+      {
+        "id": "TS1-16",
+        "column": "social",
+        "form": "reverse",
+        "text": "团队里有人缺少参与感时，通常不会影响整体协作。",
+        "score_rule": "reverse"
+      },
+      {
+        "id": "TS1-17",
+        "column": "social",
+        "form": "scenario",
+        "text": "需要对外展示成果时，我们会自然考虑团队形象、统一说法和外部反馈。",
+        "score_rule": "scenario"
+      },
+      {
+        "id": "TS1-18",
+        "column": "social",
+        "form": "scenario",
+        "text": "团队进入新环境时，我们会先观察关系网络、关键角色和潜规则。",
+        "score_rule": "scenario"
+      },
+      {
+        "id": "TS1-19",
+        "column": "social",
+        "form": "scenario",
+        "text": "如果一个决策会影响团队名声或在公司里的位置，我们会明显更谨慎。",
+        "score_rule": "scenario"
+      },
+      {
+        "id": "TS1-20",
+        "column": "social",
+        "form": "scenario",
+        "text": "当团队成员分散各做各的时，我们会需要某种共同目标把大家重新拉回一起。",
+        "score_rule": "scenario"
+      },
+      {
+        "id": "TS2-01",
+        "column": "one_to_one",
+        "form": "direct",
+        "text": "我们团队的关键推进，常常依赖少数几组深度连接或核心搭档。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS2-02",
+        "column": "one_to_one",
+        "form": "direct",
+        "text": "团队里重要人物之间的信任、火花或默契，会明显影响整体效率。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS2-03",
+        "column": "one_to_one",
+        "form": "direct",
+        "text": "团队里的人更愿意深度绑定关键客户、重要伙伴或核心成员，而不是只保持普通合作。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS2-04",
+        "column": "one_to_one",
+        "form": "direct",
+        "text": "团队成员在意谁真正理解自己、支持自己，或能和自己形成强配合。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS2-05",
+        "column": "one_to_one",
+        "form": "direct",
+        "text": "当出现一个很有吸引力的目标、人物或机会时，团队会迅速被点燃。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS2-06",
+        "column": "one_to_one",
+        "form": "direct",
+        "text": "团队内部的亲疏远近、信任裂痕或关键矛盾，常会比流程问题更影响大家。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS2-07",
+        "column": "one_to_one",
+        "form": "direct",
+        "text": "我们团队适合用深谈、共创、挑战或强目标来激发投入。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS2-08",
+        "column": "one_to_one",
+        "form": "direct",
+        "text": "当重要的人或项目出现时，团队会比平时更快投入进去。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS2-09",
+        "column": "one_to_one",
+        "form": "direct",
+        "text": "成员之间是否有真实连接，会影响大家是否愿意拿出更深的投入。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS2-10",
+        "column": "one_to_one",
+        "form": "direct",
+        "text": "我们团队对“关键人是否站在一起”很敏感。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS2-11",
+        "column": "one_to_one",
+        "form": "reverse",
+        "text": "我们团队协作主要靠制度流程，不太受关键关系或核心搭档影响。",
+        "score_rule": "reverse"
+      },
+      {
+        "id": "TS2-12",
+        "column": "one_to_one",
+        "form": "reverse",
+        "text": "团队成员之间是否有深度信任，对整体投入影响不大。",
+        "score_rule": "reverse"
+      },
+      {
+        "id": "TS2-13",
+        "column": "one_to_one",
+        "form": "reverse",
+        "text": "我们团队很少因为某个关键人物、强目标或特别机会而迅速兴奋起来。",
+        "score_rule": "reverse"
+      },
+      {
+        "id": "TS2-14",
+        "column": "one_to_one",
+        "form": "reverse",
+        "text": "团队里的亲疏、火花或默契，通常不会影响工作推进。",
+        "score_rule": "reverse"
+      },
+      {
+        "id": "TS2-15",
+        "column": "one_to_one",
+        "form": "reverse",
+        "text": "大家更习惯保持礼貌距离，不太需要深度连接或强配合。",
+        "score_rule": "reverse"
+      },
+      {
+        "id": "TS2-16",
+        "column": "one_to_one",
+        "form": "reverse",
+        "text": "即使核心搭档之间出现误会，团队整体也通常不受影响。",
+        "score_rule": "reverse"
+      },
+      {
+        "id": "TS2-17",
+        "column": "one_to_one",
+        "form": "scenario",
+        "text": "当某个重要客户、重要伙伴或重要项目出现时，团队会比平时更快投入进去。",
+        "score_rule": "scenario"
+      },
+      {
+        "id": "TS2-18",
+        "column": "one_to_one",
+        "form": "scenario",
+        "text": "如果团队里两个关键人关系紧张，其他成员也会感受到气氛变化。",
+        "score_rule": "scenario"
+      },
+      {
+        "id": "TS2-19",
+        "column": "one_to_one",
+        "form": "scenario",
+        "text": "相比常规例会，我们团队更容易在深度共创或一对一对齐后真正动起来。",
+        "score_rule": "scenario"
+      },
+      {
+        "id": "TS2-20",
+        "column": "one_to_one",
+        "form": "scenario",
+        "text": "团队遇到低迷时，一个强目标或关键人物的召唤常能重新点燃大家。",
+        "score_rule": "scenario"
+      },
+      {
+        "id": "TS3-01",
+        "column": "self_preservation",
+        "form": "direct",
+        "text": "我们团队做事前会先确认资源是否够用，包括时间、预算、精力和人手。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS3-02",
+        "column": "self_preservation",
+        "form": "direct",
+        "text": "团队成员普遍在意节奏是否可持续，而不是只看短期冲刺。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS3-03",
+        "column": "self_preservation",
+        "form": "direct",
+        "text": "当边界、职责或流程不清楚时，团队会明显感到消耗。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS3-04",
+        "column": "self_preservation",
+        "form": "direct",
+        "text": "资源不够、流程不清或风险太高时，团队会明显变谨慎。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS3-05",
+        "column": "self_preservation",
+        "form": "direct",
+        "text": "如果大家连续处在高压或被打断的状态，团队效率会明显下降。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS3-06",
+        "column": "self_preservation",
+        "form": "direct",
+        "text": "我们团队需要稳定的基础，例如固定节奏、清楚安排和可靠支持。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS3-07",
+        "column": "self_preservation",
+        "form": "direct",
+        "text": "成员会在意自己的时间、精力和个人边界是否被尊重。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS3-08",
+        "column": "self_preservation",
+        "form": "direct",
+        "text": "面对新机会时，我们会先评估它会不会打乱现有资源和运转秩序。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS3-09",
+        "column": "self_preservation",
+        "form": "direct",
+        "text": "团队里常有人提醒大家留出余量，不要把资源压到太满。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS3-10",
+        "column": "self_preservation",
+        "form": "direct",
+        "text": "我们更愿意把事情做稳、做可持续，而不是只追求一时兴奋。",
+        "score_rule": "direct"
+      },
+      {
+        "id": "TS3-11",
+        "column": "self_preservation",
+        "form": "reverse",
+        "text": "我们团队通常不太关注资源余量，先冲起来再说。",
+        "score_rule": "reverse"
+      },
+      {
+        "id": "TS3-12",
+        "column": "self_preservation",
+        "form": "reverse",
+        "text": "职责、边界或流程不清楚时，大家也很少感到消耗。",
+        "score_rule": "reverse"
+      },
+      {
+        "id": "TS3-13",
+        "column": "self_preservation",
+        "form": "reverse",
+        "text": "团队成员通常不太在意作息、节奏或精力是否被持续透支。",
+        "score_rule": "reverse"
+      },
+      {
+        "id": "TS3-14",
+        "column": "self_preservation",
+        "form": "reverse",
+        "text": "面对新机会时，我们很少评估成本、风险和后续维护。",
+        "score_rule": "reverse"
+      },
+      {
+        "id": "TS3-15",
+        "column": "self_preservation",
+        "form": "reverse",
+        "text": "团队不太需要稳定安排，也能长期保持高效。",
+        "score_rule": "reverse"
+      },
+      {
+        "id": "TS3-16",
+        "column": "self_preservation",
+        "form": "reverse",
+        "text": "个人边界和时间被频繁打断时，通常不会影响团队状态。",
+        "score_rule": "reverse"
+      },
+      {
+        "id": "TS3-17",
+        "column": "self_preservation",
+        "form": "scenario",
+        "text": "接到新任务时，团队会先评估资源、时间、风险和执行条件。",
+        "score_rule": "scenario"
+      },
+      {
+        "id": "TS3-18",
+        "column": "self_preservation",
+        "form": "scenario",
+        "text": "如果计划频繁变化，我们团队会需要重新确认边界、优先级和基本安排。",
+        "score_rule": "scenario"
+      },
+      {
+        "id": "TS3-19",
+        "column": "self_preservation",
+        "form": "scenario",
+        "text": "团队要接受一个新任务前，我们会很在意它会占用多少真实精力。",
+        "score_rule": "scenario"
+      },
+      {
+        "id": "TS3-20",
+        "column": "self_preservation",
+        "form": "scenario",
+        "text": "当团队疲惫时，比起继续加目标，我们更需要恢复秩序，把基础稳住。",
+        "score_rule": "scenario"
+      }
+    ]
+  }
+}

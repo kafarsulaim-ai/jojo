@@ -1,0 +1,13 @@
+{
+  "name": "enneagram-map-h5",
+  "version": "0.1.0",
+  "private": true,
+  "description": "九型人格地图 H5 MVP",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
+

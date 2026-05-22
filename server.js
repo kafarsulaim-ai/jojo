@@ -227,7 +227,8 @@ const ENCOURAGEMENT_LIBRARY = {
     { at: 50, title: "中场补一口能量", body: "松一下肩膀，继续往前一点点。" },
     { at: 60, title: "大脑小剧场已记录", body: "不用解释，先选完再说。" },
     { at: 70, title: "迷茫中前行，也算前行", body: "嘿，已经很稳了。" },
-    { at: 80, title: "最后一小段", body: "别突然变认真，第一反应收尾。" }
+    { at: 80, title: "最后一小段", body: "别突然变认真，第一反应收尾。" },
+    { at: 90, title: "地图生成中", body: "你已经答完啦，jojo马上把结果端上来。" }
   ],
   main180: [
     { at: 10, title: "先拿下一小袋", body: "专业深测不用赶，先把第一反应放上来。" },
@@ -246,22 +247,26 @@ const ENCOURAGEMENT_LIBRARY = {
     { at: 140, title: "细节正在合拢", body: "同一个你，在不同场景里可能有不同反应。" },
     { at: 150, title: "走完一大半", body: "继续保持第一反应，别把自己答成说明书。" },
     { at: 160, title: "最后两组", body: "把剩下的题当作收尾，不用突然变认真。" },
-    { at: 170, title: "马上生成地图", body: "最后一小段，真实一点就很够了。" }
+    { at: 170, title: "马上生成地图", body: "最后一小段，真实一点就很够了。" },
+    { at: 180, title: "深测完成", body: "这份耐心很能打，jojo正在整理更细的地图。" }
   ],
   subtype_adult: [
     { at: 10, title: "注意力入口已收一段", body: "副型看的是注意力最常先去哪里。" },
-    { at: 20, title: "三种入口正在排序", body: "别急着选形象，选最近半年更常见的反应。" }
+    { at: 20, title: "三种入口正在排序", body: "别急着选形象，选最近半年更常见的反应。" },
+    { at: 30, title: "副型完成", body: "入口排序已收好，马上出图。" }
   ],
   subtype_child: [
     { at: 10, title: "先看孩子的需要", body: "这不是给孩子贴标签，是帮大人多一个理解入口。" },
-    { at: 20, title: "再靠近一点", body: "想一想最近三个月，而不是某一次特别事件。" }
+    { at: 20, title: "再靠近一点", body: "想一想最近三个月，而不是某一次特别事件。" },
+    { at: 30, title: "观察完成", body: "这份答案会变成一张更温和的亲子理解图。" }
   ],
   team_subtype: [
     { at: 10, title: "匿名样本已进入", body: "团队副型只看群体，不追溯个人。" },
     { at: 20, title: "入口开始成形", body: "按真实工作状态选就好。" },
     { at: 30, title: "走完一半", body: "你提供的是团队画像的一块拼图。" },
     { at: 40, title: "继续保持真实", body: "不用替团队答，答你自己最近稳定的状态。" },
-    { at: 50, title: "最后一组", body: "收尾就好，匿名汇总会保护个人明细。" }
+    { at: 50, title: "最后一组", body: "收尾就好，匿名汇总会保护个人明细。" },
+    { at: 60, title: "已匿名计入", body: "团队入口图又清楚了一点，个人明细不会展示。" }
   ]
 };
 
@@ -407,7 +412,7 @@ function makeEncouragements(total, mode = "main90") {
     "这一段是在把模糊的地方慢慢说清楚。"
   ];
   const cards = [];
-  for (let at = 10; at < total; at += 10) {
+  for (let at = 10; at <= total; at += 10) {
     const item = fixed.get(at) || {
       at,
       title: `第 ${at / 10} 组完成`,

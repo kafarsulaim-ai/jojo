@@ -2554,6 +2554,7 @@ select:focus {
 
 .identity-mini-map,
 .identity-subtype-triangle,
+.identity-subtype-chip,
 .identity-subtype-large,
 .identity-main-empty {
   min-width: 0;
@@ -2561,6 +2562,15 @@ select:focus {
   background: rgba(255, 255, 255, 0.56);
   border: 1px solid rgba(20, 33, 38, 0.08);
   border-radius: 8px;
+}
+
+.identity-subtype-chip {
+  display: grid;
+  min-height: 38px;
+  place-items: center;
+  color: rgba(52, 73, 81, 0.7);
+  font-size: 11px;
+  font-weight: 900;
 }
 
 .identity-mini-map .map-svg {
@@ -2646,6 +2656,24 @@ select:focus {
   height: 112px;
 }
 
+.identity-subtype-only {
+  display: grid;
+  place-items: center;
+  min-height: 150px;
+  padding: 6px 0 0;
+}
+
+.identity-subtype-only .poster-pie-wrap {
+  grid-template-columns: minmax(0, 132px) minmax(0, 1fr);
+  width: 100%;
+  gap: 8px;
+}
+
+.identity-subtype-only .poster-pie {
+  width: 132px;
+  height: 132px;
+}
+
 .share-card-stack {
   display: grid;
   align-content: start;
@@ -2712,6 +2740,7 @@ select:focus {
 .usage-guide-list p {
   grid-template-columns: 76px minmax(0, 1fr);
   align-items: center;
+  min-height: 44px;
 }
 
 .usage-guide-list span {
@@ -2721,10 +2750,10 @@ select:focus {
 }
 
 .usage-guide-qr.poster-qr-block {
-  width: min(168px, 66%);
-  min-height: 96px;
-  margin-top: 8px;
-  padding: 8px;
+  width: min(154px, 62%);
+  min-height: 74px;
+  margin-top: 4px;
+  padding: 7px;
 }
 
 .usage-guide-qr .poster-qr-copy {
@@ -2740,11 +2769,11 @@ select:focus {
 }
 
 .usage-guide-qr .poster-qr-empty.compact {
-  min-height: 84px;
+  min-height: 62px;
 }
 
 .usage-guide-qr .poster-qr-empty.compact span {
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .poster-analysis-list {
@@ -5107,7 +5136,7 @@ select:focus {
   .share-card {
     flex: 0 0 min(84vw, 332px);
     scroll-snap-align: center;
-    padding: 16px 15px;
+    padding: 15px 14px;
   }
 
   .result-snapshot {
@@ -5198,13 +5227,13 @@ select:focus {
 
   .share-body {
     min-height: calc(100% - 42px);
-    padding: 18px 0 36px;
-    gap: 9px;
+    padding: 16px 0 34px;
+    gap: 8px;
   }
 
   .share-card-primary .share-body {
-    padding: 14px 0 34px;
-    gap: 8px;
+    padding: 12px 0 32px;
+    gap: 7px;
   }
 
   .share-watermark {
@@ -5214,11 +5243,11 @@ select:focus {
   }
 
   .share-body h3 {
-    font-size: 31px;
+    font-size: 29px;
   }
 
   .share-card-primary .share-body h3 {
-    font-size: 25px;
+    font-size: 24px;
   }
 
   .share-body p {
@@ -5237,8 +5266,24 @@ select:focus {
     gap: 7px;
   }
 
+  .identity-subtype-only {
+    min-height: 138px;
+    padding-top: 2px;
+  }
+
+  .identity-subtype-only .poster-pie-wrap {
+    grid-template-columns: 126px minmax(0, 1fr);
+    gap: 7px;
+  }
+
+  .identity-subtype-only .poster-pie {
+    width: 126px;
+    height: 126px;
+  }
+
   .identity-mini-map,
   .identity-subtype-triangle,
+  .identity-subtype-chip,
   .identity-main-empty {
     padding: 5px;
   }
@@ -5250,15 +5295,16 @@ select:focus {
 
   .usage-guide-list p {
     grid-template-columns: 68px minmax(0, 1fr);
-    padding: 10px;
+    min-height: 40px;
+    padding: 8px 9px;
   }
 
   .usage-guide-list span {
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .friend-translation-list p {
-    padding: 10px;
+    padding: 9px 10px;
   }
 
   .result-utility-nav {
@@ -5275,11 +5321,12 @@ select:focus {
 
   .share-card-stack {
     min-height: calc(100% - 42px);
-    padding-top: 16px;
+    gap: 8px;
+    padding-top: 14px;
   }
 
   .share-card-stack h3 {
-    font-size: 26px;
+    font-size: 25px;
   }
 
   .poster-evidence .evidence-row,
@@ -5319,14 +5366,14 @@ select:focus {
   }
 
   .poster-pie-wrap {
-    grid-template-columns: 1fr;
-    place-items: center;
-    gap: 6px;
+    grid-template-columns: 116px minmax(0, 1fr);
+    place-items: center stretch;
+    gap: 7px;
   }
 
   .poster-pie {
-    width: 118px;
-    height: 118px;
+    width: 116px;
+    height: 116px;
   }
 
   .poster-pie-legend {
@@ -5335,7 +5382,7 @@ select:focus {
   }
 
   .poster-pie-legend span {
-    font-size: 10px;
+    font-size: 9.5px;
   }
 
   .poster-analysis-list p {
@@ -5345,7 +5392,7 @@ select:focus {
 
   .share-chips {
     gap: 6px;
-    margin-top: 12px;
+    margin-top: 9px;
   }
 
   .share-chips span {
@@ -5364,6 +5411,17 @@ select:focus {
 
   .share-footer {
     align-items: flex-end;
+  }
+
+  .usage-guide-qr.poster-qr-block {
+    width: min(140px, 58%);
+    min-height: 66px;
+    margin-top: 2px;
+    padding: 6px;
+  }
+
+  .usage-guide-qr .poster-qr-empty.compact {
+    min-height: 54px;
   }
 
   .generating-panel {

@@ -498,8 +498,8 @@ async function bootFromRoute() {
   }
   if (parts[0] === "combine") {
     const params = new URLSearchParams(window.location.search);
-    const main = params.get("main") || "";
-    const subtype = params.get("subtype") || "";
+    const main = params.get("main") || parts[1] || "";
+    const subtype = params.get("subtype") || parts[2] || "";
     $("combinedMainInput").value = main.toUpperCase();
     $("combinedSubtypeInput").value = subtype.toUpperCase();
     if (main && subtype) await loadCombinedReport(main, subtype);
@@ -831,7 +831,7 @@ async function openGroupChatModal() {
   const settings = state.siteSettings || {};
   const qr = settings.group_chat_qr_image_url || "";
   $("groupChatTitle").textContent = settings.group_chat_qr_caption || "扫码加入群聊";
-  $("groupChatCaption").textContent = qr ? "长按加入" : "二维码待更新";
+  $("groupChatCaption").textContent = qr ? "长按加入" : "管理员上传后显示";
   $("groupChatQr").innerHTML = qr
     ? `<img src="${escapeHtml(qr)}" alt="微信群聊二维码">`
     : `<span>二维码待更新</span>`;
@@ -1908,7 +1908,7 @@ function showEncouragement(item, onClose) {
   $("modalPercent").textContent = `${percent}%`;
   $("modalMeta").textContent = `${done}/${total} · ${lines[(group - 1) % lines.length]}`;
   $("modalBadge").innerHTML = `<img src="/jojo-icon.svg" alt="">`;
-  $("modalContinue").textContent = "继续轻轻答";
+  $("modalContinue").textContent = done >= total ? "看结果" : "继续轻轻答";
   $("encouragementModal").hidden = false;
   if (state.rewardPlayedAt !== item.at) {
     playCardRewardSound(group);
@@ -2957,6 +2957,7 @@ function renderShareDeck(result, bundle = null) {
   const deck = normalizeResultBundle(result, bundle);
   const main = deck.main;
   const subtype = deck.subtype;
+  const hasSubtype = isPersonalSubtypeResult(subtype);
   const primary = getMainPrimary(main) || 6;
   const cardType = main ? primary : 6;
   const code = result.verification_code || main?.verification_code || subtype?.verification_code || "------";
@@ -2976,11 +2977,11 @@ function renderShareDeck(result, bundle = null) {
   $("sharePrimaryKicker").textContent = "身份卡";
   $("shareTitle").textContent = identity;
   $("shareLine").textContent = main
-    ? "10天内最新主型+副型，截图可直接转发。"
-    : "先看到副型入口，补主型后自动拼身份卡。";
+    ? (hasSubtype ? "主型+副型已拼好，截图可直接转发。" : "主型结果已生成，副型可稍后补测。")
+    : "副型入口已生成，主型可稍后补测。";
   $("shareChips").innerHTML = identityChips(deck, code).map((text) => `<span>${escapeHtml(text)}</span>`).join("");
   $("shareMiniMap").innerHTML = identityVisualHtml(deck);
-  $("shareTopTypes").textContent = main ? `前三 ${topText} · 副型 ${subtypeRank}` : `副型 ${subtypeRank}`;
+  $("shareTopTypes").textContent = main ? `前三 ${topText.replace(/号/g, "")}${hasSubtype ? ` · ${subtypeRank.split(" / ")[0]}` : ""}` : `副型 ${subtypeRank.split(" / ").slice(0, 2).join(" / ")}`;
 
   $("shareEvidenceTitle").textContent = translation.friend;
   $("shareEvidenceKicker").textContent = "朋友翻译卡";
@@ -2993,7 +2994,9 @@ function renderShareDeck(result, bundle = null) {
 
   $("shareNextKicker").textContent = "我的使用说明卡";
   $("shareNextTitle").textContent = "靠近方式";
-  $("shareNextLine").textContent = usage.line;
+  $("shareNextLine").textContent = main
+    ? "三句话给别人读懂你的相处说明。"
+    : usage.line;
   $("shareNextQr").innerHTML = usageGuideHtml(usage, result);
   $("shareNextFoot").textContent = "截图发朋友圈也能读懂";
   $("shareNextCode").textContent = `ref ${code}`;
@@ -3076,23 +3079,22 @@ function identityVisualHtml(bundle) {
   const main = bundle.main;
   const subtype = bundle.subtype;
   if (main) {
+    const subtypeBlock = isPersonalSubtypeResult(subtype)
+      ? `<div class="identity-subtype-triangle">${subtypeTriangleHtml(subtype)}</div>`
+      : `<div class="identity-subtype-chip">副型待补</div>`;
     return `
       <div class="identity-visual-grid">
         <div class="identity-main-bars">${mainResultDistributionHtml(main)}</div>
         <div class="identity-mini-stack">
           <div class="identity-mini-map">${createMapSvg(main.scores || {}, main.top_types || [], 180, true)}</div>
-          <div class="identity-subtype-triangle">${subtypeTriangleHtml(subtype)}</div>
+          ${subtypeBlock}
         </div>
       </div>
     `;
   }
   return `
-    <div class="identity-visual-grid">
-      <div class="identity-main-empty">
-        <span>主型待测</span>
-        <p>补完主型后，这里会出现1-9号分布图。</p>
-      </div>
-      <div class="identity-subtype-large">${subtypePieHtml(subtype?.subtype_ranked || [])}</div>
+    <div class="identity-subtype-only">
+      ${subtypePieHtml(subtype?.subtype_ranked || [])}
     </div>
   `;
 }
@@ -3150,7 +3152,7 @@ function usageGuideHtml(usage, result) {
   const caption = settings.group_chat_qr_caption || "扫码加入群聊";
   const qrHtml = qr
     ? `<img src="${escapeHtml(qr)}" alt="${escapeHtml(caption)}"><p>${escapeHtml(caption)}</p>`
-    : `<div class="poster-qr-empty compact"><span>进群二维码</span><p>管理员后台可配置</p></div>`;
+    : `<div class="poster-qr-empty compact"><span>进群入口</span><p>添加群聊里查看</p></div>`;
   return `
     <div class="usage-guide-list">
       <p><strong>靠近方式</strong><span>${escapeHtml(usage.near)}</span></p>

@@ -5,7 +5,9 @@ const crypto = require("crypto");
 
 const PORT = Number(process.env.PORT || 4173);
 const ADMIN_KEY = process.env.ADMIN_KEY || "";
+const ALLOW_LEGACY_ADMIN_KEY = process.env.ALLOW_LEGACY_ADMIN_KEY === "1";
 const ADMIN_COOKIE = "jojo_admin_session";
+const ADMIN_LOGOUT_COOKIE = "jojo_admin_logged_out";
 const ADMIN_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const ADMIN_BOOTSTRAP_NAME = process.env.ADMIN_BOOTSTRAP_NAME || "管理员";
 const ADMIN_BOOTSTRAP_LOGIN = process.env.ADMIN_BOOTSTRAP_LOGIN || "admin@jojo.cn";
@@ -57,6 +59,7 @@ const DEFAULT_SITE_SETTINGS = {
   group_chat_qr_caption: "扫码加入群聊",
   updated_at: ""
 };
+const MAX_IMAGE_SOURCE_LENGTH = 1_900_000;
 
 const SHARE_NAMES = {
   1: { name: "人间校准仪", line: "不是我想管，是我真的看不得事情歪在那里。" },
@@ -307,7 +310,14 @@ function cleanImageSource(value) {
   if (typeof value !== "string") return "";
   const trimmed = value.trim();
   if (!trimmed) return "";
-  if (trimmed.startsWith("data:image/")) return trimmed.slice(0, 2_000_000);
+  if (trimmed.startsWith("data:image/")) {
+    if (trimmed.length > MAX_IMAGE_SOURCE_LENGTH) {
+      const err = new Error("图片过大，请压缩后再上传");
+      err.status = 413;
+      throw err;
+    }
+    return trimmed;
+  }
   if (trimmed.startsWith("/") && !trimmed.startsWith("//")) return trimmed.slice(0, 500);
   return "";
 }
@@ -572,6 +582,7 @@ function computeResult(payload, req = null) {
       scored_value: scored
     });
   }
+  validateMainSubmission(mode, detailed);
 
   const scores = {};
   for (const element of allElements) {
@@ -664,6 +675,7 @@ function computeSubtypeResult(payload, mode, req = null) {
       raw_answer: raw
     });
   }
+  validateSubtypeSubmission(mode, detailed, bank);
 
   for (const item of Object.values(byColumn)) {
     const min = item.count || 0;
@@ -713,6 +725,36 @@ function computeSubtypeResult(payload, mode, req = null) {
     question_ids: detailed.map((d) => d.question_id),
     team: teamForSubmission(payload, mode)
   };
+}
+
+function validateMainSubmission(mode, detailed) {
+  const required = mode === "main90" ? 90 : 180;
+  validateSubmissionCompleteness(detailed, required, "main");
+  const counts = new Map();
+  for (const item of detailed) {
+    counts.set(item.element, (counts.get(item.element) || 0) + 1);
+  }
+  for (let element = 1; element <= 9; element += 1) {
+    if ((counts.get(element) || 0) < required / 9) {
+      const err = new Error("answers_incomplete");
+      err.status = 400;
+      throw err;
+    }
+  }
+}
+
+function validateSubtypeSubmission(mode, detailed, bank) {
+  const required = mode === "team_subtype" ? 60 : 30;
+  validateSubmissionCompleteness(detailed, required, "subtype");
+}
+
+function validateSubmissionCompleteness(detailed, required, kind) {
+  const unique = new Set(detailed.map((item) => item.question_id));
+  if (detailed.length !== required || unique.size !== required) {
+    const err = new Error(kind === "main" ? "主型题目未完成" : "副型题目未完成");
+    err.status = 400;
+    throw err;
+  }
 }
 
 function cleanText(value, max) {
@@ -1050,35 +1092,42 @@ function teamForSubmission(payload, mode) {
     return null;
   }
   return {
-    id: team.id,
-    code: team.code,
-    name: team.name,
-    test_kind: kind,
-    anonymous: kind === "subtype",
+    ...publicTeam(team),
     joined_at: new Date().toISOString()
   };
 }
 
-function authenticatedUserResults(req, reqUrl) {
-  const hash = hashDeviceToken(reqUrl.searchParams.get("device"));
+function authenticatedUserResults(req, reqUrl, options = {}) {
   const account = findAccountByToken(reqUrl.searchParams.get("account_token"));
   const wechat = findWechatAccountByRequest(req);
-  const deviceResults = hash ? readResults().filter((result) => result.device_hash === hash) : [];
   const accountItems = account ? accountResults(account) : [];
   const wechatItems = wechat ? wechatAccountResults(wechat) : [];
+  const deviceResults = options.includeDevice
+    ? readOwnedDeviceResults(req, reqUrl, account, wechat)
+    : [];
   return {
-    hash,
     account,
     wechat,
+    deviceResults,
     results: uniqueHistoryItems([...accountItems, ...wechatItems, ...deviceResults])
   };
+}
+
+function readOwnedDeviceResults(req, reqUrl, account = null, wechat = null) {
+  const hash = hashDeviceToken(reqUrl.searchParams.get("device"));
+  if (!hash) return [];
+  const candidates = readResults().filter((result) => result.device_hash === hash);
+  return candidates.filter((result) =>
+    (account && result.account?.id === account.id) ||
+    (wechat && result.wechat?.id === wechat.id)
+  );
 }
 
 function recentReusableMainResult(req, reqUrl, teamCode) {
   const team = findTeamByCode(teamCode);
   if (!team || normalizeTeamKind(team.test_kind) !== "main" || !isTeamActive(team)) return null;
   const auth = authenticatedUserResults(req, reqUrl);
-  if (!auth.hash && !auth.account && !auth.wechat) return null;
+  if (!auth.account && !auth.wechat) return null;
   const cutoff = Date.now() - TEAM_MAIN_REUSE_WINDOW_MS;
   return auth.results
     .filter((result) => {
@@ -1431,6 +1480,32 @@ function clearAdminCookie(req) {
   return parts.join("; ");
 }
 
+function buildAdminLogoutCookie(req) {
+  const secure = String(req.headers["x-forwarded-proto"] || "").includes("https");
+  const parts = [
+    `${ADMIN_LOGOUT_COOKIE}=1`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+    `Max-Age=${Math.floor(ADMIN_SESSION_TTL_MS / 1000)}`
+  ];
+  if (secure) parts.push("Secure");
+  return parts.join("; ");
+}
+
+function clearAdminLogoutCookie(req) {
+  const secure = String(req.headers["x-forwarded-proto"] || "").includes("https");
+  const parts = [
+    `${ADMIN_LOGOUT_COOKIE}=`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+    "Max-Age=0"
+  ];
+  if (secure) parts.push("Secure");
+  return parts.join("; ");
+}
+
 function cleanAdminText(value, max = 80) {
   return cleanText(value, max).replace(/\s+/g, " ");
 }
@@ -1584,7 +1659,7 @@ function readAdminAccess(req, reqUrl) {
       }
     }
   }
-  if (ADMIN_KEY && reqUrl?.searchParams?.get("key") === ADMIN_KEY) {
+  if (ALLOW_LEGACY_ADMIN_KEY && ADMIN_KEY && reqUrl?.searchParams?.get("key") === ADMIN_KEY && isLocalRequest(req)) {
     return {
       id: "legacy-admin-key",
       login_id: "legacy",
@@ -1594,6 +1669,14 @@ function readAdminAccess(req, reqUrl) {
     };
   }
   return null;
+}
+
+function isLocalRequest(req) {
+  const remote = String(req.socket?.remoteAddress || "");
+  const host = getRequestHost(req).split(":")[0].toLowerCase();
+  const localRemote = ["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(remote);
+  const localHost = host === "localhost" || host === "127.0.0.1";
+  return localRemote && localHost;
 }
 
 function requireAdmin(req, reqUrl, roles = null) {
@@ -1624,7 +1707,7 @@ function createAdminSession(account, req) {
   writeAdminSessions(sessions);
   return {
     token,
-    cookie: buildAdminCookie(token, req)
+    cookie: [buildAdminCookie(token, req), clearAdminLogoutCookie(req)]
   };
 }
 
@@ -1720,10 +1803,18 @@ function revokeAdminSession(req) {
 function publicAdminPermissions(account) {
   return {
     can_manage_teachers: account?.role === "super_admin",
-    can_manage_users: Boolean(account),
+    can_manage_users: account?.role === "super_admin",
     can_create_invites: account?.role === "super_admin",
-    can_view_results: Boolean(account)
+    can_view_results: account?.role === "super_admin",
+    can_diagnose: Boolean(account)
   };
+}
+
+function publicAdminSelfAccount(account) {
+  const item = publicAdminAccount(account);
+  if (!item) return null;
+  if (item.role !== "super_admin") delete item.invite_code;
+  return item;
 }
 
 function publicTeacherActivity(item) {
@@ -1756,7 +1847,7 @@ function buildTeacherDashboard(account) {
     uniquePeople.add([item.verification_code || "", item.user_nickname || "", item.test_time || ""].join("|").toLowerCase());
   }
   return {
-    profile: publicAdminAccount(account),
+    profile: publicAdminSelfAccount(account),
     stats: {
       view_count: views.length,
       diagnosis_count: diagnoses.length,
@@ -1894,6 +1985,11 @@ function registerAdminFromInvite(payload, req) {
     throw err;
   }
   const wechat = req ? findWechatAccountByRequest(req) : null;
+  if (!wechat) {
+    const err = new Error("wechat_not_authorized");
+    err.status = 401;
+    throw err;
+  }
   const wechatId = wechat?.id || "";
   const account = createAdminAccountRecord({
     login_id: loginId,
@@ -2065,6 +2161,22 @@ function publicAdminDashboardActivity(result, action = "view") {
   };
 }
 
+function normalizeMatchText(value) {
+  return String(value || "").trim().toLowerCase().replace(/\s+/g, "");
+}
+
+function resultMatchesDiagnosisNickname(result, nickname) {
+  const input = normalizeMatchText(nickname);
+  if (!input) return false;
+  const candidates = [
+    result.user?.nickname,
+    result.user?.contact,
+    result.wechat?.nickname,
+    result.account?.name
+  ].map(normalizeMatchText).filter(Boolean);
+  return candidates.some((item) => item === input);
+}
+
 function makeAdminUserGroup(identity, account = null) {
   return {
     id: identity.id,
@@ -2182,18 +2294,26 @@ function updateAdminTeacher(id, payload, actor) {
     err.status = 404;
     throw err;
   }
-  if (target.role === "super_admin" && actor.id !== target.id) {
-    const err = new Error("不能修改超级管理员");
-    err.status = 403;
-    throw err;
-  }
   if (payload.role != null) {
     if (actor.role !== "super_admin") {
       const err = new Error("没有权限");
       err.status = 403;
       throw err;
     }
-    target.role = payload.role === "super_admin" ? "super_admin" : "teacher";
+    const nextRole = payload.role === "super_admin" ? "super_admin" : "teacher";
+    if (target.role === "super_admin" && nextRole !== "super_admin") {
+      const remainingAdmins = accounts.filter((item) =>
+        item.id !== target.id &&
+        item.role === "super_admin" &&
+        item.status !== "disabled"
+      ).length;
+      if (remainingAdmins < 1) {
+        const err = new Error("至少保留一个管理员");
+        err.status = 400;
+        throw err;
+      }
+    }
+    target.role = nextRole;
   }
   if (payload.name != null) target.name = cleanAdminText(payload.name, 60) || target.name;
   if (payload.status != null) target.status = payload.status === "disabled" ? "disabled" : "active";
@@ -2564,7 +2684,7 @@ function globalAuthStatus(req, reqUrl) {
   };
   const staffAccount = readAdminAccess(req, reqUrl);
   const staff = staffAccount ? {
-    account: publicAdminAccount(staffAccount),
+    account: publicAdminSelfAccount(staffAccount),
     permissions: publicAdminPermissions(staffAccount)
   } : null;
   return {
@@ -3310,13 +3430,7 @@ function teamSummary(code) {
     dominant_elements: hasTeamConclusion ? ranked.slice(0, 3) : [],
     low_elements: hasTeamConclusion ? low : [],
     split_elements: hasTeamConclusion ? split : [],
-    members: results.map((result) => ({
-      code: result.verification_code,
-      nickname: result.user?.nickname || "",
-      created_at: result.created_at,
-      primary: result.share?.primary_type,
-      top_types: result.top_types?.map((item) => item.element) || []
-    }))
+    members: []
   };
 }
 
@@ -3605,10 +3719,26 @@ function combinedReportByCodes(mainCode, subtypeCode) {
     err.status = 400;
     throw err;
   }
+  if (subtype.test_mode === "team_subtype" || subtype.team?.test_kind === "subtype") {
+    const err = new Error("团队副型为匿名汇总，不能生成个人综合报告");
+    err.status = 400;
+    throw err;
+  }
   return {
     main: publicResult(main),
     subtype: publicResult(subtype),
-    report: buildCombinedReport(main, subtype)
+    report: publicReportSummary(buildCombinedReport(main, subtype))
+  };
+}
+
+function publicReportSummary(report) {
+  if (!report) return null;
+  return {
+    version: report.version || "",
+    title: report.title || "",
+    focus: report.focus || "",
+    summary_cards: Array.isArray(report.summary_cards) ? report.summary_cards.slice(0, 3) : [],
+    caution: report.caution || ""
   };
 }
 
@@ -3939,21 +4069,17 @@ const server = http.createServer(async (req, res) => {
       ));
     }
     if (req.method === "GET" && reqUrl.pathname === "/api/me/results") {
-      const hash = hashDeviceToken(reqUrl.searchParams.get("device"));
-      const account = findAccountByToken(reqUrl.searchParams.get("account_token"));
-      const wechat = findWechatAccountByRequest(req);
-      if (!hash && !account && !wechat) return sendJson(res, 400, { error: "missing_identity" });
-      const deviceResults = hash ? readResults().filter((result) => result.device_hash === hash) : [];
-      const accountItems = account ? accountResults(account) : [];
-      const wechatItems = wechat ? wechatAccountResults(wechat) : [];
-      const results = uniqueHistoryItems([...accountItems, ...wechatItems, ...deviceResults])
+      const auth = authenticatedUserResults(req, reqUrl);
+      if (!auth.account && !auth.wechat) return sendJson(res, 401, { error: "missing_identity" });
+      const results = auth.results
         .slice(0, 50)
         .map(publicHistoryItem);
-      return sendJson(res, 200, { account: publicAccount(account), wechat: publicWechatAccount(wechat), results });
+      return sendJson(res, 200, { account: publicAccount(auth.account), wechat: publicWechatAccount(auth.wechat), results });
     }
     if (req.method === "GET" && reqUrl.pathname === "/api/admin/auth/me") {
       let account = readAdminAccess(req, reqUrl);
-      if (!account) {
+      const adminLoggedOut = parseCookies(req)[ADMIN_LOGOUT_COOKIE] === "1";
+      if (!account && !adminLoggedOut) {
         const wechat = findWechatAccountByRequest(req);
         if (wechat) {
           const linked = findAdminAccountByWechatId(wechat.id);
@@ -3965,7 +4091,7 @@ const server = http.createServer(async (req, res) => {
             account = linked;
             const session = createAdminSession(linked, req);
             return sendJson(res, 200, {
-              account: publicAdminAccount(linked),
+              account: publicAdminSelfAccount(linked),
               permissions: publicAdminPermissions(linked)
             }, { "Set-Cookie": session.cookie });
           }
@@ -3973,7 +4099,7 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 401, { error: "unauthorized" });
       }
       return sendJson(res, 200, {
-        account: publicAdminAccount(account),
+        account: publicAdminSelfAccount(account),
         permissions: publicAdminPermissions(account)
       });
     }
@@ -3982,7 +4108,7 @@ const server = http.createServer(async (req, res) => {
       const account = loginAdminAccount(payload);
       const session = createAdminSession(account, req);
       return sendJson(res, 200, {
-        account: publicAdminAccount(account),
+        account: publicAdminSelfAccount(account),
         permissions: publicAdminPermissions(account)
       }, { "Set-Cookie": session.cookie });
     }
@@ -3991,7 +4117,7 @@ const server = http.createServer(async (req, res) => {
       const account = registerAdminFromInvite(payload, req);
       const session = createAdminSession(account, req);
       return sendJson(res, 200, {
-        account: publicAdminAccount(account),
+        account: publicAdminSelfAccount(account),
         permissions: publicAdminPermissions(account)
       }, { "Set-Cookie": session.cookie });
     }
@@ -4000,7 +4126,7 @@ const server = http.createServer(async (req, res) => {
       const account = loginAdminByWechat(req, payload);
       const session = createAdminSession(account, req);
       return sendJson(res, 200, {
-        account: publicAdminAccount(account),
+        account: publicAdminSelfAccount(account),
         permissions: publicAdminPermissions(account)
       }, { "Set-Cookie": session.cookie });
     }
@@ -4015,7 +4141,7 @@ const server = http.createServer(async (req, res) => {
       }
       const updated = bindAdminAccountWechat(account, req);
       return sendJson(res, 200, {
-        account: publicAdminAccount(updated),
+        account: publicAdminSelfAccount(updated),
         permissions: publicAdminPermissions(updated)
       });
     }
@@ -4024,13 +4150,13 @@ const server = http.createServer(async (req, res) => {
       const updated = finishAdminWechatBindFromState(req, payload.bind_state);
       const session = createAdminSession(updated, req);
       return sendJson(res, 200, {
-        account: publicAdminAccount(updated),
+        account: publicAdminSelfAccount(updated),
         permissions: publicAdminPermissions(updated)
       }, { "Set-Cookie": session.cookie });
     }
     if (req.method === "POST" && reqUrl.pathname === "/api/admin/auth/logout") {
       revokeAdminSession(req);
-      return sendJson(res, 200, { ok: true }, { "Set-Cookie": clearAdminCookie(req) });
+      return sendJson(res, 200, { ok: true }, { "Set-Cookie": [clearAdminCookie(req), buildAdminLogoutCookie(req)] });
     }
     if (req.method === "GET" && reqUrl.pathname === "/api/admin/dashboard") {
       const account = requireAdmin(req, reqUrl);
@@ -4057,7 +4183,7 @@ const server = http.createServer(async (req, res) => {
       const account = requireAdmin(req, reqUrl);
       const payload = await readBody(req);
       const updated = updateAdminAccountRecord(account.id, payload);
-      return sendJson(res, 200, { account: publicAdminAccount(updated) });
+      return sendJson(res, 200, { account: publicAdminSelfAccount(updated) });
     }
     if (req.method === "POST" && reqUrl.pathname === "/api/admin/activity/view") {
       const account = requireAdmin(req, reqUrl);
@@ -4082,6 +4208,9 @@ const server = http.createServer(async (req, res) => {
       }
       const result = findResultByCode(code);
       if (!result) return sendJson(res, 404, { error: "result_not_found" });
+      if (account.role !== "super_admin" && !resultMatchesDiagnosisNickname(result, nickname)) {
+        return sendJson(res, 403, { error: "nickname_mismatch" });
+      }
       const record = logTeacherActivity(account, {
         ...publicAdminDashboardActivity(result, "diagnose"),
         action: "diagnose",
@@ -4104,7 +4233,7 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, { invite: publicAdminInvite(invite) });
     }
     if (req.method === "GET" && reqUrl.pathname === "/api/admin/users") {
-      requireAdmin(req, reqUrl);
+      requireAdmin(req, reqUrl, ["super_admin"]);
       const users = listAdminUsers(reqUrl.searchParams.get("keyword") || "");
       return sendJson(res, 200, { users: users.map(({ account, results, search_text, ...item }) => item) });
     }
@@ -4118,14 +4247,14 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, { settings: publicSiteSettings(updateSiteSettings(payload, actor)) });
     }
     if (req.method === "GET" && reqUrl.pathname.startsWith("/api/admin/users/")) {
-      requireAdmin(req, reqUrl);
+      requireAdmin(req, reqUrl, ["super_admin"]);
       const id = reqUrl.pathname.split("/").pop();
       const detail = findAdminUserDetails(id);
       if (!detail) return sendJson(res, 404, { error: "user_not_found" });
       return sendJson(res, 200, detail);
     }
     if (req.method === "GET" && reqUrl.pathname === "/api/admin/results") {
-      if (!checkAdmin(req, reqUrl)) return sendJson(res, 401, { error: "unauthorized" });
+      if (!checkAdmin(req, reqUrl, ["super_admin"])) return sendJson(res, 401, { error: "unauthorized" });
       const results = filterResults(readResults(), reqUrl);
       return sendJson(res, 200, {
         quality: qualitySummary(results),
@@ -4133,7 +4262,7 @@ const server = http.createServer(async (req, res) => {
       });
     }
     if (req.method === "GET" && reqUrl.pathname === "/api/admin/teams") {
-      if (!checkAdmin(req, reqUrl)) return sendJson(res, 401, { error: "unauthorized" });
+      if (!checkAdmin(req, reqUrl, ["super_admin"])) return sendJson(res, 401, { error: "unauthorized" });
       const counts = new Map();
       for (const result of readResults()) {
         if (!result.team?.code) continue;
@@ -4147,11 +4276,11 @@ const server = http.createServer(async (req, res) => {
       });
     }
     if (req.method === "GET" && reqUrl.pathname === "/api/admin/events") {
-      if (!checkAdmin(req, reqUrl)) return sendJson(res, 401, { error: "unauthorized" });
+      if (!checkAdmin(req, reqUrl, ["super_admin"])) return sendJson(res, 401, { error: "unauthorized" });
       return sendJson(res, 200, eventSummary());
     }
     if (req.method === "GET" && reqUrl.pathname === "/api/admin/export.csv") {
-      if (!checkAdmin(req, reqUrl)) return sendJson(res, 401, { error: "unauthorized" });
+      if (!checkAdmin(req, reqUrl, ["super_admin"])) return sendJson(res, 401, { error: "unauthorized" });
       const csv = toCsv(filterResults(readResults(), reqUrl).reverse());
       res.writeHead(200, {
         "Content-Type": "text/csv; charset=utf-8",
@@ -4168,6 +4297,19 @@ const server = http.createServer(async (req, res) => {
 });
 
 function publicResult(result) {
+  if (result?.team?.test_kind === "subtype" || result?.test_mode === "team_subtype") {
+    return publicTeamSubtypeSubmission(result);
+  }
+  const team = result.team ? {
+    name: result.team.name,
+    code: result.team.code,
+    test_kind: result.team.test_kind,
+    anonymous: Boolean(result.team.anonymous),
+    mode_label: result.team.mode_label || "",
+    expires_at: result.team.expires_at || "",
+    active: result.team.active,
+    summary_url: result.team.summary_url || (result.team.code ? `/team/${result.team.code}` : "")
+  } : null;
   return {
     session_id: result.session_id,
     test_mode: result.test_mode || "main90",
@@ -4181,11 +4323,54 @@ function publicResult(result) {
     subtype_ranked: result.subtype_ranked,
     subtype_confidence: result.subtype_confidence,
     quality_flags: result.quality_flags,
-    report: result.report,
+    report: publicReportSummary(result.report),
     share: result.share,
-    account: publicAccount(result.account),
-    wechat: publicWechatAccount(result.wechat),
-    team: result.team,
+    account: null,
+    wechat: null,
+    team,
+    reused_from: result.reused_from || null
+  };
+}
+
+function publicTeamSubtypeSubmission(result) {
+  const team = result.team ? {
+    name: result.team.name,
+    code: result.team.code,
+    test_kind: result.team.test_kind || "subtype",
+    anonymous: true,
+    mode_label: result.team.mode_label || MODE_LABELS.team_subtype,
+    expires_at: result.team.expires_at || "",
+    active: result.team.active,
+    summary_url: result.team.summary_url || (result.team.code ? `/team/${result.team.code}` : "")
+  } : null;
+  return {
+    session_id: result.session_id,
+    test_mode: result.test_mode || "team_subtype",
+    mode_label: result.mode_label || MODE_LABELS.team_subtype,
+    verification_code: result.verification_code,
+    created_at: result.created_at,
+    quality_flags: result.quality_flags || [],
+    report: {
+      version: "1.0",
+      title: "已计入团队副型汇总",
+      focus: "本次为匿名团队副型测试，只进入团队层面的注意力入口统计。",
+      summary_cards: [
+        { label: "提交状态", value: "已匿名计入", text: "页面不展示个人副型排序。" },
+        { label: "团队", value: result.team?.name || "团队", text: "老师端查看团队层面的汇总结果。" },
+        { label: "隐私", value: "匿名汇总", text: "不把个人副型明细作为结果页公开。" }
+      ],
+      caution: "团队副型用于观察群体倾向，不用于评价单个成员。"
+    },
+    share: {
+      primary_type: "team_subtype",
+      title: "已计入团队副型汇总",
+      line: "这一份只进入团队总图，不展示个人排序。",
+      summary: "匿名汇总，保护个人明细。"
+    },
+    account: null,
+    wechat: null,
+    team,
+    anonymous: true,
     reused_from: result.reused_from || null
   };
 }
@@ -4195,5 +4380,5 @@ ensureAdminBootstrapAccount();
 const SUBTYPE_BANKS = JSON.parse(fs.readFileSync(SUBTYPE_FILE, "utf8"));
 server.listen(PORT, () => {
   console.log(`jojo测九型 H5 running at http://localhost:${PORT}`);
-  if (ADMIN_KEY) console.log("Admin API requires ADMIN_KEY.");
+  if (ADMIN_KEY && !ALLOW_LEGACY_ADMIN_KEY) console.log("Legacy ADMIN_KEY is configured but disabled.");
 });

@@ -84,7 +84,7 @@
 
         <nav class="admin-tabs" id="adminTabs" aria-label="后台模块">
           <button class="active" type="button" data-tab="overview">老师数据台</button>
-          <button type="button" data-tab="users">用户列表</button>
+          <button type="button" data-tab="users" id="usersTab">用户列表</button>
           <button type="button" data-tab="teachers" id="teachersTab">老师管理</button>
           <button type="button" data-tab="settings" id="settingsTab">联系方式</button>
         </nav>
@@ -114,6 +114,9 @@
                 <div><span>用户</span><strong>-</strong></div>
                 <div><span>查看</span><strong>-</strong></div>
               </div>
+              <article class="result-detail teacher-diagnosis-detail" id="teacherDiagnosisDetail">
+                <p class="muted">输入用户昵称和测试编号后查看。</p>
+              </article>
             </section>
 
             <details class="admin-fold teacher-profile-fold">
@@ -152,7 +155,7 @@
             </div>
             <div class="admin-quick-actions">
               <button class="ghost-action compact" type="button" data-admin-jump="teachers">老师管理</button>
-              <button class="ghost-action compact" type="button" data-admin-jump="users">用户列表</button>
+              <button class="ghost-action compact" type="button" data-admin-jump="users" data-admin-only="true">用户列表</button>
               <button class="ghost-action compact" type="button" data-admin-jump="settings">联系方式</button>
             </div>
           </section>
@@ -171,7 +174,7 @@
             </div>
           </details>
 
-          <details class="admin-fold">
+          <details class="admin-fold" id="resultsFold">
             <summary>测试记录</summary>
             <form class="admin-controls" id="adminForm" aria-label="查询" autocomplete="off">
               <label>

@@ -1092,11 +1092,50 @@ select:focus {
 }
 
 #autosaveText {
-  display: none;
+  min-height: 18px;
+  margin-left: auto;
+  color: var(--mint-deep);
+  font-size: 12px;
+  font-weight: 820;
+  opacity: 0;
+  transition: opacity 180ms ease, transform 180ms ease;
+  transform: translateY(2px);
+}
+
+#autosaveText.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.save-toast {
+  position: fixed;
+  left: 50%;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 40;
+  max-width: min(92vw, 340px);
+  padding: 10px 14px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(22, 49, 55, 0.12);
+  border-radius: 999px;
+  box-shadow: 0 16px 34px rgba(26, 53, 58, 0.12);
+  font-size: 12px;
+  font-weight: 820;
+  line-height: 1.35;
+  transform: translateX(-50%) translateY(12px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.save-toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 .screen-result {
-  padding: 0 0 56px;
+  min-height: calc(100svh - 52px);
+  padding: clamp(14px, 3.2vw, 28px) 0 clamp(18px, 4vw, 36px);
 }
 
 .screen-team {
@@ -1550,6 +1589,30 @@ select:focus {
   margin-bottom: 12px;
 }
 
+.combined-share-deck {
+  width: 100%;
+  margin-top: 18px;
+}
+
+.combined-compact-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: min(1080px, calc(100% - 24px));
+  margin: 10px auto 0;
+}
+
+.combined-compact-summary span {
+  min-height: 30px;
+  padding: 7px 10px;
+  color: var(--soft-ink);
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 820;
+}
+
 .combined-lines,
 .combined-insights {
   display: grid;
@@ -1868,20 +1931,20 @@ select:focus {
 .result-digest {
   display: grid;
   gap: 12px;
-  width: min(820px, calc(100% - 28px));
-  margin: -10px auto 22px;
+  width: min(780px, calc(100% - 24px));
+  margin: -8px auto 20px;
 }
 
 .result-snapshot {
   display: grid;
-  grid-template-columns: 1.1fr 0.85fr 0.85fr;
+  grid-template-columns: 1.08fr 0.92fr 0.78fr;
   gap: 12px;
 }
 
 .snapshot-card {
   position: relative;
   overflow: hidden;
-  padding: 14px;
+  padding: 13px;
   background: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(23, 36, 42, 0.09);
   border-radius: var(--radius);
@@ -1929,7 +1992,7 @@ select:focus {
 .snapshot-card strong {
   margin-top: 6px;
   color: var(--ink);
-  font-size: clamp(17px, 2vw, 22px);
+  font-size: clamp(16px, 1.8vw, 20px);
   font-weight: 930;
   line-height: 1.18;
 }
@@ -1999,7 +2062,7 @@ select:focus {
 
 .report-summary-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -2038,6 +2101,25 @@ select:focus {
   color: var(--soft-ink);
   font-size: 13px;
   line-height: 1.68;
+}
+
+.report-pulse {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.report-pulse span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 9px;
+  color: var(--soft-ink);
+  background: rgba(255, 250, 243, 0.78);
+  border: 1px solid rgba(var(--type-a-rgb), 0.14);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 820;
 }
 
 .report-block p,
@@ -2311,9 +2393,10 @@ select:focus {
   z-index: 1;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  width: min(1100px, calc(100% - 28px));
-  margin: -14px auto 16px;
+  gap: 12px;
+  width: min(1080px, calc(100% - 24px));
+  margin: 0 auto;
+  padding: 0 0 6px;
   align-items: start;
 }
 
@@ -2322,7 +2405,7 @@ select:focus {
   width: 100%;
   aspect-ratio: 3 / 4;
   margin: 0;
-  padding: clamp(22px, 4vw, 32px);
+  padding: clamp(20px, 3.6vw, 28px);
   overflow: hidden;
   color: var(--ink);
   background:
@@ -2337,11 +2420,11 @@ select:focus {
 
 .share-watermark {
   position: absolute;
-  right: 18px;
-  top: 12px;
+  right: 16px;
+  top: 10px;
   z-index: 0;
   color: rgba(20, 33, 38, 0.07);
-  font-size: clamp(96px, 18vw, 148px);
+  font-size: clamp(82px, 16vw, 132px);
   font-weight: 900;
   line-height: 1;
   transform: none;
@@ -2386,13 +2469,13 @@ select:focus {
   display: grid;
   gap: 18px;
   align-content: space-between;
-  min-height: calc(100% - 62px);
-  padding: clamp(28px, 4vw, 48px) 0 42px;
+  min-height: calc(100% - 58px);
+  padding: clamp(24px, 3.4vw, 40px) 0 38px;
 }
 
 .share-card-primary .share-body {
   gap: 10px;
-  padding: 22px 0 38px;
+  padding: 18px 0 34px;
 }
 
 .share-body h3 {
@@ -2405,7 +2488,7 @@ select:focus {
 }
 
 .share-card-primary .share-body h3 {
-  font-size: clamp(31px, 3.2vw, 44px);
+  font-size: clamp(30px, 3vw, 40px);
 }
 
 .share-body p {
@@ -2421,7 +2504,7 @@ select:focus {
 }
 
 .share-mini-map {
-  width: min(100%, 260px);
+  width: min(100%, 240px);
   justify-self: stretch;
 }
 
@@ -2429,13 +2512,13 @@ select:focus {
   display: grid;
   align-content: start;
   gap: 12px;
-  min-height: calc(100% - 48px);
-  padding-top: clamp(28px, 4vw, 48px);
+  min-height: calc(100% - 42px);
+  padding-top: clamp(22px, 3.2vw, 34px);
 }
 
 .share-card-stack h3 {
   margin: 0;
-  font-size: clamp(30px, 3.8vw, 48px);
+  font-size: clamp(28px, 3.4vw, 42px);
   line-height: 1.04;
 }
 
@@ -2675,9 +2758,9 @@ select:focus {
   display: grid;
   place-items: center;
   gap: 8px;
-  width: min(240px, 78%);
-  margin: 12px auto 0;
-  padding: 14px;
+  width: min(228px, 82%);
+  margin: 10px auto 0;
+  padding: 12px;
   background: rgba(255, 255, 255, 0.64);
   border: 1px solid rgba(20, 33, 38, 0.1);
   border-radius: 8px;
@@ -2778,9 +2861,9 @@ select:focus {
 
 .modal-panel {
   position: relative;
-  width: min(350px, 100%);
+  width: min(330px, 100%);
   overflow: hidden;
-  padding: 24px 22px 22px;
+  padding: 22px 20px 20px;
   text-align: center;
   background:
     radial-gradient(circle at 16% 12%, rgba(53, 199, 208, 0.16), transparent 34%),
@@ -3214,7 +3297,7 @@ select:focus {
 
 .generating-panel {
   width: min(360px, 100%);
-  padding: 26px 22px 22px;
+  padding: 24px 20px 20px;
   text-align: center;
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(255, 248, 232, 0.92));
@@ -3280,7 +3363,7 @@ select:focus {
 .generating-panel h2 {
   margin: 0;
   color: var(--ink);
-  font-size: 22px;
+  font-size: 21px;
   line-height: 1.28;
 }
 
@@ -4319,6 +4402,10 @@ select:focus {
     align-items: start;
   }
 
+  .start-visual {
+    overflow: hidden;
+  }
+
   .screen-start.active {
     align-items: start;
     justify-items: center;
@@ -4335,9 +4422,9 @@ select:focus {
 
   .jojo-signal {
     --signal-y: 0px;
-    right: -22px;
+    right: 4px;
     top: 64px;
-    width: 72px;
+    width: 58px;
     opacity: 0.42;
   }
 
@@ -4759,19 +4846,30 @@ select:focus {
 
   .share-deck {
     display: flex;
-    width: calc(100% - 20px);
-    margin: -8px auto 14px;
-    gap: 10px;
+    width: 100%;
+    margin: 0 auto;
+    gap: 12px;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
-    padding: 0 0 6px;
+    padding: 2px 10px 8px;
     -webkit-overflow-scrolling: touch;
   }
 
+  .combined-share-deck {
+    width: 100%;
+    margin-left: 0;
+    padding-inline: 0 10px;
+  }
+
+  .combined-compact-summary {
+    width: 100%;
+    padding: 0 2px;
+  }
+
   .share-card {
-    flex: 0 0 min(82vw, 330px);
+    flex: 0 0 min(84vw, 332px);
     scroll-snap-align: center;
-    padding: 16px;
+    padding: 16px 15px;
   }
 
   .result-snapshot {
@@ -4862,7 +4960,7 @@ select:focus {
 
   .share-body {
     min-height: calc(100% - 42px);
-    padding: 20px 0 38px;
+    padding: 18px 0 36px;
     gap: 9px;
   }
 
@@ -4894,7 +4992,7 @@ select:focus {
 
   .share-card-stack {
     min-height: calc(100% - 42px);
-    padding-top: 26px;
+    padding-top: 24px;
   }
 
   .share-card-stack h3 {
@@ -5029,7 +5127,8 @@ select:focus {
   .team-summary-shell,
   .combined-shell {
     width: 100%;
-    padding: 24px;
+    padding: 24px 20px;
+    overflow: hidden;
   }
 
   .team-summary-meta span,

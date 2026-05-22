@@ -36,7 +36,8 @@ const state = {
   siteSettings: {},
   groupQrImage: "",
   teacherDashboard: null,
-  teacherAvatarImage: ""
+  teacherAvatarImage: "",
+  viewedCodes: new Set()
 };
 
 const $ = (id) => document.getElementById(id);
@@ -171,6 +172,12 @@ function setAccount(data) {
   $("adminQuickEntry").hidden = true;
   $("teachersTab").hidden = !state.permissions.can_manage_teachers;
   $("settingsTab").hidden = !state.permissions.can_manage_teachers;
+  $("usersTab").hidden = !state.permissions.can_manage_users;
+  $("resultsFold").hidden = !state.permissions.can_view_results;
+  $("exportLink").hidden = !state.permissions.can_view_results;
+  document.querySelectorAll("[data-admin-only='true']").forEach((node) => {
+    node.hidden = !state.permissions.can_manage_users;
+  });
   renderTeacherProfile();
 }
 
@@ -188,14 +195,15 @@ function showDashboard() {
   $("authShell").hidden = true;
   $("dashboardShell").hidden = false;
   if (!state.permissions.can_manage_teachers && ["teachers", "settings"].includes(activeTab())) switchTab("overview");
+  if (!state.permissions.can_manage_users && activeTab() === "users") switchTab("overview");
 }
 
 async function loadDashboardData() {
   await Promise.all([
     loadTeacherDashboard(),
-    loadResults(),
+    state.permissions.can_view_results ? loadResults() : Promise.resolve(resetResultsPanel()),
     state.permissions.can_manage_teachers ? loadTeacherData() : Promise.resolve(),
-    loadUsers(),
+    state.permissions.can_manage_users ? loadUsers() : Promise.resolve(resetUsersPanel()),
     state.permissions.can_manage_teachers ? loadSiteSettings() : Promise.resolve()
   ]);
 }
@@ -334,7 +342,9 @@ function renderTeacherDashboard(data) {
     <div><span>用户</span><strong>${escapeHtml(stats.diagnosed_people_count ?? 0)}</strong></div>
     <div><span>查看</span><strong>${escapeHtml(stats.view_count ?? 0)}</strong></div>
   `;
-  const items = data?.recent_views || data?.recent_diagnoses || [];
+  const views = data?.recent_views || [];
+  const diagnoses = data?.recent_diagnoses || [];
+  const items = views.length ? views : diagnoses;
   if (!items.length) {
     $("teacherRecentTableBody").innerHTML = `<tr><td colspan="4">暂无查看记录</td></tr>`;
     return;
@@ -366,13 +376,15 @@ function onTeacherAvatarFileChange(event) {
     setMessage("teacherProfileMessage", "请选择图片文件");
     return;
   }
-  if (file.size > 1_500_000) {
-    setMessage("teacherProfileMessage", "图片请控制在1.5MB以内");
+  if (file.size > 1_300_000) {
+    setMessage("teacherProfileMessage", "图片请控制在1.3MB以内");
     return;
   }
   const reader = new FileReader();
   reader.onload = () => {
-    state.teacherAvatarImage = String(reader.result || "");
+    const image = String(reader.result || "");
+    if (!imageSourceAllowed(image, "teacherProfileMessage")) return;
+    state.teacherAvatarImage = image;
     renderTeacherProfile();
     setMessage("teacherProfileMessage", "");
   };
@@ -480,7 +492,7 @@ async function submitTeacherDiagnosis(event) {
       state.results = [data.result];
       renderQualitySummary({ total: 1, flagged: data.result.quality_flags?.length ? 1 : 0, modes: [], top_flags: [] });
       renderList();
-      renderDetail(data.result);
+      renderDetail(data.result, "teacherDiagnosisDetail");
     } else {
       await loadResults();
     }
@@ -508,6 +520,7 @@ function activeTab() {
 
 function switchTab(tab) {
   if (["teachers", "settings"].includes(tab) && !state.permissions.can_manage_teachers) tab = "overview";
+  if (tab === "users" && !state.permissions.can_manage_users) tab = "overview";
   document.querySelectorAll(".admin-tabs button[data-tab]").forEach((button) => {
     button.classList.toggle("active", button.dataset.tab === tab);
   });
@@ -517,6 +530,18 @@ function switchTab(tab) {
   if (tab === "teachers" && !state.teachers.length) loadTeacherData();
   if (tab === "users" && !state.users.length) loadUsers();
   if (tab === "settings") loadSiteSettings();
+}
+
+function resetResultsPanel() {
+  $("resultsList").innerHTML = "";
+  $("resultDetail").innerHTML = `<p class="muted">输入用户昵称和测试编号后查看。</p>`;
+  $("teacherDiagnosisDetail").innerHTML = `<p class="muted">输入用户昵称和测试编号后查看。</p>`;
+  renderQualitySummary({ total: 0, flagged: 0, modes: [], top_flags: [] });
+}
+
+function resetUsersPanel() {
+  $("usersList").innerHTML = "";
+  $("userDetail").innerHTML = `<p class="muted">管理员可查看用户列表。</p>`;
 }
 
 async function loadSiteSettings() {
@@ -539,17 +564,31 @@ function onGroupQrFileChange(event) {
     setMessage("siteSettingsMessage", "请选择图片文件");
     return;
   }
-  if (file.size > 1_500_000) {
-    setMessage("siteSettingsMessage", "图片请控制在1.5MB以内");
+  if (file.size > 1_300_000) {
+    setMessage("siteSettingsMessage", "图片请控制在1.3MB以内");
     return;
   }
   const reader = new FileReader();
   reader.onload = () => {
-    state.groupQrImage = String(reader.result || "");
+    const image = String(reader.result || "");
+    if (!imageSourceAllowed(image, "siteSettingsMessage")) return;
+    state.groupQrImage = image;
     renderGroupQrPreview();
     setMessage("siteSettingsMessage", "");
   };
   reader.readAsDataURL(file);
+}
+
+function imageSourceAllowed(image, messageId) {
+  if (!image.startsWith("data:image/")) {
+    setMessage(messageId, "图片读取失败，请换一张");
+    return false;
+  }
+  if (image.length > 1_900_000) {
+    setMessage(messageId, "图片过大，请压缩后再上传");
+    return false;
+  }
+  return true;
 }
 
 function renderGroupQrPreview() {
@@ -580,6 +619,10 @@ async function saveSiteSettings(event) {
 }
 
 async function loadResults() {
+  if (!state.permissions.can_view_results) {
+    resetResultsPanel();
+    return;
+  }
   const requestId = ++state.requestId;
   const code = $("codeSearchInput").value.trim().toUpperCase();
   const mode = $("modeFilterInput").value;
@@ -823,12 +866,22 @@ async function onTeacherAction(event) {
   }
   if (action === "remove") {
     if (!window.confirm(`确定要移除 ${teacher.name} 吗？`)) return;
-    await adminFetch(`/api/admin/teachers/${encodeURIComponent(id)}`, { method: "DELETE" });
-    await loadTeacherData();
+    try {
+      await adminFetch(`/api/admin/teachers/${encodeURIComponent(id)}`, { method: "DELETE" });
+      await loadTeacherData();
+      setMessage("inviteMessage", "已移除");
+    } catch (err) {
+      setMessage("inviteMessage", err.message || "操作失败");
+    }
     return;
   }
-  await adminFetch(`/api/admin/teachers/${encodeURIComponent(id)}`, { method: "PATCH", body });
-  await loadTeacherData();
+  try {
+    await adminFetch(`/api/admin/teachers/${encodeURIComponent(id)}`, { method: "PATCH", body });
+    await loadTeacherData();
+    setMessage("inviteMessage", "已更新");
+  } catch (err) {
+    setMessage("inviteMessage", err.message || "操作失败");
+  }
 }
 
 function onInviteAction(event) {
@@ -844,6 +897,10 @@ function onInviteAction(event) {
 }
 
 async function loadUsers() {
+  if (!state.permissions.can_manage_users) {
+    resetUsersPanel();
+    return;
+  }
   const keyword = $("userKeywordInput").value.trim();
   const params = new URLSearchParams();
   if (keyword) params.set("keyword", keyword);
@@ -883,6 +940,10 @@ function onUserClick(event) {
 }
 
 async function loadUserDetail(id) {
+  if (!state.permissions.can_manage_users) {
+    resetUsersPanel();
+    return;
+  }
   state.selectedUserId = id;
   renderUsers();
   $("userDetail").innerHTML = `<p class="muted">正在加载用户记录...</p>`;
@@ -923,23 +984,23 @@ async function loadUserDetail(id) {
   }
 }
 
-function renderDetail(item) {
+function renderDetail(item, targetId = "resultDetail") {
   if (!item) return;
   state.selectedCode = item.verification_code;
   if (isSubtypeMode(item.test_mode)) {
-    renderSubtypeDetail(item);
+    renderSubtypeDetail(item, targetId);
     return;
   }
   const top = item.top_types || [];
   const flags = item.quality_flags || [];
   const scores = [1,2,3,4,5,6,7,8,9].map((element) => item.scores?.[element] || item.scores?.[String(element)] || { element });
-  $("resultDetail").innerHTML = `
+  $(targetId).innerHTML = `
     <div class="detail-header">
       <div>
         <h2>${escapeHtml(item.verification_code)}</h2>
         <p class="muted">${escapeHtml(formatDate(item.created_at))}</p>
       </div>
-      <button class="ghost-action compact" id="copyJsonButton" type="button">复制JSON</button>
+      <button class="ghost-action compact" type="button" data-copy-json="true">复制JSON</button>
     </div>
     <div class="detail-grid">
       <div class="detail-cell"><span>昵称</span><strong>${escapeHtml(item.user?.nickname || "未填写")}</strong></div>
@@ -987,20 +1048,25 @@ function renderDetail(item) {
       </tbody>
     </table>
   `;
-  $("copyJsonButton").addEventListener("click", () => copyJson(item));
-  renderList();
+  $(targetId).querySelector("[data-copy-json='true']")?.addEventListener("click", (event) => copyJson(item, event.currentTarget));
+  recordResultView(item.verification_code);
+  if (targetId === "resultDetail") renderList();
 }
 
-function renderSubtypeDetail(item) {
+function renderSubtypeDetail(item, targetId = "resultDetail") {
+  if (item?.anonymous || item?.team?.test_kind === "subtype" || item?.test_mode === "team_subtype") {
+    renderAnonymousTeamSubtypeDetail(item, targetId);
+    return;
+  }
   const flags = item.quality_flags || [];
   const ranked = item.subtype_ranked || Object.values(item.subtype_scores || {}).sort((a, b) => b.percent - a.percent);
-  $("resultDetail").innerHTML = `
+  $(targetId).innerHTML = `
     <div class="detail-header">
       <div>
         <h2>${escapeHtml(item.verification_code)}</h2>
         <p class="muted">${escapeHtml(formatDate(item.created_at))}</p>
       </div>
-      <button class="ghost-action compact" id="copyJsonButton" type="button">复制JSON</button>
+      <button class="ghost-action compact" type="button" data-copy-json="true">复制JSON</button>
     </div>
     <div class="detail-grid">
       <div class="detail-cell"><span>昵称</span><strong>${escapeHtml(item.user?.nickname || "未填写")}</strong></div>
@@ -1037,8 +1103,41 @@ function renderSubtypeDetail(item) {
       </tbody>
     </table>
   `;
-  $("copyJsonButton").addEventListener("click", () => copyJson(item));
-  renderList();
+  $(targetId).querySelector("[data-copy-json='true']")?.addEventListener("click", (event) => copyJson(item, event.currentTarget));
+  recordResultView(item.verification_code);
+  if (targetId === "resultDetail") renderList();
+}
+
+function renderAnonymousTeamSubtypeDetail(item, targetId = "resultDetail") {
+  state.selectedCode = item.verification_code;
+  $(targetId).innerHTML = `
+    <div class="detail-header">
+      <div>
+        <h2>${escapeHtml(item.verification_code)}</h2>
+        <p class="muted">${escapeHtml(formatDate(item.created_at))}</p>
+      </div>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-cell"><span>测试模式</span><strong>团队副型</strong></div>
+      <div class="detail-cell"><span>团队</span><strong>${escapeHtml(item.team?.name || "团队")}</strong></div>
+      <div class="detail-cell"><span>隐私</span><strong>匿名汇总</strong></div>
+    </div>
+    <p class="muted">团队副型不展示个人副型排序，只进入团队层面的汇总。</p>
+  `;
+  recordResultView(item.verification_code);
+  if (targetId === "resultDetail") renderList();
+}
+
+function recordResultView(code) {
+  if (!code || !state.account) return;
+  if (state.viewedCodes.has(code)) return;
+  state.viewedCodes.add(code);
+  adminFetch("/api/admin/activity/view", {
+    method: "POST",
+    body: { verification_code: code }
+  })
+    .then(() => loadTeacherDashboard())
+    .catch(() => {});
 }
 
 function primaryLabel(item) {
@@ -1102,11 +1201,12 @@ function modeText(mode) {
   return labels[mode] || mode || "-";
 }
 
-function copyJson(item) {
+function copyJson(item, button) {
   navigator.clipboard?.writeText(JSON.stringify(item, null, 2)).then(() => {
-    $("copyJsonButton").textContent = "已复制";
+    if (!button) return;
+    button.textContent = "已复制";
     window.setTimeout(() => {
-      $("copyJsonButton").textContent = "复制JSON";
+      button.textContent = "复制JSON";
     }, 1200);
   });
 }

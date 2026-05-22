@@ -24,6 +24,7 @@
           <span class="top-progress-track"><span id="topProgressBar"></span></span>
         </div>
       </header>
+      <div class="save-toast" id="saveToast" aria-live="polite" hidden></div>
 
       <main>
         <section class="screen screen-start active" id="startScreen">
@@ -189,22 +190,6 @@
         </section>
 
         <section class="screen screen-result" id="resultScreen">
-          <div class="result-poster">
-            <div class="result-copy">
-              <p class="eyebrow">你的地图</p>
-              <div class="result-title-line">
-                <span class="result-number" id="resultTypeNumber">9</span>
-                <h2 id="resultTitle">地图生成中</h2>
-              </div>
-              <p class="result-line" id="resultLine"></p>
-              <div class="result-hero-meta" id="resultHeroMeta"></div>
-            </div>
-            <div class="result-map-wrap">
-              <div class="result-map-halo" aria-hidden="true"></div>
-              <div class="result-map" id="resultMap" aria-label="jojo测九型结果图形"></div>
-            </div>
-          </div>
-
           <section class="share-deck" id="shareDeck" aria-label="三张结果分享卡">
             <article class="share-card share-card-primary" id="shareCard" aria-label="结果主卡">
               <div class="share-watermark" id="shareNumber" aria-hidden="true">9</div>
@@ -264,28 +249,6 @@
             </article>
           </section>
 
-          <div class="result-digest">
-            <div class="result-snapshot" id="resultSnapshot"></div>
-            <div id="topTypes" class="top-types"></div>
-            <div id="evidenceBars" class="evidence-bars"></div>
-            <div class="report-panel" id="reportPanel"></div>
-            <div class="calibration-note" id="calibrationNote"></div>
-            <div class="next-step-panel" id="nextStepPanel" hidden>
-              <div>
-                <strong id="nextStepTitle">继续完成副型</strong>
-                <span id="nextStepText">补充30题副型后，将自动生成综合报告。</span>
-              </div>
-              <button class="primary-action compact" id="followupSubtypeButton" type="button">继续测副型</button>
-            </div>
-            <div class="result-actions">
-              <button class="primary-action compact" id="copyCodeButton" type="button">复制编号</button>
-              <button class="ghost-action compact" id="shareSaveButton" type="button">保存三张卡</button>
-              <button class="ghost-action compact" id="restartButton" type="button">重新测试</button>
-              <button class="ghost-action compact" id="combineFromResultButton" type="button" hidden>生成综合报告</button>
-              <a class="ghost-link compact" id="teamSummaryLink" href="#" hidden>查看团队总图</a>
-              <span class="quiet-code" id="verificationCode">------</span>
-            </div>
-          </div>
         </section>
 
         <section class="screen screen-history" id="historyScreen">

@@ -8,7 +8,7 @@
     <link rel="icon" href="/jojo-icon.svg" type="image/svg+xml">
     <link rel="icon" href="/jojo-icon.png" type="image/png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <link rel="stylesheet" href="/styles.css?v=20260521-result-visual-v2">
+    <link rel="stylesheet" href="/styles.css?v=20260523-share-cards-v1">
   </head>
   <body>
     <div class="app-shell">
@@ -212,14 +212,14 @@
               </div>
             </article>
 
-            <article class="share-card share-card-evidence" id="shareEvidenceCard" aria-label="简要分析卡">
+            <article class="share-card share-card-evidence" id="shareEvidenceCard" aria-label="朋友翻译卡">
               <div class="share-watermark" id="shareEvidenceWatermark" aria-hidden="true">jo</div>
               <div class="share-top">
                 <span class="share-brand"><img src="/jojo-icon.svg" alt="">jojo测九型</span>
                 <span>02 / 03</span>
               </div>
               <div class="share-core share-card-stack">
-                <p class="share-label" id="shareEvidenceKicker">简要分析</p>
+                <p class="share-label" id="shareEvidenceKicker">朋友翻译卡</p>
                 <h3 id="shareEvidenceTitle">这结果像什么</h3>
                 <p id="shareEvidenceLine"></p>
                 <div class="poster-analysis" id="shareEvidenceVisual"></div>
@@ -230,15 +230,15 @@
               </div>
             </article>
 
-            <article class="share-card share-card-next" id="shareNextCard" aria-label="下一步与进群卡">
+            <article class="share-card share-card-next" id="shareNextCard" aria-label="我的使用说明卡">
               <div class="share-watermark" id="shareNextWatermark" aria-hidden="true">go</div>
               <div class="share-top">
                 <span class="share-brand"><img src="/jojo-icon.svg" alt="">jojo测九型</span>
                 <span>03 / 03</span>
               </div>
               <div class="share-core share-card-stack">
-                <p class="share-label" id="shareNextKicker">下一步</p>
-                <h3 id="shareNextTitle">继续补全地图</h3>
+                <p class="share-label" id="shareNextKicker">我的使用说明卡</p>
+                <h3 id="shareNextTitle">靠近方式</h3>
                 <p id="shareNextLine"></p>
                 <div class="poster-qr-block" id="shareNextQr"></div>
               </div>
@@ -248,6 +248,12 @@
               </div>
             </article>
           </section>
+
+          <nav class="result-utility-nav" aria-label="结果页入口">
+            <button type="button" id="resultTeamButton">团队测试结果查看</button>
+            <button type="button" id="resultHistoryButton">历史记录</button>
+            <button type="button" id="resultGroupChatButton">添加群聊</button>
+          </nav>
 
         </section>
 
@@ -464,6 +470,6 @@
       </div>
     </div>
 
-    <script src="/app.js?v=20260521-result-visual-v2"></script>
+    <script src="/app.js?v=20260523-share-cards-v1"></script>
   </body>
 </html>

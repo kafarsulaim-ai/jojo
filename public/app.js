@@ -2860,6 +2860,9 @@ function renderCombinedReport(data) {
   $("combinedTitle").textContent = report.title || "主型 × 副型";
   $("combinedNote").textContent = "截图三张卡即可转发；更完整的判断交给老师结合访谈校准。";
   $("combinedCodes").textContent = codeText;
+  const combinedFocus = report.focus || "主型看核心动机，副型看这个动机最常进入生活的入口。";
+  const briefFocus = combinedFocus.split("。").filter(Boolean)[0] || "主型看核心动机，副型看注意力入口";
+  const primaryCardTitle = `${primary}号 × ${subtypeTitle}`;
   $("combinedContent").innerHTML = `
     <section class="share-deck combined-share-deck" aria-label="三张综合结果分享卡">
       <article class="share-card share-card-primary" data-type="${escapeHtml(primary)}">
@@ -2871,18 +2874,17 @@ function renderCombinedReport(data) {
         <div class="share-body">
           <div class="share-core">
             <p class="share-label">主副型综合</p>
-            <h3>${escapeHtml(`${primary}号 × ${subtypeTitle}`)}</h3>
-            <p>${escapeHtml(report.focus || "主型看核心动机，副型看这个动机最常进入生活的入口。")}</p>
+            <h3>${escapeHtml(primaryCardTitle)}</h3>
+            <p>${escapeHtml(briefFocus)}。</p>
             <div class="share-chips">
               <span>主调 ${escapeHtml(primary)}号</span>
               <span>${escapeHtml(wing)}</span>
-              <span>副型排序</span>
             </div>
           </div>
           <div class="share-mini-map">${mainResultDistributionHtml(main)}</div>
         </div>
         <div class="share-footer">
-          <span>前三 ${escapeHtml(mainTop)}</span>
+          <span>前三 ${escapeHtml(mainTop.replace(/号/g, ""))}</span>
           <span class="hidden-code">ref ${escapeHtml(codeText)}</span>
         </div>
       </article>

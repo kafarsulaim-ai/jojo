@@ -71,84 +71,6 @@ const SUBTYPE_SHORT_NAMES = {
   self_preservation: "自保"
 };
 
-const MAIN_ANALOGIES = {
-  1: {
-    simple: "你像一个自带校准线的人，哪里不对劲，很难假装没看见。",
-    friend: "朋友可能觉得你靠谱、有原则，也会偶尔紧绷到像在开质检会。",
-    mbti: "气质上有点像高责任感的 J 型人格，常见于 ISTJ / INFJ / ENFJ 的某些表达。",
-    zodiac: "星座语境里会让人想到处女座或摩羯座那种“我来把它弄对”的劲儿。"
-  },
-  2: {
-    simple: "你很容易先看到人，再看到事；别人舒服一点，你也会安心一点。",
-    friend: "朋友可能觉得你暖、会照顾人，但有时会忘了把自己的需求摆上桌。",
-    mbti: "气质上有点像外向情感强的人，常见于 ENFJ / ESFJ，也可能出现在温柔型 INFJ。",
-    zodiac: "星座语境里会让人想到巨蟹座或双鱼座那种“我懂你”的雷达。"
-  },
-  3: {
-    simple: "你像一个会自动推进进度的人，目标一出现，大脑已经开始排任务。",
-    friend: "朋友可能觉得你能打、有效率，也会担心你把自己活成了项目。",
-    mbti: "气质上有点像目标感强的 E/J 型人格，常见于 ENTJ / ENFJ / ESTJ 的某些表达。",
-    zodiac: "星座语境里会让人想到狮子座或摩羯座那种“我要做成”的能量。"
-  },
-  4: {
-    simple: "你不太满足于表面答案，更想知道这件事对我到底意味着什么。",
-    friend: "朋友可能觉得你细腻、有审美、有故事感，也会觉得你很难被敷衍。",
-    mbti: "气质上容易让人联想到高内在感受的 INFP / INFJ，但这只是表达风格类比。",
-    zodiac: "星座语境里会让人想到天蝎座或双鱼座那种“要真实、要深”的味道。"
-  },
-  5: {
-    simple: "你像一个先观察再入场的人，没搞清楚前，不太想随便把自己交出去。",
-    friend: "朋友可能觉得你清醒、懂很多，也会觉得你有时像开启了省电模式。",
-    mbti: "气质上有点像理性观察型人格，常见于 INTP / INTJ / ISTP 的某些表达。",
-    zodiac: "星座语境里会让人想到水瓶座或摩羯座那种“让我先研究一下”的距离感。"
-  },
-  6: {
-    simple: "你很会提前看风险，不是不相信世界，是希望事情真的靠得住。",
-    friend: "朋友可能觉得你谨慎、靠谱、有预案，也会被你的 Plan B 宇宙震到。",
-    mbti: "气质上有点像安全感需求高的 SJ / NJ 型人格，常见于 ISFJ / ISTJ / INFJ。",
-    zodiac: "星座语境里会让人想到巨蟹座或处女座那种“先确认安全”的敏感度。"
-  },
-  7: {
-    simple: "你像一个自带下一站的人，只要还有可能性，生活就不算卡死。",
-    friend: "朋友可能觉得你有趣、会带气氛，也会发现你不太爱被沉重困住。",
-    mbti: "气质上有点像高可能性的 P 型人格，常见于 ENFP / ENTP / ESFP 的某些表达。",
-    zodiac: "星座语境里会让人想到射手座或双子座那种“先去看看”的轻快感。"
-  },
-  8: {
-    simple: "你像一个自带防护罩的人，关键时刻会先站出来，把边界撑住。",
-    friend: "朋友可能觉得你直接、有力量，也会偶尔被你的气场按下静音键。",
-    mbti: "气质上有点像强决断和强边界的 ENTJ / ESTP / ESTJ，但核心不等同于 MBTI。",
-    zodiac: "星座语境里会让人想到白羊座或天蝎座那种“我来扛”的狠劲。"
-  },
-  9: {
-    simple: "你很会感受气氛，哪里太紧，你会本能地想让它先松下来。",
-    friend: "朋友可能觉得你舒服、好相处，但有时也会猜你到底真正想要什么。",
-    mbti: "气质上有点像温和协调型人格，常见于 ISFP / INFP / ISFJ 的某些表达。",
-    zodiac: "星座语境里会让人想到天秤座或双鱼座那种“大家别太僵”的柔软感。"
-  }
-};
-
-const SUBTYPE_ANALOGIES = {
-  social: {
-    simple: "你的注意力很容易进入群体、位置、归属和共同目标。",
-    friend: "朋友可能觉得你很会读场，也能感受到一个圈子里谁在影响局面。",
-    mbti: "气质上有点像外向情感或组织感较强的人，类似 ENFJ / ESFJ 的某些表达。",
-    zodiac: "星座语境里会像天秤座或水瓶座那种“我在关系网络里找位置”的感觉。"
-  },
-  one_to_one: {
-    simple: "你的注意力很容易被强连接、吸引力和重要对象牵动。",
-    friend: "朋友可能觉得你要么不走心，要么一下子走很深。",
-    mbti: "气质上有点像重视深度连接的 INFJ / ENFP / INFP 的某些表达。",
-    zodiac: "星座语境里会像天蝎座那种“要特别、要真实、要有火花”的强度。"
-  },
-  self_preservation: {
-    simple: "你的注意力会先回到身体、节奏、资源、边界和安全基本盘。",
-    friend: "朋友可能觉得你务实、会规划，也不太喜欢生活失控。",
-    mbti: "气质上有点像重视秩序和资源管理的 ISTJ / ISFJ / INTJ 的某些表达。",
-    zodiac: "星座语境里会像金牛座或摩羯座那种“先把日子稳住”的底盘感。"
-  }
-};
-
 const TEN_DAYS_MS = 10 * 24 * 60 * 60 * 1000;
 
 const RESULT_TRANSLATIONS = {
@@ -372,7 +294,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("historyBackButton").addEventListener("click", () => showScreen("start"));
   $("combinedForm").addEventListener("submit", submitCombinedForm);
   $("combinedBackButton").addEventListener("click", openHistory);
-  $("combinedPrintButton").addEventListener("click", () => window.print());
+  $("combinedPrintButton").addEventListener("click", () => saveVisibleShareCards("combined"));
   $("passkeyRegisterButton").addEventListener("click", registerPasskey);
   $("passkeyLoginButton").addEventListener("click", loginPasskey);
   $("wechatLoginButton").addEventListener("click", () => {
@@ -396,6 +318,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("teamStartTestButton").addEventListener("click", startCreatedTeamTest);
   $("teamReuseConfirmButton").addEventListener("click", confirmReuseTeamMain);
   $("teamReuseRetestButton").addEventListener("click", retestTeamMain);
+  $("shareImageCloseButton").addEventListener("click", closeShareImageModal);
   $("soundToggleButton").addEventListener("click", toggleSound);
   byId("copyCodeButton")?.addEventListener("click", copyVerificationCode);
   byId("shareSaveButton")?.addEventListener("click", saveShareCard);
@@ -404,7 +327,6 @@ document.addEventListener("DOMContentLoaded", () => {
   byId("resultTeamButton")?.addEventListener("click", openResultTeamEntry);
   byId("resultHistoryButton")?.addEventListener("click", openHistory);
   byId("resultGroupChatButton")?.addEventListener("click", openGroupChatModal);
-  $("teamPrintButton").addEventListener("click", () => window.print());
   $("methodButton").addEventListener("click", () => showInfo("method"));
   $("calibrationButton").addEventListener("click", () => showInfo("calibration"));
   $("noticeButton").addEventListener("click", () => showInfo("notice"));
@@ -2925,10 +2847,6 @@ function renderCombinedReport(data) {
         </div>
       </article>
     </section>
-    <section class="combined-compact-summary">
-      <span>主型 ${escapeHtml(mainTop)}</span>
-      <span>副型 ${escapeHtml(subtypeRank)}</span>
-    </section>
   `;
 }
 
@@ -2968,6 +2886,7 @@ function renderShareDeck(result, bundle = null) {
     : subtypeTranslation(subtype);
   const usage = main ? translation : subtypeUsage(subtype);
   const identity = identityTitle(deck);
+  const mainOnly = Boolean(main && !hasSubtype);
   const topText = main
     ? (main.top_types || []).slice(0, 3).map((item) => `${item.element}号`).join(" / ")
     : "主型待补";
@@ -2976,31 +2895,27 @@ function renderShareDeck(result, bundle = null) {
   setShareDeckType(cardType);
   $("shareNumber").textContent = main ? `${primary}` : "sx";
   $("hiddenCode").textContent = `ref ${code}`;
-  $("sharePrimaryKicker").textContent = "身份卡";
-  $("shareTitle").textContent = identity;
-  $("shareLine").textContent = main
-    ? (hasSubtype ? "主型+副型已拼好，截图可直接转发。" : "主型结果已生成，副型可稍后补测。")
-    : "副型入口已生成，主型可稍后补测。";
-  $("shareChips").innerHTML = identityChips(deck, code).map((text) => `<span>${escapeHtml(text)}</span>`).join("");
+  $("sharePrimaryKicker").textContent = mainOnly ? "本次主位" : "身份卡";
+  $("shareTitle").textContent = mainOnly ? mainOnlyTitle(main) : identity;
+  $("shareLine").textContent = mainOnly
+    ? "这次先看主型分布；副型可以之后补充，不影响本次主结果。"
+    : (main ? "" : "副型先看排序，主型补齐后更完整。");
+  $("shareChips").innerHTML = identityChips(deck, code, { mainOnly }).filter((text) => !text.startsWith("ref ")).map((text) => `<span>${escapeHtml(text)}</span>`).join("");
   $("shareMiniMap").innerHTML = identityVisualHtml(deck);
   $("shareTopTypes").textContent = main ? `前三 ${topText.replace(/号/g, "")}${hasSubtype ? ` · ${subtypeRank.split(" / ")[0]}` : ""}` : `副型 ${subtypeRank.split(" / ").slice(0, 2).join(" / ")}`;
 
   $("shareEvidenceTitle").textContent = translation.friend;
   $("shareEvidenceKicker").textContent = "朋友翻译卡";
-  $("shareEvidenceLine").textContent = main
-    ? "给朋友、同事、搭子看的低门槛翻译版。"
-    : "先按副型入口翻译，等主型补齐后会更准。";
+  $("shareEvidenceLine").textContent = "";
   $("shareEvidenceVisual").innerHTML = translationCardHtml(translation);
-  $("shareEvidenceFoot").textContent = main ? "朋友视角 / 工作视角 / 压力姿势" : "副型视角，主型待补";
+  $("shareEvidenceFoot").textContent = main ? "朋友 / 工作 / 压力" : "副型视角";
   $("shareEvidenceCode").textContent = `ref ${code}`;
 
-  $("shareNextKicker").textContent = "我的使用说明卡";
-  $("shareNextTitle").textContent = "靠近方式";
-  $("shareNextLine").textContent = main
-    ? "三句话给别人读懂你的相处说明。"
-    : usage.line;
+  $("shareNextKicker").textContent = "使用说明卡";
+  $("shareNextTitle").textContent = "我的使用说明";
+  $("shareNextLine").textContent = "";
   $("shareNextQr").innerHTML = usageGuideHtml(usage, result);
-  $("shareNextFoot").textContent = "截图发朋友圈也能读懂";
+  $("shareNextFoot").textContent = "进群继续看结果";
   $("shareNextCode").textContent = `ref ${code}`;
   renderResultUtilities(result);
 }
@@ -3041,13 +2956,24 @@ function getSubtypeTop(subtype) {
   return isPersonalSubtypeResult(subtype) ? subtype.subtype_ranked?.[0] || null : null;
 }
 
+function mainTypeCode(main) {
+  const primary = getMainPrimary(main);
+  const wing = getWingNumber(main);
+  return primary ? `${primary}${wing ? `w${wing}` : "号"}` : "主型";
+}
+
+function mainOnlyTitle(main) {
+  const primary = getMainPrimary(main);
+  const typeName = primary ? (main?.share?.title || TYPE_NAMES[primary] || `${primary}号`) : "主型结果";
+  return `${mainTypeCode(main)} ${typeName}`;
+}
+
 function identityTitle(bundle) {
   const main = bundle.main;
   const subtype = bundle.subtype;
   const primary = getMainPrimary(main);
-  const wing = getWingNumber(main);
   const typeName = primary ? (main?.share?.title || TYPE_NAMES[primary] || `${primary}号`) : "";
-  const typeCode = primary ? `${primary}${wing ? `w${wing}` : "号"}` : "副型待拼图";
+  const typeCode = primary ? mainTypeCode(main) : "副型待拼图";
   const topSubtype = getSubtypeTop(subtype);
   const subtypeName = topSubtype
     ? `${SUBTYPE_SHORT_NAMES[topSubtype.key] || SUBTYPE_NAMES[topSubtype.key] || topSubtype.label}优先`
@@ -3055,20 +2981,26 @@ function identityTitle(bundle) {
   if (!primary) {
     return `我是 ${subtypeName}的注意力入口`;
   }
-  return `我是 ${typeCode} ${subtypeName}的${typeName}`;
+  return topSubtype ? `我是 ${typeCode} ${subtypeName}的${typeName}` : `我是 ${typeCode} 的${typeName}`;
 }
 
-function identityChips(bundle, code) {
+function identityChips(bundle, code, options = {}) {
   const main = bundle.main;
   const subtype = bundle.subtype;
   const primary = getMainPrimary(main);
-  const wing = getWingNumber(main);
   const topSubtype = getSubtypeTop(subtype);
+  if (options.mainOnly && primary) {
+    return [
+      `主型 ${mainTypeCode(main)}`,
+      "本次主位",
+      `ref ${code}`
+    ];
+  }
   return [
-    primary ? `主型 ${primary}${wing ? `w${wing}` : "号"}` : "主型待测",
-    topSubtype ? `${SUBTYPE_SHORT_NAMES[topSubtype.key] || SUBTYPE_NAMES[topSubtype.key] || topSubtype.label}优先` : "副型待补",
+    primary ? `主型 ${mainTypeCode(main)}` : "主型待测",
+    topSubtype ? `${SUBTYPE_SHORT_NAMES[topSubtype.key] || SUBTYPE_NAMES[topSubtype.key] || topSubtype.label}优先` : "",
     `ref ${code}`
-  ];
+  ].filter(Boolean);
 }
 
 function subtypeRankText(subtype) {
@@ -3081,9 +3013,12 @@ function identityVisualHtml(bundle) {
   const main = bundle.main;
   const subtype = bundle.subtype;
   if (main) {
-    const subtypeBlock = isPersonalSubtypeResult(subtype)
-      ? `<div class="identity-subtype-triangle">${subtypeTriangleHtml(subtype)}</div>`
-      : `<div class="identity-subtype-chip">副型待补</div>`;
+    if (!isPersonalSubtypeResult(subtype)) {
+      return `
+        <div class="identity-main-only-bars">${mainResultDistributionHtml(main)}</div>
+      `;
+    }
+    const subtypeBlock = `<div class="identity-subtype-triangle">${subtypeTriangleHtml(subtype)}</div>`;
     return `
       <div class="identity-visual-grid">
         <div class="identity-main-bars">${mainResultDistributionHtml(main)}</div>
@@ -3141,9 +3076,8 @@ function subtypeTriangleHtml(subtype) {
 function translationCardHtml(item) {
   return `
     <div class="friend-translation-list">
-      <p><strong>朋友视角</strong><span>${escapeHtml(item.friend)}</span></p>
-      <p><strong>工作视角</strong><span>${escapeHtml(item.work)}</span></p>
-      <p><strong>压力姿势</strong><span>${escapeHtml(item.pressure)}</span></p>
+      <p><strong>工作</strong><span>${escapeHtml(item.work)}</span></p>
+      <p><strong>压力</strong><span>${escapeHtml(item.pressure)}</span></p>
     </div>
   `;
 }
@@ -3157,8 +3091,8 @@ function usageGuideHtml(usage, result) {
     : `<div class="poster-qr-empty compact"><span>进群入口</span><p>添加群聊里查看</p></div>`;
   return `
     <div class="usage-guide-list">
-      <p><strong>靠近方式</strong><span>${escapeHtml(usage.near)}</span></p>
-      <p><strong>避雷方式</strong><span>${escapeHtml(usage.avoid)}</span></p>
+      <p><strong>靠近</strong><span>${escapeHtml(usage.near)}</span></p>
+      <p><strong>避雷</strong><span>${escapeHtml(usage.avoid)}</span></p>
       <p><strong>充电口</strong><span>${escapeHtml(usage.charge)}</span></p>
     </div>
     <div class="poster-qr-block usage-guide-qr">${qrHtml}</div>
@@ -3217,11 +3151,10 @@ function renderAnonymousTeamSubtypeShareDeck(result) {
   $("hiddenCode").textContent = `ref ${code}`;
   $("sharePrimaryKicker").textContent = "团队副型";
   $("shareTitle").textContent = "已匿名计入";
-  $("shareLine").textContent = "这份结果只进入团队副型汇总，不展示个人排序。";
+  $("shareLine").textContent = "";
   $("shareChips").innerHTML = [
     `团队 ${teamName}`,
-    "匿名汇总",
-    `ref ${code}`
+    "匿名汇总"
   ].map((text) => `<span>${escapeHtml(text)}</span>`).join("");
   $("shareMiniMap").innerHTML = `
     <div class="poster-qr-empty">
@@ -3233,7 +3166,7 @@ function renderAnonymousTeamSubtypeShareDeck(result) {
 
   $("shareEvidenceTitle").textContent = "为什么匿名";
   $("shareEvidenceKicker").textContent = "简要说明";
-  $("shareEvidenceLine").textContent = "团队副型看的是群体注意力入口，不评价某一个人。";
+  $("shareEvidenceLine").textContent = "";
   $("shareEvidenceVisual").innerHTML = `
     <div class="poster-analysis-list">
       <p><strong>个人</strong>不公开副型排序，减少被贴标签。</p>
@@ -3246,7 +3179,7 @@ function renderAnonymousTeamSubtypeShareDeck(result) {
 
   $("shareNextKicker").textContent = "团队入口";
   $("shareNextTitle").textContent = "查看团队总图";
-  $("shareNextLine").textContent = "进入团队页看汇总，或进群找老师继续解读。";
+  $("shareNextLine").textContent = "";
   $("shareNextQr").innerHTML = getTeamOrGroupQrHtml(result);
   $("shareNextFoot").textContent = "团队页 / 群聊入口";
   $("shareNextCode").textContent = `ref ${code}`;
@@ -3372,36 +3305,6 @@ function subtypePieHtml(items = []) {
   `;
 }
 
-function analogyListHtml(item) {
-  return `
-    <div class="poster-analysis-list">
-      <p><strong>朋友视角</strong>${escapeHtml(item.friend || "")}</p>
-      <p><strong>MBTI感</strong>${escapeHtml(item.mbti || "")}</p>
-      <p><strong>星座感</strong>${escapeHtml(item.zodiac || "")}</p>
-    </div>
-  `;
-}
-
-function subtypeGlyph(key, compact = false) {
-  const labels = {
-    social: ["团体", "位置", "贡献"],
-    one_to_one: ["吸引", "深度", "火花"],
-    self_preservation: ["资源", "边界", "稳定"]
-  }[key] || ["副型", "倾向", "观察"];
-  const size = compact ? 226 : 360;
-  return `
-    <svg class="subtype-glyph" viewBox="0 0 ${size} ${size}" role="img" aria-label="副型图形">
-      <circle cx="${size/2}" cy="${size/2}" r="${size*0.34}" fill="rgba(255,255,255,.62)" stroke="rgba(20,33,38,.12)"></circle>
-      <path d="M${size/2} ${size*0.18} L${size*0.79} ${size*0.68} L${size*0.21} ${size*0.68} Z" fill="rgba(var(--type-a-rgb),.12)" stroke="var(--type-a)" stroke-width="${compact ? 3 : 4}" stroke-linejoin="round"></path>
-      <circle cx="${size/2}" cy="${size*0.18}" r="${compact ? 8 : 12}" fill="var(--type-a)"></circle>
-      <circle cx="${size*0.79}" cy="${size*0.68}" r="${compact ? 8 : 12}" fill="var(--type-b)"></circle>
-      <circle cx="${size*0.21}" cy="${size*0.68}" r="${compact ? 8 : 12}" fill="var(--type-c)"></circle>
-      <text x="${size/2}" y="${size*0.48}" text-anchor="middle" fill="var(--ink)" font-size="${compact ? 18 : 28}" font-weight="850">${labels[0]}</text>
-      <text x="${size/2}" y="${size*0.58}" text-anchor="middle" fill="rgba(52,73,81,.62)" font-size="${compact ? 11 : 15}" font-weight="760">${labels[1]} / ${labels[2]}</text>
-    </svg>
-  `;
-}
-
 function calibrationCopy(flags) {
   if (!flags || !flags.length) {
     return "答题节奏稳定，结果可参考。";
@@ -3429,303 +3332,235 @@ function copyVerificationCode() {
 }
 
 function saveShareCard() {
-  if (!state.result) return;
-  const button = byId("shareSaveButton");
-  const code = state.result.verification_code || "jojo";
-  const svgs = shareCardSvgs();
-  svgs.forEach((svg, index) => {
-    window.setTimeout(() => {
-      const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `jojo测九型-${code}-${index + 1}.svg`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 800);
-    }, index * 120);
-  });
-  if (button) button.textContent = "已保存三张";
-  trackEvent("share_card_save", {
+  saveVisibleShareCards("result");
+}
+
+async function saveVisibleShareCards(scope = "result") {
+  const root = scope === "combined" ? $("combinedScreen") : $("resultScreen");
+  if (!root) return;
+  const button = scope === "combined" ? byId("combinedPrintButton") : byId("shareSaveButton");
+  const cards = [...root.querySelectorAll(".share-card")].filter((card) => card.offsetParent !== null);
+  if (!cards.length) return;
+  const code = scope === "combined"
+    ? ($("combinedCodes")?.textContent || "jojo").replace(/\s+/g, "-").replace(/[^\w\u4e00-\u9fa5-]+/g, "")
+    : (state.result?.verification_code || "jojo");
+  if (button) button.textContent = "正在生成";
+  const previews = [];
+  try {
+    for (let index = 0; index < cards.length; index += 1) {
+      const previewUrl = await cardToShareImage(cards[index], index, cards.length);
+      previews.push({ url: previewUrl, label: `${index + 1} / ${cards.length}` });
+    }
+    showShareImageModal(previews);
+    if (button) button.textContent = "已生成三张";
+  } catch {
+    if (previews.length) showShareImageModal(previews);
+    if (button) button.textContent = previews.length ? `已生成${previews.length}张` : "生成失败，请截图";
+  }
+  trackEvent(scope === "combined" ? "combined_card_save" : "share_card_save", {
     result_kind: isSubtypeResult(state.result) ? "subtype" : "main",
-    test_mode: state.result?.test_mode || ""
+    test_mode: state.result?.test_mode || "",
+    saved_count: previews.length
   });
   window.setTimeout(() => {
-    if (button) button.textContent = "保存三张卡";
-  }, 1400);
+    if (button) button.textContent = "保存三张图片";
+  }, 1500);
 }
 
-function shareCardSvgs() {
-  return [
-    shareCardSvg("primary"),
-    shareCardSvg("analysis"),
-    shareCardSvg("next")
-  ];
+async function cardToShareImage(card, index, total) {
+  const svg = sharePosterSvgFromCard(card, index, total);
+  const dataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  const image = new Image();
+  image.decoding = "sync";
+  image.src = dataUrl;
+  await new Promise((resolve, reject) => {
+    image.onload = resolve;
+    image.onerror = reject;
+  });
+  const canvas = document.createElement("canvas");
+  canvas.width = 900;
+  canvas.height = 1200;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#fff8ec";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(image, 0, 0);
+  return canvas.toDataURL("image/png", 0.96);
 }
 
-function shareCardSvg(kind = "primary") {
-  const result = state.result || {};
-  const content = shareSvgContent(result, kind);
-  const title = content.title || "jojo测九型";
-  const line = content.line || "这是一张探索地图，不是一个固定标签。";
-  const code = result.verification_code || "------";
-  const watermark = content.watermark || "jojo";
-  const safeLine = wrapSvgText(line, 20).slice(0, 3);
-  const chips = (content.chips || []).slice(0, 3);
-  const bars = content.bars || [];
-  const analysisLines = content.analysis || [];
-  const primaryVisual = kind === "primary" ? svgPrimaryVisual(result) : "";
+function sharePosterSvgFromCard(card, index, total) {
+  const type = Number(card.dataset.type || state.result?.share?.primary_type || getMainPrimary(state.result) || 6);
+  const palette = posterPalette(type);
+  const label = card.querySelector(".share-label")?.textContent.trim() || `0${index + 1} / 0${total}`;
+  const title = card.querySelector("h3")?.textContent.trim() || "jojo测九型";
+  const body = card.querySelector(".share-core > p, .share-body p")?.textContent.trim() || "";
+  const chips = [...card.querySelectorAll(".share-chips span")].map((item) => item.textContent.trim()).filter(Boolean).slice(0, 3);
+  const footer = card.querySelector(".share-footer > span:first-child")?.textContent.trim() || "";
+  const code = card.querySelector(".hidden-code")?.textContent.trim() || "";
+  const rows = posterRowsFromCard(card);
+  const blocks = posterBlocksFromCard(card);
+  const qr = card.querySelector(".poster-qr-block") ? posterQrSvgBlock(footer) : "";
+  const titleLines = svgTextLines(title, index === 0 ? 12 : 11, 3);
+  const bodyLines = svgTextLines(body, 22, 2);
+  const yAfterTitle = 242 + titleLines.length * 70;
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#fff8ec"/>
-      <stop offset="0.46" stop-color="#efffff"/>
-      <stop offset="1" stop-color="#fff0f7"/>
+      <stop offset="0" stop-color="#fff8ef"/>
+      <stop offset="0.48" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="${palette.soft}"/>
     </linearGradient>
-    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#ff7166"/>
-      <stop offset="0.5" stop-color="#ffd45a"/>
-      <stop offset="1" stop-color="#27c7ee"/>
+    <linearGradient id="bar" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f66f7f"/>
+      <stop offset="0.52" stop-color="#e7c463"/>
+      <stop offset="1" stop-color="#21bdb3"/>
     </linearGradient>
     <style>
       text { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; letter-spacing: 0; }
-      .brand { fill: #087f79; font-size: 28px; font-weight: 900; }
-      .meta { fill: #6d8583; font-size: 24px; font-weight: 800; }
-      .title { fill: #13373b; font-size: 74px; font-weight: 950; }
-      .line { fill: #335b5f; font-size: 31px; font-weight: 650; }
-      .chip { fill: #13373b; font-size: 23px; font-weight: 850; }
-      .water { fill: rgba(19,55,59,.08); font-size: 220px; font-weight: 950; }
-      .tiny { fill: rgba(19,55,59,.18); font-size: 18px; font-weight: 760; }
-      .barLabel { fill: #335b5f; font-size: 22px; font-weight: 850; }
-      .barValue { fill: #13373b; font-size: 22px; font-weight: 900; }
-      .legend { fill: #5f746f; font-size: 19px; font-weight: 820; }
+      .brand { fill: #7c938d; font-size: 25px; font-weight: 900; }
+      .page { fill: rgba(20,33,38,.42); font-size: 28px; font-weight: 900; }
+      .kicker { fill: ${palette.main}; font-size: 31px; font-weight: 930; }
+      .title { fill: #153a3e; font-size: ${index === 0 ? 58 : 52}px; font-weight: 950; }
+      .body { fill: #38666a; font-size: 28px; font-weight: 720; }
+      .chip { fill: #153a3e; font-size: 23px; font-weight: 880; }
+      .muted { fill: rgba(52,73,81,.56); font-size: 22px; font-weight: 850; }
+      .code { fill: rgba(20,33,38,.16); font-size: 17px; font-weight: 760; }
+      .barlabel { fill: #6c8581; font-size: 21px; font-weight: 900; }
+      .blockLabel { fill: ${palette.main}; font-size: 24px; font-weight: 930; }
+      .blockText { fill: #2f6064; font-size: 25px; font-weight: 760; }
     </style>
   </defs>
-  <rect width="900" height="1200" rx="34" fill="url(#bg)"/>
-  <path d="M640 0H900V330L690 300Z" fill="#16cfc0" opacity=".11"/>
-  <path d="M0 900L390 838L540 1200H0Z" fill="#ff719b" opacity=".10"/>
-  <circle cx="690" cy="420" r="150" fill="none" stroke="url(#accent)" stroke-width="18" opacity=".22"/>
-  <text x="68" y="88" class="brand">jojo测九型</text>
-  <text x="710" y="88" class="meta">${escapeHtml(content.page || "我的地图")}</text>
-  <text x="644" y="244" class="water">${escapeHtml(watermark)}</text>
-  <text x="68" y="190" class="meta">${escapeHtml(content.kicker || "我的结果")}</text>
-  <text x="68" y="292" class="title">${escapeHtml(title)}</text>
-  ${safeLine.map((text, index) => `<text x="68" y="${370 + index * 48}" class="line">${escapeHtml(text)}</text>`).join("")}
-  ${chips.map((chip, index) => {
-    const x = 68 + index * 238;
-    return `<rect x="${x}" y="535" width="214" height="54" rx="27" fill="#ffffff" opacity=".72" stroke="#d8ece8"/>
-  <text x="${x + 24}" y="570" class="chip">${escapeHtml(chip)}</text>`;
+  <rect x="0" y="0" width="900" height="1200" rx="34" fill="url(#bg)"/>
+  <circle cx="88" cy="75" r="18" fill="#fff" stroke="${palette.main}" stroke-width="5"/>
+  <circle cx="88" cy="75" r="5" fill="${palette.main}"/>
+  <text x="124" y="85" class="brand">jojo测九型</text>
+  <text x="760" y="85" class="page">0${index + 1} / 0${total}</text>
+  <text x="615" y="246" fill="rgba(20,33,38,.055)" font-size="190" font-weight="950">${escapeSvg(card.querySelector(".share-watermark")?.textContent.trim() || "")}</text>
+  <text x="64" y="174" class="kicker">${escapeSvg(label)}</text>
+  ${titleLines.map((line, lineIndex) => `<text x="64" y="${258 + lineIndex * 70}" class="title">${escapeSvg(line)}</text>`).join("")}
+  ${bodyLines.map((line, lineIndex) => `<text x="64" y="${yAfterTitle + 20 + lineIndex * 40}" class="body">${escapeSvg(line)}</text>`).join("")}
+  ${chips.map((chip, chipIndex) => {
+    const x = 64 + chipIndex * 172;
+    return `<rect x="${x}" y="${yAfterTitle + 92}" width="148" height="48" rx="24" fill="#fff" stroke="rgba(246,111,127,.28)"/>
+  <text x="${x + 22}" y="${yAfterTitle + 124}" class="chip">${escapeSvg(chip)}</text>`;
   }).join("")}
-  ${primaryVisual}
-  ${kind === "analysis" ? analysisLines.map((item, index) => {
-    const y = 675 + index * 104;
-    const lines = wrapSvgText(item.text, 21).slice(0, 2);
-    return `<text x="86" y="${y}" class="barLabel">${escapeHtml(item.label)}</text>
-  ${lines.map((text, lineIndex) => `<text x="86" y="${y + 40 + lineIndex * 34}" class="line">${escapeHtml(text)}</text>`).join("")}`;
-  }).join("") : ""}
-  ${bars.map((bar, index) => {
-    const y = 680 + index * 66;
-    const width = Math.max(6, Math.min(100, Number(bar.value || 0))) * 5.2;
-    return `<text x="86" y="${y}" class="barLabel">${escapeHtml(bar.label)}</text>
-  <rect x="218" y="${y - 24}" width="540" height="22" rx="11" fill="rgba(19,55,59,.09)"/>
-  <rect x="218" y="${y - 24}" width="${width.toFixed(1)}" height="22" rx="11" fill="url(#accent)"/>
-  <text x="785" y="${y}" class="barValue">${Math.round(Number(bar.value || 0))}%</text>`;
-  }).join("")}
-  ${kind === "next" ? `<rect x="552" y="702" width="218" height="218" rx="36" fill="#fff" opacity=".82" stroke="#d8ece8"/>
-  <text x="594" y="804" class="chip">${escapeHtml(content.qrText || "进群")}</text>
-  <text x="574" y="850" class="tiny">${escapeHtml(content.qrSubtext || "找老师继续看")}</text>` : ""}
-  <text x="68" y="1110" class="meta">${escapeHtml(content.footer || "结果可截图转发")}</text>
-  <text x="690" y="1110" class="tiny">ref ${escapeHtml(code)}</text>
+  ${rows.length ? posterBarsSvg(rows, yAfterTitle + 210) : ""}
+  ${blocks.length ? posterBlocksSvg(blocks, yAfterTitle + 165) : ""}
+  ${qr || ""}
+  <text x="64" y="1110" class="muted">${escapeSvg(footer)}</text>
+  <text x="670" y="1110" class="code">${escapeSvg(code)}</text>
 </svg>`;
 }
 
-function shareSvgContent(result, kind) {
-  if (kind === "analysis") {
-    if (isSubtypeResult(result)) {
-      const ranked = result.subtype_ranked || [];
-      if (isTeamSubtypeResult(result)) {
-        return {
-          page: "02 / 03",
-          kicker: "简要说明",
-          title: "为什么匿名",
-          line: "团队副型看的是群体注意力入口，不评价某一个人。",
-          watermark: "02",
-          chips: ["个人不公开", "团队看汇总", "找老师解读"],
-          analysis: [
-            { label: "个人", text: "不公开副型排序，减少被贴标签。" },
-            { label: "团队", text: "只看整体倾向，适合做协作复盘。" },
-            { label: "老师", text: "结合团队主型和访谈再做解释。" }
-          ],
-          footer: "匿名汇总，不展示个人明细"
-        };
-      }
-      const top = ranked[0];
-      const analogy = SUBTYPE_ANALOGIES[top?.key || "social"] || SUBTYPE_ANALOGIES.social;
-      return {
-        page: "02 / 03",
-        kicker: "简要分析",
-        title: "注意力先去哪",
-        line: analogy.simple,
-        watermark: "02",
-        chips: ranked.slice(0, 2).map((item, index) => `${index + 1}.${SUBTYPE_NAMES[item.key] || item.label}`),
-        analysis: [
-          { label: "朋友视角", text: analogy.friend },
-          { label: "MBTI感", text: analogy.mbti },
-          { label: "星座感", text: analogy.zodiac }
-        ],
-        footer: "类比不是硬对应"
-      };
-    }
-    const primary = result.share?.primary_type || result.top_types?.[0]?.element || 9;
-    const analogy = MAIN_ANALOGIES[primary] || MAIN_ANALOGIES[9];
-    return {
-      page: "02 / 03",
-      kicker: "简要分析",
-      title: "这结果像什么",
-      line: analogy.simple,
-      watermark: "02",
-      chips: [`主型 ${primary}号`, "气质类比", "不硬对应"],
-      analysis: [
-        { label: "朋友视角", text: analogy.friend },
-        { label: "MBTI感", text: analogy.mbti },
-        { label: "星座感", text: analogy.zodiac }
-      ],
-      footer: "类比不是硬对应"
-    };
-  }
-  if (kind === "next") {
-    if (isSubtypeResult(result)) {
-      return {
-        page: "03 / 03",
-        kicker: "下一步",
-        title: result.team ? "匿名已提交" : "可以合图了",
-        line: result.team ? "团队副型只进匿名汇总，不展示个人副型。" : "有主型编号后，可以生成主副型综合结果。",
-        watermark: "go",
-        chips: ["进群", "找老师", `ref ${result.verification_code || "------"}`],
-        footer: result.team ? "团队匿名汇总" : "主副型综合",
-        qrText: "进群",
-        qrSubtext: "继续看"
-      };
-    }
-    return {
-      page: "03 / 03",
-      kicker: "下一步",
-      title: "副型待测",
-      line: "目前只测了主型，所以不猜副型。想看排序，再补一份副型。",
-      watermark: "go",
-      chips: ["副型待测", "进群", `ref ${result.verification_code || "------"}`],
-      footer: "补副型后可合图",
-      qrText: "进群",
-      qrSubtext: "补副型"
-    };
-  }
-  if (isSubtypeResult(result)) {
-    if (isTeamSubtypeResult(result)) {
-      return {
-        page: "01 / 03",
-        kicker: "团队副型",
-        title: "已匿名计入",
-        line: "这份结果只进入团队总图，不展示个人排序。",
-        watermark: "team",
-        chips: ["匿名汇总", result.team?.name || "团队", `ref ${result.verification_code || "------"}`],
-        footer: "团队副型匿名提交"
-      };
-    }
-    const ranked = result.subtype_ranked || [];
-    const top = ranked[0];
-    const second = ranked[1];
-    return {
-      page: "01 / 03",
-      kicker: "我的副型排序",
-      title: result.share?.title || "副型倾向",
-      line: result.share?.line || "副型是一种排序，不硬定一个单标签。",
-      watermark: "jo",
-      chips: [
-        `第一 ${SUBTYPE_NAMES[top?.key] || top?.label || "待确认"}`,
-        `第二 ${SUBTYPE_NAMES[second?.key] || second?.label || "待确认"}`,
-        `ref ${result.verification_code || "------"}`
-      ],
-      footer: "副型排序"
-    };
-  }
-  const primary = result.share?.primary_type || result.top_types?.[0]?.element || "-";
-  const topText = (result.top_types || []).map((item) => `${item.element}号`).join(" / ") || "-";
-  const wing = result.report?.summary_cards?.find((item) => item.label === "侧翼")?.value || "侧翼待复核";
+function posterPalette(type) {
+  const key = Number(type) || 6;
   return {
-    page: "01 / 03",
-    kicker: "我的主型分布",
-    title: result.share?.title || `${primary}号`,
-    line: result.share?.line || "这是一张探索地图，不是一个固定标签。",
-    watermark: String(primary),
-    chips: [`主调 ${primary}号`, wing, `前三 ${topText}`],
-    footer: "主型结果"
-  };
+    1: { main: "#de6c76", soft: "#eafff8" },
+    2: { main: "#d85d91", soft: "#eafffb" },
+    3: { main: "#d58c24", soft: "#ecfffb" },
+    4: { main: "#8b76d9", soft: "#f4fff8" },
+    5: { main: "#2d8aa7", soft: "#fff7ec" },
+    6: { main: "#087f79", soft: "#fff1f6" },
+    7: { main: "#d79b17", soft: "#ecfbff" },
+    8: { main: "#ca5f43", soft: "#effffc" },
+    9: { main: "#61a779", soft: "#fff5f1" }
+  }[key] || { main: "#087f79", soft: "#fff1f6" };
 }
 
-function svgPrimaryVisual(result) {
-  if (isSubtypeResult(result)) {
-    if (isTeamSubtypeResult(result)) {
-      return `<circle cx="450" cy="800" r="136" fill="rgba(255,255,255,.7)" stroke="rgba(19,55,59,.08)" stroke-width="30"/>
-  <text x="450" y="782" text-anchor="middle" font-size="58" font-weight="900" fill="#13373b">匿名</text>
-  <text x="450" y="838" text-anchor="middle" class="chip">已进入团队汇总</text>`;
-    }
-    const ranked = result.subtype_ranked || [];
-    const total = ranked.reduce((sum, item) => sum + Number(item.percent || 0), 0) || 1;
-    const colors = ["#ff7166", "#27c7ee", "#ffc83d"];
-    let offset = 25;
-    const segs = ranked.slice(0, 3).map((item, index) => {
-      const dash = Math.max(0, Number(item.percent || 0) / total * 100);
-      const node = `<circle cx="450" cy="800" r="126" pathLength="100" stroke="${colors[index]}" stroke-width="${index === 0 ? 48 : 34}" stroke-dasharray="${dash} ${100 - dash}" stroke-dashoffset="${-offset}" fill="none"/>`;
-      offset += dash;
-      return node;
-    }).join("");
-    const top = ranked[0];
-    const legend = ranked.slice(0, 3).map((item, index) => {
-      const y = 980 + index * 34;
-      return `<rect x="244" y="${y - 21}" width="20" height="20" rx="6" fill="${colors[index]}"/>
-  <circle cx="292" cy="${y - 11}" r="13" fill="${index === 0 ? "#13373b" : "rgba(19,55,59,.58)"}"/>
-  <text x="288" y="${y - 4}" fill="#fff" font-size="17" font-weight="900">${index + 1}</text>
-  <text x="322" y="${y}" class="chip">${escapeHtml(SUBTYPE_NAMES[item.key] || item.label)} ${Math.round(item.percent || 0)}%</text>`;
-    }).join("");
-    return `<circle cx="450" cy="800" r="126" fill="rgba(255,255,255,.66)" stroke="rgba(19,55,59,.08)" stroke-width="30"/>
-  ${segs}
-  <text x="450" y="790" text-anchor="middle" class="chip">${escapeHtml(SUBTYPE_NAMES[top?.key] || top?.label || "副型")}</text>
-  <text x="450" y="842" text-anchor="middle" class="title" font-size="54">${Math.round(top?.percent || 0)}%</text>
-  ${legend}`;
-  }
-  const scores = result.scores || {};
-  const topSet = new Set((result.top_types || []).map((item) => Number(item.element)));
-  const legend = `<circle cx="92" cy="633" r="7" fill="#f16a78"/><text x="108" y="640" class="legend">否</text>
-  <circle cx="166" cy="633" r="7" fill="#e0be67"/><text x="182" y="640" class="legend">不确定</text>
-  <circle cx="288" cy="633" r="7" fill="#22b9ae"/><text x="304" y="640" class="legend">是</text>
-  <line x1="486" y1="617" x2="486" y2="642" stroke="rgba(19,55,59,.45)" stroke-width="3" stroke-dasharray="6 6"/><text x="504" y="640" class="legend">中线</text>`;
-  const rows = [1,2,3,4,5,6,7,8,9].map((element, index) => {
-    const item = scores[element] || {};
-    const total = Number(item.yes || 0) + Number(item.uncertain || 0) + Number(item.no || 0) || 1;
-    const no = Math.round(Number(item.no || 0) / total * 100);
-    const uncertain = Math.round(Number(item.uncertain || 0) / total * 100);
-    const yes = Math.max(0, 100 - no - uncertain);
-    const y = 690 + index * 42;
-    return `<text x="90" y="${y}" class="barLabel">${element}</text>
-  <rect x="145" y="${y - 23}" width="590" height="24" rx="12" fill="rgba(19,55,59,.08)"/>
-  <rect x="145" y="${y - 23}" width="${(no * 5.9).toFixed(1)}" height="24" rx="12" fill="#f16a78"/>
-  <rect x="${(145 + no * 5.9).toFixed(1)}" y="${y - 23}" width="${(uncertain * 5.9).toFixed(1)}" height="24" fill="#e0be67"/>
-  <rect x="${(145 + (no + uncertain) * 5.9).toFixed(1)}" y="${y - 23}" width="${(yes * 5.9).toFixed(1)}" height="24" rx="12" fill="#22b9ae"/>
-  <line x1="440" y1="${y - 28}" x2="440" y2="${y + 7}" stroke="rgba(19,55,59,.45)" stroke-width="3" stroke-dasharray="7 7"/>
-  ${topSet.has(element) ? `<text x="758" y="${y}" class="barValue">Top</text>` : ""}`;
+function posterRowsFromCard(card) {
+  return [...card.querySelectorAll(".poster-main-row")].map((row) => {
+    const label = row.querySelector("span")?.textContent.trim() || "";
+    const no = parseFloat(row.querySelector(".poster-main-track .no")?.style.width || "0") || 0;
+    const uncertain = parseFloat(row.querySelector(".poster-main-track .uncertain")?.style.width || "0") || 0;
+    const yes = parseFloat(row.querySelector(".poster-main-track .yes")?.style.width || `${Math.max(0, 100 - no - uncertain)}`) || 0;
+    return { label, no, uncertain, yes };
+  }).filter((row) => row.label);
+}
+
+function posterBlocksFromCard(card) {
+  const listItems = [...card.querySelectorAll(".friend-translation-list p, .usage-guide-list p, .poster-analysis-list p")];
+  return listItems.map((item) => ({
+    label: item.querySelector("strong")?.textContent.trim() || "",
+    text: item.querySelector("span")?.textContent.trim() || item.textContent.replace(item.querySelector("strong")?.textContent || "", "").trim()
+  })).filter((item) => item.label || item.text).slice(0, 4);
+}
+
+function posterBarsSvg(rows, startY) {
+  const legendY = startY - 38;
+  return `
+    <circle cx="72" cy="${legendY}" r="8" fill="#f66f7f"/><text x="92" y="${legendY + 8}" class="muted">否</text>
+    <circle cx="152" cy="${legendY}" r="8" fill="#e7c463"/><text x="172" y="${legendY + 8}" class="muted">不确定</text>
+    <circle cx="292" cy="${legendY}" r="8" fill="#21bdb3"/><text x="312" y="${legendY + 8}" class="muted">是</text>
+    <line x1="486" y1="${legendY - 14}" x2="486" y2="${legendY + 18}" stroke="rgba(20,33,38,.42)" stroke-width="3" stroke-dasharray="7 7"/><text x="506" y="${legendY + 8}" class="muted">虚线为中线</text>
+    ${rows.slice(0, 9).map((row, index) => {
+      const y = startY + index * 48;
+      const barX = 116;
+      const barW = 700;
+      const noW = barW * row.no / 100;
+      const uncertainW = barW * row.uncertain / 100;
+      const yesW = Math.max(0, barW - noW - uncertainW);
+      return `<text x="68" y="${y + 20}" class="barlabel">${escapeSvg(row.label)}</text>
+  <rect x="${barX}" y="${y}" width="${barW}" height="24" rx="12" fill="rgba(20,33,38,.08)"/>
+  <rect x="${barX}" y="${y}" width="${noW}" height="24" rx="12" fill="#f66f7f"/>
+  <rect x="${barX + noW}" y="${y}" width="${uncertainW}" height="24" fill="#e7c463"/>
+  <rect x="${barX + noW + uncertainW}" y="${y}" width="${yesW}" height="24" rx="12" fill="#21bdb3"/>
+  <line x1="${barX + barW / 2}" y1="${y - 6}" x2="${barX + barW / 2}" y2="${y + 30}" stroke="rgba(20,33,38,.4)" stroke-width="3" stroke-dasharray="7 7"/>`;
+    }).join("")}
+  `;
+}
+
+function posterBlocksSvg(blocks, startY) {
+  return blocks.map((block, index) => {
+    const y = startY + index * 126;
+    const textLines = svgTextLines(block.text, 21, 2);
+    return `<rect x="64" y="${y}" width="772" height="96" rx="18" fill="rgba(255,255,255,.72)" stroke="rgba(20,33,38,.08)"/>
+  <text x="92" y="${y + 36}" class="blockLabel">${escapeSvg(block.label)}</text>
+  ${textLines.map((line, lineIndex) => `<text x="92" y="${y + 68 + lineIndex * 28}" class="blockText">${escapeSvg(line)}</text>`).join("")}`;
   }).join("");
-  return `${legend}${rows}`;
 }
 
-function wrapSvgText(text, maxChars) {
-  const chars = Array.from(String(text || ""));
+function posterQrSvgBlock(footer) {
+  return `<rect x="292" y="660" width="316" height="316" rx="34" fill="rgba(255,255,255,.78)" stroke="rgba(20,33,38,.1)"/>
+  <rect x="348" y="718" width="204" height="156" rx="28" fill="rgba(255,255,255,.86)" stroke="rgba(20,33,38,.08)"/>
+  <text x="450" y="790" text-anchor="middle" class="chip">进群入口</text>
+  <text x="450" y="835" text-anchor="middle" class="muted">${escapeSvg(footer || "长按保存后继续看")}</text>`;
+}
+
+function svgTextLines(text, maxChars, maxLines = 3) {
+  const chars = Array.from(String(text || "").trim());
+  if (!chars.length) return [];
   const lines = [];
-  for (let i = 0; i < chars.length; i += maxChars) {
+  for (let i = 0; i < chars.length && lines.length < maxLines; i += maxChars) {
     lines.push(chars.slice(i, i + maxChars).join(""));
   }
-  return lines.length ? lines : [""];
+  return lines;
+}
+
+function escapeSvg(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function showShareImageModal(images = []) {
+  const modal = $("shareImageModal");
+  const list = $("shareImageList");
+  if (!modal || !list) return;
+  list.innerHTML = images.map((item, index) => `
+    <figure>
+      <img src="${escapeHtml(item.url)}" alt="结果分享图 ${index + 1}">
+      <figcaption>${escapeHtml(item.label || `${index + 1} / ${images.length}`)}</figcaption>
+    </figure>
+  `).join("");
+  modal.hidden = false;
+  showSaveToast("三张图已生成，可长按保存");
+}
+
+function closeShareImageModal() {
+  $("shareImageModal").hidden = true;
+  $("shareImageList").innerHTML = "";
 }
 
 function renderTeamSummary(summary) {
@@ -3738,7 +3573,6 @@ function renderTeamSummary(summary) {
   $("teamSummaryNote").textContent = summary.sample_note;
   $("teamImageLink").href = `/api/team/${encodeURIComponent(summary.team.code)}/report.svg`;
   $("teamImageLink").hidden = false;
-  $("teamPrintButton").hidden = false;
   $("teamSummaryMeta").innerHTML = `
     <span>成员 ${summary.member_count} 人</span>
     <span>有效至 ${formatDate(summary.team.expires_at)}</span>
@@ -3784,7 +3618,6 @@ function renderSubtypeTeamSummary(summary) {
   $("teamSummaryNote").textContent = `${summary.sample_note} 本页为匿名汇总，仅展示团队层面的注意力入口。`;
   $("teamImageLink").href = `/api/team/${encodeURIComponent(summary.team.code)}/report.svg`;
   $("teamImageLink").hidden = false;
-  $("teamPrintButton").hidden = false;
   $("teamSummaryMeta").innerHTML = `
     <span>匿名样本 ${summary.member_count} 人</span>
     <span>有效至 ${formatDate(summary.team.expires_at)}</span>

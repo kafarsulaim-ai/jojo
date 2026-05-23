@@ -8,7 +8,7 @@
     <link rel="icon" href="/jojo-icon.svg" type="image/svg+xml">
     <link rel="icon" href="/jojo-icon.png" type="image/png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <link rel="stylesheet" href="/styles.css?v=20260523-share-cards-v2">
+    <link rel="stylesheet" href="/styles.css?v=20260523-share-cards-v3">
   </head>
   <body>
     <div class="app-shell">
@@ -249,6 +249,10 @@
             </article>
           </section>
 
+          <div class="result-actions share-export-actions">
+            <button class="primary-action compact" id="shareSaveButton" type="button">保存三张图片</button>
+          </div>
+
           <nav class="result-utility-nav" aria-label="结果页入口">
             <button type="button" id="resultTeamButton">团队测试结果查看</button>
             <button type="button" id="resultHistoryButton">历史记录</button>
@@ -337,7 +341,7 @@
             <p class="start-line" id="combinedNote"></p>
             <div id="combinedContent"></div>
             <div class="result-actions">
-              <button class="primary-action compact" id="combinedPrintButton" type="button">保存PDF</button>
+              <button class="primary-action compact" id="combinedPrintButton" type="button">保存三张图片</button>
               <button class="ghost-action compact" id="combinedBackButton" type="button">返回记录</button>
               <span class="quiet-code" id="combinedCodes"></span>
             </div>
@@ -367,7 +371,6 @@
             <div class="result-actions">
               <a class="primary-action compact" href="/">返回首页</a>
               <a class="ghost-link compact" id="teamImageLink" href="#" target="_blank" rel="noreferrer" hidden>导出图片</a>
-              <button class="ghost-action compact" id="teamPrintButton" type="button" hidden>保存PDF</button>
             </div>
           </div>
         </section>
@@ -412,6 +415,16 @@
           <button class="primary-action compact" id="teamReuseConfirmButton" type="button">直接计入团队</button>
           <button class="ghost-action compact" id="teamReuseRetestButton" type="button">重新测试</button>
         </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="shareImageModal" hidden>
+      <div class="modal-panel share-image-panel" role="dialog" aria-modal="true" aria-labelledby="shareImageTitle">
+        <span class="modal-badge marker-logo" aria-hidden="true"><img src="/jojo-icon.svg" alt=""></span>
+        <span class="modal-kicker">图片已生成</span>
+        <h2 id="shareImageTitle">长按保存三张图</h2>
+        <div class="share-image-list" id="shareImageList"></div>
+        <button class="ghost-action compact" id="shareImageCloseButton" type="button">关闭</button>
       </div>
     </div>
 
@@ -470,6 +483,6 @@
       </div>
     </div>
 
-    <script src="/app.js?v=20260523-share-cards-v2"></script>
+    <script src="/app.js?v=20260523-share-cards-v3"></script>
   </body>
 </html>

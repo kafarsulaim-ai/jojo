@@ -1590,7 +1590,7 @@ select:focus {
 }
 
 .combined-share-deck {
-  width: min(1080px, calc(100vw - 24px));
+  width: min(420px, calc(100vw - 24px));
   margin-top: 18px;
 }
 
@@ -2438,9 +2438,9 @@ select:focus {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  width: min(1080px, calc(100% - 24px));
+  grid-template-columns: 1fr;
+  gap: 14px;
+  width: min(420px, calc(100% - 24px));
   margin: 0 auto;
   padding: 0 0 6px;
   align-items: start;
@@ -2547,8 +2547,8 @@ select:focus {
 
 .share-card-primary .share-body h3 {
   max-width: 100%;
-  font-size: clamp(23px, 2.35vw, 32px);
-  line-height: 1.12;
+  font-size: clamp(27px, 3.15vw, 40px);
+  line-height: 1.08;
 }
 
 .share-body p {
@@ -2558,9 +2558,14 @@ select:focus {
 }
 
 .share-card-primary .share-body p {
-  max-width: 100%;
+  max-width: 92%;
   font-size: 13px;
-  line-height: 1.42;
+  line-height: 1.48;
+}
+
+.share-body p:empty,
+.share-card-stack > p:empty {
+  display: none;
 }
 
 .share-mini-map {
@@ -2577,6 +2582,19 @@ select:focus {
 
 .identity-main-bars .poster-main-bars {
   gap: 3px;
+}
+
+.identity-main-only-bars .poster-main-bars {
+  gap: 5px;
+  max-width: 100%;
+}
+
+.identity-main-only-bars .poster-main-track {
+  height: 10px;
+}
+
+.identity-main-only-bars .poster-main-legend {
+  margin-bottom: 2px;
 }
 
 .identity-main-bars .poster-main-track {
@@ -2615,7 +2633,9 @@ select:focus {
   min-height: 38px;
   place-items: center;
   color: rgba(52, 73, 81, 0.7);
-  font-size: 11px;
+  text-align: center;
+  font-size: 10.5px;
+  line-height: 1.2;
   font-weight: 900;
 }
 
@@ -3121,9 +3141,19 @@ select:focus {
   display: flex;
   justify-content: center;
   gap: 9px;
-  width: min(720px, calc(100% - 24px));
+  width: min(420px, calc(100% - 24px));
   margin: 10px auto 0;
   padding-bottom: 18px;
+}
+
+.share-export-actions {
+  justify-content: center;
+  width: min(420px, calc(100% - 24px));
+  margin: 8px auto 0;
+}
+
+.share-export-actions .primary-action {
+  width: 100%;
 }
 
 .result-utility-nav button {
@@ -3186,6 +3216,54 @@ select:focus {
   border-radius: var(--radius);
   box-shadow: 0 18px 48px rgba(84, 91, 88, 0.16);
   animation: modalPop 180ms ease both;
+}
+
+.share-image-panel {
+  width: min(378px, 100%);
+  max-height: min(86svh, 760px);
+  display: grid;
+  gap: 10px;
+  padding: 18px 16px 16px;
+}
+
+.share-image-panel h2 {
+  margin-bottom: 0;
+  font-size: 22px;
+}
+
+.share-image-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  max-height: min(54svh, 420px);
+  overflow-y: auto;
+  padding: 2px 1px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.share-image-list figure {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+}
+
+.share-image-list img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  background: #fffaf0;
+  border: 1px solid rgba(20, 33, 38, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 10px 22px rgba(26, 53, 58, 0.1);
+  -webkit-touch-callout: default;
+  user-select: auto;
+}
+
+.share-image-list figcaption {
+  color: rgba(52, 73, 81, 0.6);
+  font-size: 10px;
+  font-weight: 850;
 }
 
 .encouragement-panel {
@@ -5158,14 +5236,13 @@ select:focus {
   }
 
   .share-deck {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr;
     width: 100%;
     margin: 0 auto;
-    gap: 12px;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
+    gap: 14px;
+    overflow: visible;
     padding: 2px 10px 8px;
-    -webkit-overflow-scrolling: touch;
   }
 
   .combined-share-deck {
@@ -5198,8 +5275,6 @@ select:focus {
   }
 
   .share-card {
-    flex: 0 0 min(84vw, 332px);
-    scroll-snap-align: center;
     padding: 15px 14px;
   }
 
@@ -5311,7 +5386,7 @@ select:focus {
   }
 
   .share-card-primary .share-body h3 {
-    font-size: 24px;
+    font-size: 29px;
   }
 
   .share-body p {
@@ -5328,6 +5403,10 @@ select:focus {
   .identity-visual-grid {
     grid-template-columns: minmax(0, 1fr) 78px;
     gap: 7px;
+  }
+
+  .identity-main-only-bars .poster-main-track {
+    height: 9px;
   }
 
   .identity-subtype-only {
@@ -5373,14 +5452,15 @@ select:focus {
 
   .result-utility-nav {
     width: calc(100% - 24px);
-    justify-content: flex-start;
-    overflow-x: auto;
+    justify-content: center;
+    overflow: visible;
     padding: 0 2px 18px;
-    -webkit-overflow-scrolling: touch;
   }
 
   .result-utility-nav button {
-    flex: 0 0 auto;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0 9px;
   }
 
   .share-card-stack {

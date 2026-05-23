@@ -64,15 +64,15 @@ const MAX_IMAGE_SOURCE_LENGTH = 1_900_000;
 const TEST_SESSION_TTL_MS = 8 * 24 * 60 * 60 * 1000;
 
 const SHARE_NAMES = {
-  1: { name: "人间校准仪", line: "不是我想管，是我真的看不得事情歪在那里。" },
-  2: { name: "心意接线员", line: "我总能接住别人的需要，也希望自己的心意被好好接住。" },
-  3: { name: "人生项目经理", line: "我不是卷，我只是停下来就会怀疑自己有没有价值。" },
-  4: { name: "情绪收藏家", line: "别人只是经历了一件事，我已经在心里给它配完BGM。" },
-  5: { name: "信息囤积者", line: "我不是冷淡，我只是还没整理好怎么参与这个世界。" },
-  6: { name: "安全预案师", line: "你们看到的是我想太多，我看到的是Plan B还不够多。" },
-  7: { name: "快乐逃生员", line: "只要还有下一个计划，我就还能假装没事。" },
-  8: { name: "人间防护罩", line: "我看起来不好惹，只是因为我不想重要的人再受伤。" },
-  9: { name: "氛围修复师", line: "我不是没想法，我只是太会先让大家舒服。" }
+  1: { name: "标准校准者", line: "对标准、原则和改进空间更敏感，常会主动把事情校准到更可靠。" },
+  2: { name: "关系支持者", line: "容易看见关系里的需要和回应，也常通过支持他人建立连接。" },
+  3: { name: "目标推进者", line: "关注目标、效率和成果反馈，擅长把行动推向可见结果。" },
+  4: { name: "感受辨识者", line: "重视真实感、独特性和情绪细节，容易捕捉深层感受。" },
+  5: { name: "信息分析者", line: "关注信息、边界和理解框架，常会先看清结构再投入。" },
+  6: { name: "风险预案者", line: "关注安全感、可信度和风险预案，常会提前验证和准备。" },
+  7: { name: "可能性探索者", line: "容易看见可能性、选择感和新鲜出口，擅长打开新的方向。" },
+  8: { name: "边界守护者", line: "重视主动权、边界和保护，常在关键时刻直接扛事。" },
+  9: { name: "和谐协调者", line: "关注和谐、稳定和冲突降噪，常能把局面先缓下来。" }
 };
 
 const ELEMENT_SUMMARY = {
@@ -1305,6 +1305,22 @@ function readResults() {
     })
     .filter(Boolean)
     .reverse();
+}
+
+function publicSiteStats() {
+  const results = readResults();
+  const byMode = {};
+  for (const item of results) {
+    const mode = item.test_mode || "main90";
+    byMode[mode] = (byMode[mode] || 0) + 1;
+  }
+  return {
+    total_tests: results.length,
+    main_tests: results.filter((item) => MAIN_MODES.has(item.test_mode || "main90")).length,
+    subtype_tests: results.filter((item) => SUBTYPE_MODES.has(item.test_mode || "")).length,
+    by_mode: byMode,
+    updated_at: new Date().toISOString()
+  };
 }
 
 function cleanEventName(value) {
@@ -3557,7 +3573,7 @@ function teamSubtypeSummary(team) {
 }
 
 function teamSampleNote(count) {
-  if (count <= 2) return "样本量不足，不建议生成团队结论。";
+  if (count <= 2) return `已有 ${count}/3 人，满3人后生成团队总图。`;
   if (count <= 4) return "样本量较小，适合作为初步观察。";
   if (count <= 7) return "可以观察团队倾向，但仍建议结合岗位结构复核。";
   return "样本量可用于生成相对稳定的团队总图。";
@@ -3857,19 +3873,60 @@ function escapeXml(value) {
     .replace(/"/g, "&quot;");
 }
 
+function xmlTextLines(value, maxChars = 20, maxLines = 2) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  if (!text) return [""];
+  const chars = Array.from(text);
+  const lines = [];
+  for (let index = 0; index < chars.length && lines.length < maxLines; index += maxChars) {
+    let line = chars.slice(index, index + maxChars).join("");
+    if (lines.length === maxLines - 1 && index + maxChars < chars.length) line = `${Array.from(line).slice(0, Math.max(1, maxChars - 1)).join("")}…`;
+    lines.push(line);
+  }
+  return lines;
+}
+
+function svgTextBlock(lines, x, y, className, lineHeight = 62) {
+  return lines.map((line, index) => `<text x="${x}" y="${y + index * lineHeight}" class="${className}">${escapeXml(line)}</text>`).join("");
+}
+
+function teamMainInsightText(summary) {
+  const labels = {
+    1: "标准校准",
+    2: "关系支持",
+    3: "目标推进",
+    4: "真实表达",
+    5: "信息理解",
+    6: "风险验证",
+    7: "可能性探索",
+    8: "边界承担",
+    9: "稳定氛围"
+  };
+  const elements = (summary.dominant_elements || []).slice(0, 3).map((item) => Number(item.element)).filter(Boolean);
+  if (!elements.length) return "先把邀请链接发给成员，满3人后自动生成团队总图。";
+  return `复盘提示：这个团队更关注${elements.map((element) => labels[element]).join("、")}，先确认共识、卡点和支持。`;
+}
+
 function teamReportSvg(summary) {
   if (summary.kind === "subtype") return teamSubtypeReportSvg(summary);
   const width = 1080;
   const height = 1420;
   const rows = [1,2,3,4,5,6,7,8,9];
+  const hasConclusion = Number(summary.member_count || 0) >= 3;
+  const titleLines = xmlTextLines(summary.team.name, 17, 2);
+  const headerShift = titleLines.length > 1 ? 58 : 0;
+  const cardY = 285 + headerShift;
+  const sectionY = 420 + headerShift;
+  const rowBaseY = 445 + headerShift;
+  const footerY = 1248 + headerShift;
   const dominant = summary.dominant_elements.map((item) => `${item.element}号`).join(" / ") || "暂无";
   const low = summary.low_elements.map((item) => `${item.element}号`).join(" / ") || "暂无";
   const split = summary.split_elements.length
     ? summary.split_elements.map((item) => `${item.element}号`).join(" / ")
     : "暂无明显高分化";
-  const rowSvg = rows.map((element, index) => {
+  const rowSvg = hasConclusion ? rows.map((element, index) => {
     const item = summary.stats[element] || {};
-    const y = 445 + index * 86;
+    const y = rowBaseY + index * 86;
     const barX = 210;
     const barW = 585;
     const noW = Math.round((item.no_rate || 0) / 100 * barW);
@@ -3888,7 +3945,14 @@ function teamReportSvg(summary) {
         <text x="${strengthX}" y="${y + 39}" class="metric-sub">均${Math.round(item.mean || 0)} / ${escapeXml(item.disagreement || "-")}分化</text>
       </g>
     `;
-  }).join("");
+  }).join("") : `
+    <g>
+      <rect x="78" y="${sectionY + 28}" width="924" height="220" rx="28" class="card"/>
+      <text x="118" y="${sectionY + 102}" class="empty-title">已有 ${summary.member_count} / 3 人</text>
+      <text x="118" y="${sectionY + 154}" class="note">先把邀请链接发给成员，满3人后自动生成团队总图。</text>
+      <text x="118" y="${sectionY + 206}" class="metric-sub">当前不展示证据条，避免把空数据误读成团队结论。</text>
+    </g>
+  `;
   return `<?xml version="1.0" encoding="UTF-8"?>
   <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
     <defs>
@@ -3913,6 +3977,7 @@ function teamReportSvg(summary) {
         .row-label { font-size: 26px; font-weight: 880; }
         .metric { font-size: 22px; font-weight: 880; }
         .metric-sub { fill: #6f7c80; font-size: 18px; font-weight: 760; }
+        .empty-title { font-size: 42px; font-weight: 900; }
         .track { fill: rgba(20,33,38,.08); }
         .midline { stroke: rgba(20,33,38,.38); stroke-width: 3; stroke-linecap: round; }
         .card { fill: rgba(255,255,255,.72); stroke: rgba(20,33,38,.1); }
@@ -3923,27 +3988,28 @@ function teamReportSvg(summary) {
     <path d="M0 1140 L420 1060 L560 1420 L0 1420 Z" fill="#f16a78" opacity=".10"/>
     <circle cx="886" cy="230" r="138" fill="none" stroke="url(#accent)" stroke-width="5" opacity=".46"/>
     <text x="78" y="102" class="eyebrow">jojo测九型 · 团队报告</text>
-    <text x="78" y="178" class="title">${escapeXml(summary.team.name)}</text>
-    <text x="78" y="230" class="note">${escapeXml(summary.sample_note)}</text>
+    ${svgTextBlock(titleLines, 78, 172, "title", 66)}
+    <text x="78" y="${titleLines.length > 1 ? 282 : 230}" class="note">${escapeXml(summary.sample_note)}</text>
     <g>
-      <rect x="78" y="285" width="286" height="102" rx="20" class="card"/>
-      <text x="108" y="326" class="pill-title">成员样本</text>
-      <text x="108" y="365" class="pill-text">${summary.member_count} 人</text>
-      <rect x="397" y="285" width="286" height="102" rx="20" class="card"/>
-      <text x="427" y="326" class="pill-title">主导元素</text>
-      <text x="427" y="365" class="pill-text">${escapeXml(dominant)}</text>
-      <rect x="716" y="285" width="286" height="102" rx="20" class="card"/>
-      <text x="746" y="326" class="pill-title">分化元素</text>
-      <text x="746" y="365" class="pill-text">${escapeXml(split)}</text>
+      <rect x="78" y="${cardY}" width="286" height="102" rx="20" class="card"/>
+      <text x="108" y="${cardY + 41}" class="pill-title">成员样本</text>
+      <text x="108" y="${cardY + 80}" class="pill-text">${summary.member_count} 人</text>
+      <rect x="397" y="${cardY}" width="286" height="102" rx="20" class="card"/>
+      <text x="427" y="${cardY + 41}" class="pill-title">主导元素</text>
+      <text x="427" y="${cardY + 80}" class="pill-text">${escapeXml(hasConclusion ? dominant : "等待样本")}</text>
+      <rect x="716" y="${cardY}" width="286" height="102" rx="20" class="card"/>
+      <text x="746" y="${cardY + 41}" class="pill-title">分化元素</text>
+      <text x="746" y="${cardY + 80}" class="pill-text">${escapeXml(hasConclusion ? split : "暂不判断")}</text>
     </g>
-    <text x="78" y="420" class="section">1-9号团队证据条：红=否定，黄=不确定，绿=确定，中线=50%</text>
+    <text x="78" y="${sectionY}" class="section">${hasConclusion ? "1-9号团队证据条：红=否定，黄=不确定，绿=确定，中线=50%" : "团队总图生成进度"}</text>
     ${rowSvg}
     <g>
-      <rect x="78" y="1248" width="924" height="92" rx="20" class="card"/>
-      <text x="108" y="1287" class="pill-title">低位元素</text>
-      <text x="108" y="1327" class="pill-text">${escapeXml(low)}</text>
-      <text x="670" y="1327" class="metric-sub">生成时间 ${escapeXml(new Date().toISOString().slice(0, 10))}</text>
+      <rect x="78" y="${footerY}" width="924" height="92" rx="20" class="card"/>
+      <text x="108" y="${footerY + 39}" class="pill-title">${hasConclusion ? "低位元素" : "下一步"}</text>
+      <text x="108" y="${footerY + 79}" class="pill-text">${escapeXml(hasConclusion ? low : "复制链接给团队")}</text>
+      <text x="670" y="${footerY + 79}" class="metric-sub">生成时间 ${escapeXml(new Date().toISOString().slice(0, 10))}</text>
     </g>
+    ${hasConclusion ? `<text x="78" y="${footerY - 38}" class="metric-sub">${escapeXml(teamMainInsightText(summary))}</text>` : ""}
   </svg>`;
 }
 
@@ -4042,6 +4108,9 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === "GET" && reqUrl.pathname === "/api/site-settings") {
       return sendJson(res, 200, { settings: publicSiteSettings() });
+    }
+    if (req.method === "GET" && reqUrl.pathname === "/api/site-stats") {
+      return sendJson(res, 200, { stats: publicSiteStats() });
     }
     if (req.method === "GET" && reqUrl.pathname === "/api/auth/wechat/config") {
       return sendJson(res, 200, wechatAuthConfig(req));

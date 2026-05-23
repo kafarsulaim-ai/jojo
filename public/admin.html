@@ -13,7 +13,7 @@
     <link rel="icon" href="/jojo-icon.svg" type="image/svg+xml">
     <link rel="icon" href="/jojo-icon.png" type="image/png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/styles.css?v=20260523-v12-result-polish">
   </head>
   <body class="admin-page">
     <header class="admin-topbar">
@@ -27,46 +27,51 @@
     </header>
 
     <main class="admin-shell">
-        <section class="admin-auth-shell" id="authShell">
-          <section class="admin-auth-card">
+      <section class="admin-auth-shell" id="authShell">
+        <section class="admin-auth-card">
+          <div class="admin-auth-copy">
             <img src="/jojo-logo.png" alt="jojo测九型">
             <h1>老师数据台</h1>
+            <p class="admin-auth-hint">邀请制开通，微信授权进入。</p>
+          </div>
+          <div class="admin-auth-stack">
             <div class="admin-auth-actions">
               <button class="primary-action compact" id="teacherWechatLoginButton" type="button">微信授权登录</button>
             </div>
-          <form class="admin-auth-panel admin-invite-panel" id="registerForm" autocomplete="on">
-            <label>
-              <span>邀请码</span>
-              <input id="inviteCodeInput" autocomplete="one-time-code" placeholder="例如 INV-ABCDEFGH">
-            </label>
-            <label>
-              <span>老师姓名</span>
-              <input id="registerNameInput" autocomplete="name" placeholder="例如 阎老师">
-            </label>
-            <label hidden>
-              <span>登录账号</span>
-              <input id="registerLoginInput" autocomplete="username" placeholder="自动生成">
-            </label>
-            <label hidden>
-              <span>设置密码</span>
-              <input id="registerPasswordInput" type="password" autocomplete="new-password" placeholder="自动生成">
-            </label>
-            <button class="ghost-action compact" type="submit">开通老师入口</button>
-            <p class="muted" id="registerMessage"></p>
-          </form>
-          <form class="admin-auth-panel admin-password-panel" id="loginForm" autocomplete="on" hidden>
-            <label>
-              <span>登录账号</span>
-              <input id="loginAccountInput" autocomplete="username" placeholder="邮箱 / 手机号 / 账号">
-            </label>
-            <label>
-              <span>密码</span>
-              <input id="loginPasswordInput" type="password" autocomplete="current-password" placeholder="输入密码">
-            </label>
-            <button class="primary-action compact" type="submit">密码登录</button>
-            <p class="muted" id="loginMessage"></p>
-          </form>
-          <button class="admin-text-button" id="showPasswordLoginButton" type="button">账号密码登录</button>
+            <form class="admin-auth-panel admin-invite-panel" id="registerForm" autocomplete="on">
+              <label>
+                <span>邀请码</span>
+                <input id="inviteCodeInput" autocomplete="one-time-code" placeholder="例如 INV-ABCDEFGH">
+              </label>
+              <label>
+                <span>老师姓名</span>
+                <input id="registerNameInput" autocomplete="name" placeholder="例如 阎老师">
+              </label>
+              <label hidden>
+                <span>登录账号</span>
+                <input id="registerLoginInput" autocomplete="username" placeholder="自动生成">
+              </label>
+              <label hidden>
+                <span>设置密码</span>
+                <input id="registerPasswordInput" type="password" autocomplete="new-password" placeholder="自动生成">
+              </label>
+              <button class="ghost-action compact" type="submit">开通老师入口</button>
+              <p class="muted" id="registerMessage"></p>
+            </form>
+            <form class="admin-auth-panel admin-password-panel" id="loginForm" autocomplete="on" hidden>
+              <label>
+                <span>登录账号</span>
+                <input id="loginAccountInput" autocomplete="username" placeholder="邮箱 / 手机号 / 账号">
+              </label>
+              <label>
+                <span>密码</span>
+                <input id="loginPasswordInput" type="password" autocomplete="current-password" placeholder="输入密码">
+              </label>
+              <button class="primary-action compact" type="submit">密码登录</button>
+              <p class="muted" id="loginMessage"></p>
+            </form>
+            <button class="admin-text-button" id="showPasswordLoginButton" type="button">账号密码登录</button>
+          </div>
         </section>
       </section>
 
@@ -319,6 +324,6 @@
       </section>
     </main>
 
-    <script src="/admin.js"></script>
+    <script src="/admin.js?v=20260523-v12-result-polish"></script>
   </body>
 </html>

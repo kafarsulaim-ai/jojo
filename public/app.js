@@ -1,13 +1,25 @@
 const TYPE_NAMES = {
-  1: "人间校准仪",
-  2: "心意接线员",
-  3: "人生项目经理",
-  4: "情绪收藏家",
-  5: "信息囤积者",
-  6: "安全预案师",
-  7: "快乐逃生员",
-  8: "人间防护罩",
-  9: "氛围修复师"
+  1: "标准校准者",
+  2: "关系支持者",
+  3: "目标推进者",
+  4: "感受辨识者",
+  5: "信息分析者",
+  6: "风险预案者",
+  7: "可能性探索者",
+  8: "边界守护者",
+  9: "和谐协调者"
+};
+
+const TYPE_RESULT_LINES = {
+  1: "重点关注标准、原则和改进空间，常会主动把事情校准到更可靠。",
+  2: "重点关注关系里的需要和回应，常会通过支持他人建立连接。",
+  3: "重点关注目标、效率和成果反馈，常会把行动推向可见结果。",
+  4: "重点关注真实感、独特性和情绪细节，常能捕捉深层感受。",
+  5: "重点关注信息、边界和理解框架，常会先看清结构再投入。",
+  6: "重点关注安全感、可信度和风险预案，常会提前验证和准备。",
+  7: "重点关注可能性、选择感和新鲜出口，常能打开新的方向。",
+  8: "重点关注主动权、边界和保护，常在关键时刻直接扛事。",
+  9: "重点关注和谐、稳定和冲突降噪，常能把局面先缓下来。"
 };
 
 const FLAG_COPY = {
@@ -83,7 +95,7 @@ const RESULT_TRANSLATIONS = {
     charge: "把事情做对"
   },
   2: {
-    friend: "你以为我太会照顾人，其实我在确认我们之间有没有真的连上。",
+    friend: "你以为我太会照顾人，其实我在确认我们有没有真的连上。",
     work: "我擅长看见谁需要支持，把关系温度接住。",
     pressure: "压力一来，容易先证明自己有用。",
     near: "真诚回应",
@@ -115,7 +127,7 @@ const RESULT_TRANSLATIONS = {
     charge: "安静研究到想明白"
   },
   6: {
-    friend: "你以为我想太多，其实我在给大家提前装安全气囊。",
+    friend: "你以为我想太多，其实我在提前装安全气囊。",
     work: "我会预判风险、准备备选方案。",
     pressure: "压力一来，容易进入预案宇宙。",
     near: "给确定感",
@@ -123,7 +135,7 @@ const RESULT_TRANSLATIONS = {
     charge: "有人一起扛风险"
   },
   7: {
-    friend: "你以为我在玩，其实我在给生活疯狂开新地图。",
+    friend: "你以为我在玩，其实我在给生活开新地图。",
     work: "我擅长带来可能性、创意和气氛。",
     pressure: "压力一来，先找出口和新鲜感。",
     near: "保留可能性",
@@ -131,7 +143,7 @@ const RESULT_TRANSLATIONS = {
     charge: "有趣、有路、有下一站"
   },
   8: {
-    friend: "你以为我太强势，其实我在确认谁能站稳、谁别被欺负。",
+    friend: "你以为我太强势，其实我在确认谁别被欺负。",
     work: "关键时刻我会撑边界、做决断。",
     pressure: "压力一来，保护和掌控会先上线。",
     near: "直接坦诚",
@@ -139,7 +151,7 @@ const RESULT_TRANSLATIONS = {
     charge: "并肩作战，别让我一个人扛"
   },
   9: {
-    friend: "你以为我没意见，其实我在给现场降噪，让大家别炸。",
+    friend: "你以为我没意见，其实我在给现场降噪。",
     work: "我擅长缓和气氛、整合差异。",
     pressure: "压力一来，先想稳住和平。",
     near: "慢慢问我真想法",
@@ -343,6 +355,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadWechatStatus();
   loadAdminStatus();
   loadSiteSettings();
+  loadSiteStats();
   bootFromRoute().then(() => {
     renderResumeCard();
     trackEvent("page_open", { route: window.location.pathname || "/" });
@@ -749,6 +762,19 @@ async function loadSiteSettings() {
     state.siteSettings = data.settings || {};
   } catch {
     state.siteSettings = {};
+  }
+}
+
+async function loadSiteStats() {
+  const target = byId("homeTestedCount");
+  if (!target) return;
+  try {
+    const response = await fetch("/api/site-stats", { credentials: "same-origin" });
+    const data = response.ok ? await response.json() : {};
+    const total = Math.max(0, Number(data.stats?.total_tests || 0));
+    target.innerHTML = `<strong>${formatCount(total)}</strong><span>人次已测试过</span>`;
+  } catch {
+    target.innerHTML = `<strong>--</strong><span>人次已测试过</span>`;
   }
 }
 
@@ -1281,10 +1307,13 @@ function onModeClick(event) {
   if (mode === "team") {
     $("teamCreateForm").hidden = false;
     $("profileForm").hidden = true;
-    $("startEyebrow").textContent = "团队测试入口";
-    $("startLine").textContent = "给团队一张图。";
+    $("startScreen").classList.remove("team-invite-active");
+    $("startEyebrow").textContent = "创建团队测试链接";
+    $("startLine").textContent = "填团队名，发给成员，系统自动汇总。";
+    window.setTimeout(() => $("teamCreateForm").scrollIntoView({ block: "nearest", behavior: "smooth" }), 40);
     return;
   }
+  $("startScreen").classList.remove("team-invite-active");
   $("teamCreateForm").hidden = true;
   $("profileForm").hidden = false;
   setMode(mode);
@@ -1322,10 +1351,12 @@ async function createTeam(event) {
     const summaryUrl = new URL(data.team.summary_url, window.location.origin).href;
     state.createdTeam = { team: data.team, inviteUrl, summaryUrl };
     $("teamInviteUrlInput").value = inviteUrl;
-    $("teamCreatedTitle").textContent = "复制链接给团队";
-    $("teamCreatedBody").textContent = `${data.team.name} · ${data.team.mode_label} · 有效至 ${formatDate(data.team.expires_at)}`;
+    $("teamCreatedTitle").textContent = "团队链接已创建";
+    $("teamCreatedBody").textContent = `${data.team.name} · 有效至 ${formatShortDate(data.team.expires_at)}`;
     $("teamCreatedSummaryLink").href = summaryUrl;
-    $("teamCopyInviteButton").textContent = "复制链接给团队";
+    $("teamCopyInviteButton").textContent = "复制邀请链接";
+    $("teamStartTestButton").textContent = "我也开始测试";
+    $("teamCreatedSummaryLink").textContent = "团队总图";
     $("teamCreatedModal").hidden = false;
   } catch (err) {
     alert(err.message || "团队创建失败，请稍后再试。");
@@ -1397,9 +1428,10 @@ async function loadTeamInvite(code) {
     $("teamCodeInput").value = data.team.code;
     $("teamInvite").hidden = false;
     $("teamInviteName").textContent = data.team.name;
+    $("startScreen").classList.toggle("team-invite-active", Boolean(data.team.active));
     const isSubtypeTeam = data.team.test_kind === "subtype";
     $("teamInviteMeta").textContent = data.team.active
-      ? `${data.team.mode_label || "团队测试"} · 链接有效至 ${formatDate(data.team.expires_at)}`
+      ? `${data.team.mode_label || "团队测试"} · 有效至 ${formatShortDate(data.team.expires_at)}`
       : "链接已过期，本次测试不会计入团队";
     $("joinTeamInput").checked = data.team.active;
     $("joinTeamInput").disabled = !data.team.active;
@@ -1413,14 +1445,19 @@ async function loadTeamInvite(code) {
       $("startLine").textContent = "完成60题后，结果只进入团队副型匿名汇总，不展示个人明细。";
       return;
     }
-    $("modeGrid").hidden = false;
-    document.querySelector('[data-mode="main90"]').click();
-    $("startEyebrow").textContent = data.team.active ? "团队九型测试" : "团队链接已过期";
+    setMode("main90");
+    document.querySelectorAll(".mode-card").forEach((item) => {
+      item.classList.toggle("active", false);
+    });
+    $("modeGrid").hidden = data.team.active;
+    $("startEyebrow").textContent = data.team.active ? "团队主型测试" : "团队链接已过期";
     $("startLine").textContent = data.team.active
-      ? "完成90题后，本次结果会计入团队总图。"
+      ? "这次只做团队主型90题，完成后自动计入团队总图。"
       : "你仍可以完成个人测试，但结果不会计入该团队。";
+    $("startButton").querySelector("span").textContent = data.team.active ? "开始团队主型90题" : "开始个人主型90题";
     if (data.team.active) checkRecentMainForTeam(data.team);
   } catch {
+    $("startScreen").classList.remove("team-invite-active");
     $("teamInvite").hidden = false;
     $("teamInviteName").textContent = "团队不存在";
     $("teamInviteMeta").textContent = "请确认邀请链接是否正确。";
@@ -1556,6 +1593,7 @@ function shouldPromptRecoveryMarker() {
   if (state.recoveryMarkerConfirmed) return false;
   if (hasAnyLoggedInIdentity()) return false;
   if (state.mode === "team_subtype" || state.team?.test_kind === "subtype") return false;
+  if (state.team?.code && state.team?.active) return false;
   if (sessionStorage.getItem(WECHAT_READY_KEY)) return false;
   return true;
 }
@@ -2848,18 +2886,18 @@ function renderCombinedReport(data) {
   const subtypeRank = ranked.map((item) => `${SUBTYPE_NAMES[item.key] || item.label} ${Math.round(item.percent || 0)}%`).join(" / ") || "暂无";
   const codeText = `${main.verification_code || ""} · ${subtype.verification_code || ""}`;
   $("combinedTitle").textContent = report.title || "主型 × 副型";
-  $("combinedNote").textContent = "截图三张卡即可转发；更完整的判断交给老师结合访谈校准。";
+  $("combinedNote").textContent = "截图结果卡即可转发；更完整的判断交给老师结合访谈校准。";
   $("combinedCodes").textContent = codeText;
   const combinedFocus = report.focus || "主型看核心动机，副型看这个动机最常进入生活的入口。";
   const briefFocus = combinedFocus.split("。").filter(Boolean)[0] || "主型看核心动机，副型看注意力入口";
   const primaryCardTitle = `${primary}号 × ${subtypeTitle}`;
   $("combinedContent").innerHTML = `
-    <section class="share-deck combined-share-deck" aria-label="三张综合结果分享卡">
+    <section class="share-deck combined-share-deck" aria-label="综合结果分享卡">
       <article class="share-card share-card-primary" data-type="${escapeHtml(primary)}">
         <div class="share-watermark" aria-hidden="true">${escapeHtml(String(primary))}</div>
         <div class="share-top">
           <span class="share-brand"><img src="/jojo-icon.svg" alt="">jojo测九型</span>
-          <span>01 / 03</span>
+          <span>01 / 02</span>
         </div>
         <div class="share-body">
           <div class="share-core">
@@ -2882,7 +2920,7 @@ function renderCombinedReport(data) {
         <div class="share-watermark" aria-hidden="true">02</div>
         <div class="share-top">
           <span class="share-brand"><img src="/jojo-icon.svg" alt="">jojo测九型</span>
-          <span>02 / 03</span>
+          <span>02 / 02</span>
         </div>
         <div class="share-core share-card-stack">
           <p class="share-label">副型排序</p>
@@ -2897,7 +2935,7 @@ function renderCombinedReport(data) {
           <span class="hidden-code">ref ${escapeHtml(subtype.verification_code || "------")}</span>
         </div>
       </article>
-      <article class="share-card share-card-next" data-type="${escapeHtml(primary)}">
+      <article class="share-card share-card-next" data-type="${escapeHtml(primary)}" hidden>
         <div class="share-watermark" aria-hidden="true">go</div>
         <div class="share-top">
           <span class="share-brand"><img src="/jojo-icon.svg" alt="">jojo测九型</span>
@@ -2916,6 +2954,7 @@ function renderCombinedReport(data) {
       </article>
     </section>
   `;
+  updateShareCardPagination($("combinedScreen"));
 }
 
 function subtypeCalibrationCopy(result) {
@@ -2953,31 +2992,33 @@ function renderShareDeck(result, bundle = null) {
     ? (RESULT_TRANSLATIONS[primary] || RESULT_TRANSLATIONS[9])
     : subtypeTranslation(subtype);
   const usage = main ? translation : subtypeUsage(subtype);
-  const identity = identityTitle(deck);
   const mainOnly = Boolean(main && !hasSubtype);
+  const isSubtypeOnly = Boolean(!main && hasSubtype);
   const topText = main
     ? (main.top_types || []).slice(0, 3).map((item) => `${item.element}号`).join(" / ")
     : "主型可补";
   const subtypeRank = subtypeRankText(subtype);
 
+  $("shareDeck")?.classList.remove("team-subtype-share-deck");
   $("shareDeck")?.classList.toggle("main-only-share-deck", mainOnly);
+  $("shareDeck")?.classList.toggle("subtype-only-share-deck", isSubtypeOnly);
   setShareDeckType(cardType);
   $("shareNumber").textContent = main ? `${primary}` : "sx";
   $("hiddenCode").textContent = `ref ${code}`;
-  $("sharePrimaryKicker").textContent = mainOnly ? "主型结果" : "身份卡";
-  $("shareTitle").textContent = mainOnly ? mainOnlyTitle(main) : identity;
-  $("shareLine").textContent = mainOnly
-    ? "本次结果先以主型为主；副型像补光，之后可加测，不影响这张主图。"
-    : (main ? "" : "副型先看排序，主型补齐后更完整。");
-  $("shareChips").innerHTML = identityChips(deck, code, { mainOnly }).filter((text) => !text.startsWith("ref ")).map((text) => `<span>${escapeHtml(text)}</span>`).join("");
+  $("sharePrimaryKicker").textContent = resultOverviewKicker(deck);
+  $("shareTitle").textContent = resultOverviewTitle(deck);
+  $("shareLine").textContent = resultOverviewLine(deck);
+  $("shareChips").innerHTML = resultOverviewChips(deck).map((text) => `<span>${escapeHtml(text)}</span>`).join("");
   $("shareMiniMap").innerHTML = identityVisualHtml(deck);
-  $("shareTopTypes").textContent = main ? `${mainOnly ? "本次主型分布" : "前三"} ${topText.replace(/号/g, "")}${hasSubtype ? ` · ${subtypeRank.split(" / ")[0]}` : ""}` : `副型 ${subtypeRank.split(" / ").slice(0, 2).join(" / ")}`;
+  $("shareTopTypes").textContent = main?.team?.code
+    ? `已计入团队 · 前三 ${topText.replace(/号/g, "")}`
+    : (main ? `${mainOnly ? "本次主型分布" : "前三"} ${topText.replace(/号/g, "")}${hasSubtype ? ` · ${subtypeRank.split(" / ")[0]}` : ""}` : `副型 ${subtypeRank.split(" / ").slice(0, 2).join(" / ")}`);
 
-  $("shareEvidenceTitle").textContent = translation.friend;
-  $("shareEvidenceKicker").textContent = "朋友翻译卡";
-  $("shareEvidenceLine").textContent = "";
-  $("shareEvidenceVisual").innerHTML = translationCardHtml(translation);
-  $("shareEvidenceFoot").textContent = main ? "朋友 / 工作 / 压力" : "副型视角";
+  $("shareEvidenceTitle").textContent = briefAnalysisTitle(deck);
+  $("shareEvidenceKicker").textContent = "简要解读";
+  $("shareEvidenceLine").textContent = briefAnalysisLine(deck);
+  $("shareEvidenceVisual").innerHTML = briefAnalysisHtml(deck, translation, usage, result);
+  $("shareEvidenceFoot").textContent = "自动结果仅供参考 · 老师解读更精准";
   $("shareEvidenceCode").textContent = `ref ${code}`;
 
   $("shareNextKicker").textContent = "使用说明卡";
@@ -2986,7 +3027,19 @@ function renderShareDeck(result, bundle = null) {
   $("shareNextQr").innerHTML = usageGuideHtml(usage, result);
   $("shareNextFoot").textContent = "进群继续看结果";
   $("shareNextCode").textContent = `ref ${code}`;
+  $("shareNextCard").hidden = true;
+  updateShareCardPagination($("resultScreen"));
   renderResultUtilities(result);
+}
+
+function updateShareCardPagination(root = document) {
+  const cards = [...root.querySelectorAll(".share-card")].filter((card) => !card.hidden);
+  cards.forEach((card, index) => {
+    const page = card.querySelector(".share-top > span:last-child");
+    if (page) page.textContent = `${String(index + 1).padStart(2, "0")} / ${String(cards.length).padStart(2, "0")}`;
+  });
+  const saveButton = root.querySelector("#shareSaveButton, #combinedPrintButton");
+  if (saveButton) saveButton.textContent = cards.length > 2 ? "保存三张图片" : "保存结果图片";
 }
 
 function renderSubtypeShareDeck(result, bundle = null) {
@@ -3025,6 +3078,10 @@ function getSubtypeTop(subtype) {
   return isPersonalSubtypeResult(subtype) ? subtype.subtype_ranked?.[0] || null : null;
 }
 
+function getSubtypeSecond(subtype) {
+  return isPersonalSubtypeResult(subtype) ? subtype.subtype_ranked?.[1] || null : null;
+}
+
 function mainTypeCode(main) {
   const primary = getMainPrimary(main);
   const wing = getWingNumber(main);
@@ -3034,23 +3091,154 @@ function mainTypeCode(main) {
 function mainOnlyTitle(main) {
   const primary = getMainPrimary(main);
   const typeName = primary ? (TYPE_NAMES[primary] || main?.share?.title || `${primary}号`) : "主型结果";
-  return `${mainTypeCode(main)} ${typeName}`;
+  return primary ? `${mainTypeCode(main)} · ${typeName}` : typeName;
 }
 
 function identityTitle(bundle) {
   const main = bundle.main;
   const subtype = bundle.subtype;
   const primary = getMainPrimary(main);
-  const typeName = primary ? (TYPE_NAMES[primary] || main?.share?.title || `${primary}号`) : "";
-  const typeCode = primary ? mainTypeCode(main) : "副型待拼图";
   const topSubtype = getSubtypeTop(subtype);
+  const typeName = primary ? (TYPE_NAMES[primary] || main?.share?.title || `${primary}号`) : "";
   const subtypeName = topSubtype
     ? `${SUBTYPE_SHORT_NAMES[topSubtype.key] || SUBTYPE_NAMES[topSubtype.key] || topSubtype.label}优先`
     : "副型可补";
   if (!primary) {
-    return `我是 ${subtypeName}的注意力入口`;
+    return topSubtype ? `${subtypeName} · 副型入口` : "副型入口";
   }
-  return topSubtype ? `我是 ${typeCode} ${subtypeName}的${typeName}` : `我是 ${typeCode} 的${typeName}`;
+  return topSubtype ? `${mainTypeCode(main)} · ${subtypeName} · ${typeName}` : `${mainTypeCode(main)} · ${typeName}`;
+}
+
+function resultOverviewKicker(bundle) {
+  if (bundle.main && bundle.subtype) return "结果总览";
+  if (bundle.main) return bundle.main?.team?.code ? "团队主型已提交" : "主型结果";
+  return "副型排序结果";
+}
+
+function resultOverviewTitle(bundle) {
+  const main = bundle.main;
+  const subtype = bundle.subtype;
+  if (main) {
+    const primary = getMainPrimary(main);
+    const typeName = primary ? TYPE_NAMES[primary] || `${primary}号` : "主型";
+    const subtypeTop = getSubtypeTop(subtype);
+    const subtypeText = subtypeTop ? `${SUBTYPE_SHORT_NAMES[subtypeTop.key] || SUBTYPE_NAMES[subtypeTop.key] || subtypeTop.label}优先` : "";
+    return subtypeText ? `${mainTypeCode(main)} · ${subtypeText}` : `${mainTypeCode(main)} · ${typeName}`;
+  }
+  const top = getSubtypeTop(subtype);
+  const second = getSubtypeSecond(subtype);
+  if (!top) return "副型排序待确认";
+  const first = SUBTYPE_NAMES[top.key] || top.label;
+  const next = second ? ` / ${SUBTYPE_NAMES[second.key] || second.label}` : "";
+  return `${first}${next}`;
+}
+
+function resultOverviewLine(bundle) {
+  const main = bundle.main;
+  const subtype = bundle.subtype;
+  const primary = getMainPrimary(main);
+  if (main?.team?.code) {
+    return `本次主型已计入「${main.team.name || "团队"}」总图；个人副型可之后再补。`;
+  }
+  if (main && isPersonalSubtypeResult(subtype)) {
+    const first = getSubtypeTop(subtype);
+    const second = getSubtypeSecond(subtype);
+    return `主型看长期动机，副型看注意力入口。本次副型前两项为 ${SUBTYPE_NAMES[first?.key] || first?.label || "待确认"}${second ? ` / ${SUBTYPE_NAMES[second.key] || second.label}` : ""}。`;
+  }
+  if (main) {
+    return TYPE_RESULT_LINES[primary] || "本次先呈现主型分布；副型可之后补充，不影响主型结果查看。";
+  }
+  const ranked = subtype?.subtype_ranked || [];
+  if (ranked.length) {
+    return "副型不是单一标签，更适合看从高到低的排序；补充主型后会更完整。";
+  }
+  return "本次先生成副型入口，建议与主型一起校准。";
+}
+
+function resultOverviewChips(bundle) {
+  const main = bundle.main;
+  const subtype = bundle.subtype;
+  const primary = getMainPrimary(main);
+  const topSubtype = getSubtypeTop(subtype);
+  const chips = [];
+  if (primary) {
+    chips.push(`主型 ${mainTypeCode(main)}`);
+    chips.push(`前三 ${(main.top_types || []).slice(0, 3).map((item) => item.element).join("/") || "-"}`);
+  } else {
+    chips.push("主型可补");
+  }
+  if (isPersonalSubtypeResult(subtype)) {
+    chips.push(topSubtype ? `${SUBTYPE_SHORT_NAMES[topSubtype.key] || SUBTYPE_NAMES[topSubtype.key] || topSubtype.label}优先` : "副型待确认");
+  } else if (main) {
+    chips.push("副型可补");
+  }
+  if (main?.quality_flags?.length || subtype?.quality_flags?.length) chips.push("建议复核");
+  return chips.filter(Boolean).slice(0, 4);
+}
+
+function briefAnalysisTitle(bundle) {
+  if (bundle.main && bundle.subtype) return "先看主型，再看副型入口";
+  if (bundle.main) return "这份主型结果，可以先这样理解";
+  return "这份副型排序，可以先这样理解";
+}
+
+function briefAnalysisLine(bundle) {
+  if (bundle.main && bundle.subtype) return "网页只做有限解读，真正精准的部分要结合你的真实场景。";
+  if (bundle.main) return "先看倾向，不急着给自己贴死标签。";
+  return "副型用于补充主型，不建议单独定论。";
+}
+
+function briefAnalysisHtml(bundle, translation, usage, result) {
+  if (bundle.main) {
+    return `
+      <div class="result-brief-grid">
+        ${briefItemHtml("朋友视角", translation.friend)}
+        ${briefItemHtml("工作表现", translation.work)}
+        ${briefItemHtml("压力反应", translation.pressure)}
+        ${briefItemHtml("靠近方式", usage.near)}
+        ${briefItemHtml("避雷方式", usage.avoid)}
+        ${briefItemHtml("补能方式", usage.charge)}
+      </div>
+      ${teacherCtaHtml(result)}
+    `;
+  }
+  const subtype = bundle.subtype;
+  const ranked = subtype?.subtype_ranked || [];
+  const first = ranked[0];
+  const second = ranked[1];
+  return `
+    <div class="result-brief-grid subtype-brief-grid">
+      ${briefItemHtml("第一副型", first ? `${SUBTYPE_NAMES[first.key] || first.label} ${Math.round(first.percent || 0)}%` : "待确认")}
+      ${briefItemHtml("第二副型", second ? `${SUBTYPE_NAMES[second.key] || second.label} ${Math.round(second.percent || 0)}%` : "待确认")}
+      ${briefItemHtml("理解方式", "副型看注意力入口，不是单选标签。")}
+      ${briefItemHtml("使用建议", "与主型结合后，会更接近真实生活表现。")}
+    </div>
+    ${teacherCtaHtml(result)}
+  `;
+}
+
+function briefItemHtml(label, text) {
+  return `<p><strong>${escapeHtml(label)}</strong><span>${escapeHtml(text || "-")}</span></p>`;
+}
+
+function teacherCtaHtml(result) {
+  const code = result?.verification_code || "------";
+  const settings = state.siteSettings || {};
+  const qr = settings.group_chat_qr_image_url || "";
+  const caption = settings.group_chat_qr_caption || "扫码加入群聊";
+  const qrHtml = qr
+    ? `<div class="poster-qr-block result-brief-qr"><img src="${escapeHtml(qr)}" alt="${escapeHtml(caption)}"><p>${escapeHtml(caption)}</p></div>`
+    : "";
+  return `
+    <div class="teacher-cta-card">
+      <div>
+        <strong>想看得更准</strong>
+        <span>把编号发给老师，结合真实经历、关系和职场场景复核，会比自动报告更匹配。</span>
+      </div>
+      <em>ref ${escapeHtml(code)}</em>
+    </div>
+    ${qrHtml}
+  `;
 }
 
 function identityChips(bundle, code, options = {}) {
@@ -3091,15 +3279,28 @@ function identityVisualHtml(bundle) {
             <span>红否 · 黄不确定 · 绿是</span>
           </div>
           <div class="identity-main-only-bars">${mainResultDistributionHtml(main)}</div>
+          ${resultDistributionSummaryHtml(main)}
         </div>
       `;
     }
-    const subtypeBlock = `<div class="identity-subtype-triangle">${subtypeTriangleHtml(subtype)}</div>`;
+    const subtypeBlock = `<div class="identity-subtype-panel">
+      <div class="main-only-visual-head">
+        <strong>副型排序</strong>
+        <span>${escapeHtml(subtypeRankText(subtype))}</span>
+      </div>
+      ${subtypeTriangleHtml(subtype)}
+    </div>`;
     return `
       <div class="identity-visual-grid">
-        <div class="identity-main-bars">${mainResultDistributionHtml(main)}</div>
+        <div class="identity-main-only-visual identity-main-bars">
+          <div class="main-only-visual-head">
+            <strong>主型分布</strong>
+            <span>红否 · 黄不确定 · 绿是</span>
+          </div>
+          ${mainResultDistributionHtml(main)}
+          ${resultDistributionSummaryHtml(main)}
+        </div>
         <div class="identity-mini-stack">
-          <div class="identity-mini-map">${createMapSvg(main.scores || {}, main.top_types || [], 180, true)}</div>
           ${subtypeBlock}
         </div>
       </div>
@@ -3108,6 +3309,42 @@ function identityVisualHtml(bundle) {
   return `
     <div class="identity-subtype-only">
       ${subtypePieHtml(subtype?.subtype_ranked || [])}
+      ${subtypeOverviewSummaryHtml(subtype)}
+    </div>
+  `;
+}
+
+function subtypeOverviewSummaryHtml(subtype) {
+  const ranked = subtype?.subtype_ranked || [];
+  const first = ranked[0];
+  const second = ranked[1];
+  const third = ranked[2];
+  const confidence = {
+    clear: "较集中",
+    leaning: "有方向",
+    mixed: "双倾向"
+  }[subtype?.subtype_confidence] || "待复核";
+  return `
+    <div class="result-distribution-summary subtype-summary-grid">
+      <span><small>第一</small><b>${escapeHtml(first ? SUBTYPE_NAMES[first.key] || first.label : "-")}</b></span>
+      <span><small>第二</small><b>${escapeHtml(second ? SUBTYPE_NAMES[second.key] || second.label : "-")}</b></span>
+      <span><small>第三</small><b>${escapeHtml(third ? SUBTYPE_NAMES[third.key] || third.label : "-")}</b></span>
+      <span><small>状态</small><b>${escapeHtml(confidence)}</b></span>
+    </div>
+  `;
+}
+
+function resultDistributionSummaryHtml(main) {
+  const primary = getMainPrimary(main);
+  const wing = getWingNumber(main);
+  const top = (main?.top_types || []).slice(0, 3).map((item) => item.element).join(" / ") || "-";
+  const status = main?.quality_flags?.length ? "老师复核" : "可参考";
+  return `
+    <div class="result-distribution-summary">
+      <span><small>主型</small><b>${escapeHtml(primary ? `${primary}号` : "-")}</b></span>
+      <span><small>侧翼</small><b>${escapeHtml(wing ? `w${wing}` : "待看")}</b></span>
+      <span><small>前三</small><b>${escapeHtml(top)}</b></span>
+      <span><small>状态</small><b>${escapeHtml(status)}</b></span>
     </div>
   `;
 }
@@ -3222,7 +3459,8 @@ function renderResultUtilities(result) {
 function renderAnonymousTeamSubtypeShareDeck(result) {
   const code = result.verification_code || "------";
   const teamName = result.team?.name || "团队";
-  $("shareDeck")?.classList.remove("main-only-share-deck");
+  $("shareDeck")?.classList.remove("main-only-share-deck", "subtype-only-share-deck");
+  $("shareDeck")?.classList.add("team-subtype-share-deck");
   $("shareCard").dataset.type = 6;
   $("shareNumber").textContent = "team";
   $("hiddenCode").textContent = `ref ${code}`;
@@ -3262,6 +3500,8 @@ function renderAnonymousTeamSubtypeShareDeck(result) {
   $("shareNextCode").textContent = `ref ${code}`;
   $("shareEvidenceCard").dataset.type = 6;
   $("shareNextCard").dataset.type = 6;
+  $("shareNextCard").hidden = false;
+  updateShareCardPagination($("resultScreen"));
 }
 
 function getGroupQrHtml(result) {
@@ -3429,7 +3669,7 @@ async function saveVisibleShareCards(scope = "result") {
       previews.push({ url: previewUrl, label: `${index + 1} / ${cards.length}` });
     }
     showShareImageModal(previews);
-    if (button) button.textContent = "已生成三张";
+    if (button) button.textContent = `已生成${previews.length}张`;
   } catch {
     if (previews.length) showShareImageModal(previews);
     if (button) button.textContent = previews.length ? `已生成${previews.length}张` : "生成失败，请截图";
@@ -3440,7 +3680,7 @@ async function saveVisibleShareCards(scope = "result") {
     saved_count: previews.length
   });
   window.setTimeout(() => {
-    if (button) button.textContent = "保存三张图片";
+    if (button) button.textContent = cards.length > 2 ? "保存三张图片" : "保存结果图片";
   }, 1500);
 }
 
@@ -3469,19 +3709,20 @@ function sharePosterSvgFromCard(card, index, total) {
   const palette = posterPalette(type);
   const label = card.querySelector(".share-label")?.textContent.trim() || `0${index + 1} / 0${total}`;
   const title = card.querySelector("h3")?.textContent.trim() || "jojo测九型";
-  const body = card.querySelector(".share-core > p, .share-body p")?.textContent.trim() || "";
+  const body = card.querySelector(".share-core > p:not(.share-label), .share-body p:not(.share-label)")?.textContent.trim() || "";
   const chips = [...card.querySelectorAll(".share-chips span")].map((item) => item.textContent.trim()).filter(Boolean).slice(0, 3);
   const footer = card.querySelector(".share-footer > span:first-child")?.textContent.trim() || "";
   const code = card.querySelector(".hidden-code")?.textContent.trim() || "";
   const rows = posterRowsFromCard(card);
   const blocks = posterBlocksFromCard(card);
-  const qr = card.querySelector(".poster-qr-block") ? posterQrSvgBlock(footer) : "";
+  const cta = posterTeacherCtaFromCard(card);
   const isLongTitle = Array.from(title).length > 24;
-  const titleSize = index === 0 ? 58 : (isLongTitle ? 45 : 52);
-  const titleStep = index === 0 ? 70 : (isLongTitle ? 56 : 64);
-  const titleLines = svgTextLines(title, index === 0 ? 12 : (isLongTitle ? 13 : 11), 3);
+  const titleSize = index === 0 ? 54 : (isLongTitle ? 45 : 52);
+  const titleStep = index === 0 ? 66 : (isLongTitle ? 56 : 64);
+  const titleLines = svgTextLines(title, index === 0 ? 17 : (isLongTitle ? 14 : 12), 3);
   const bodyLines = svgTextLines(body, 22, 2);
   const yAfterTitle = 242 + titleLines.length * titleStep;
+  const blockStartY = yAfterTitle + (bodyLines.length ? 150 : 118);
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
   <defs>
@@ -3525,8 +3766,8 @@ function sharePosterSvgFromCard(card, index, total) {
   <text x="${x + 22}" y="${yAfterTitle + 124}" class="chip">${escapeSvg(chip)}</text>`;
   }).join("")}
   ${rows.length ? posterBarsSvg(rows, yAfterTitle + 210) : ""}
-  ${blocks.length ? posterBlocksSvg(blocks, yAfterTitle + 165) : ""}
-  ${qr || ""}
+  ${blocks.length ? posterBlocksSvg(blocks, blockStartY) : ""}
+  ${cta ? posterTeacherCtaSvg(cta, blocks.length ? blockStartY + Math.min(blocks.length, 6) * 102 + 20 : 820) : ""}
   <text x="64" y="1110" class="muted">${escapeSvg(footer)}</text>
   <text x="670" y="1110" class="code">${escapeSvg(code)}</text>
 </svg>`;
@@ -3558,11 +3799,11 @@ function posterRowsFromCard(card) {
 }
 
 function posterBlocksFromCard(card) {
-  const listItems = [...card.querySelectorAll(".friend-translation-list p, .usage-guide-list p, .poster-analysis-list p")];
+  const listItems = [...card.querySelectorAll(".friend-translation-list p, .usage-guide-list p, .poster-analysis-list p, .result-brief-grid p")];
   return listItems.map((item) => ({
     label: item.querySelector("strong")?.textContent.trim() || "",
     text: item.querySelector("span")?.textContent.trim() || item.textContent.replace(item.querySelector("strong")?.textContent || "", "").trim()
-  })).filter((item) => item.label || item.text).slice(0, 4);
+  })).filter((item) => item.label || item.text).slice(0, 6);
 }
 
 function posterBarsSvg(rows, startY) {
@@ -3591,19 +3832,38 @@ function posterBarsSvg(rows, startY) {
 
 function posterBlocksSvg(blocks, startY) {
   return blocks.map((block, index) => {
-    const y = startY + index * 126;
-    const textLines = svgTextLines(block.text, 21, 2);
-    return `<rect x="64" y="${y}" width="772" height="96" rx="18" fill="rgba(255,255,255,.72)" stroke="rgba(20,33,38,.08)"/>
+    const y = startY + index * 102;
+    const textLines = svgTextLines(block.text, 22, 2);
+    return `<rect x="64" y="${y}" width="772" height="82" rx="18" fill="rgba(255,255,255,.72)" stroke="rgba(20,33,38,.08)"/>
   <text x="92" y="${y + 36}" class="blockLabel">${escapeSvg(block.label)}</text>
-  ${textLines.map((line, lineIndex) => `<text x="92" y="${y + 68 + lineIndex * 28}" class="blockText">${escapeSvg(line)}</text>`).join("")}`;
+  ${textLines.map((line, lineIndex) => `<text x="238" y="${y + 36 + lineIndex * 30}" class="blockText">${escapeSvg(line)}</text>`).join("")}`;
   }).join("");
 }
 
+function posterTeacherCtaFromCard(card) {
+  const node = card.querySelector(".teacher-cta-card");
+  if (!node) return null;
+  return {
+    title: node.querySelector("strong")?.textContent.trim() || "想看得更准",
+    text: node.querySelector("span")?.textContent.trim() || "把编号发给老师，结合真实场景会更匹配。",
+    code: node.querySelector("em")?.textContent.trim() || ""
+  };
+}
+
+function posterTeacherCtaSvg(cta, startY) {
+  const y = Math.min(startY, 922);
+  const textLines = svgTextLines(cta.text, 25, 2);
+  return `<rect x="64" y="${y}" width="772" height="120" rx="24" fill="rgba(255,255,255,.78)" stroke="rgba(20,33,38,.1)"/>
+  <text x="92" y="${y + 45}" class="blockLabel">${escapeSvg(cta.title)}</text>
+  ${textLines.map((line, lineIndex) => `<text x="92" y="${y + 78 + lineIndex * 30}" class="blockText">${escapeSvg(line)}</text>`).join("")}
+  <text x="690" y="${y + 45}" class="code">${escapeSvg(cta.code)}</text>`;
+}
+
 function posterQrSvgBlock(footer) {
-  return `<rect x="292" y="660" width="316" height="316" rx="34" fill="rgba(255,255,255,.78)" stroke="rgba(20,33,38,.1)"/>
-  <rect x="348" y="718" width="204" height="156" rx="28" fill="rgba(255,255,255,.86)" stroke="rgba(20,33,38,.08)"/>
-  <text x="450" y="790" text-anchor="middle" class="chip">进群入口</text>
-  <text x="450" y="835" text-anchor="middle" class="muted">${escapeSvg(footer || "长按保存后继续看")}</text>`;
+  return `<rect x="330" y="825" width="240" height="218" rx="30" fill="rgba(255,255,255,.72)" stroke="rgba(20,33,38,.1)"/>
+  <rect x="364" y="878" width="172" height="118" rx="24" fill="rgba(255,255,255,.86)" stroke="rgba(20,33,38,.08)"/>
+  <text x="450" y="930" text-anchor="middle" class="chip">进群入口</text>
+  <text x="450" y="972" text-anchor="middle" class="muted">${escapeSvg(footer || "长按保存后继续看")}</text>`;
 }
 
 function svgTextLines(text, maxChars, maxLines = 3) {
@@ -3628,6 +3888,8 @@ function showShareImageModal(images = []) {
   const modal = $("shareImageModal");
   const list = $("shareImageList");
   if (!modal || !list) return;
+  const title = $("shareImageTitle");
+  if (title) title.textContent = images.length > 2 ? "长按保存三张图" : "长按保存结果图";
   list.innerHTML = images.map((item, index) => `
     <figure>
       <img src="${escapeHtml(item.url)}" alt="结果分享图 ${index + 1}">
@@ -3635,7 +3897,7 @@ function showShareImageModal(images = []) {
     </figure>
   `).join("");
   modal.hidden = false;
-  showSaveToast("三张图已生成，可长按保存");
+  showSaveToast(`${images.length}张图已生成，可长按保存`);
 }
 
 function closeShareImageModal() {
@@ -3648,6 +3910,7 @@ function renderTeamSummary(summary) {
     renderSubtypeTeamSummary(summary);
     return;
   }
+  const hasConclusion = Number(summary.member_count || 0) >= 3;
   document.querySelector("#teamScreen .eyebrow").textContent = "团队九型总图";
   $("teamSummaryTitle").textContent = summary.team.name;
   $("teamSummaryNote").textContent = summary.sample_note;
@@ -3661,19 +3924,30 @@ function renderTeamSummary(summary) {
   $("teamSummaryGrid").innerHTML = `
     <div class="top-type-item">
       <span>团队主导元素</span>
-      <strong>${summary.dominant_elements.map((item) => `${item.element}号`).join(" / ") || "暂无"}</strong>
+      <strong>${hasConclusion ? summary.dominant_elements.map((item) => `${item.element}号`).join(" / ") : "等待样本"}</strong>
     </div>
     <div class="top-type-item">
       <span>团队低位元素</span>
-      <strong>${summary.low_elements.map((item) => `${item.element}号`).join(" / ") || "暂无"}</strong>
+      <strong>${hasConclusion ? summary.low_elements.map((item) => `${item.element}号`).join(" / ") : "满3人生成"}</strong>
     </div>
     <div class="top-type-item">
       <span>分化元素</span>
-      <strong>${summary.split_elements.length ? summary.split_elements.map((item) => `${item.element}号`).join(" / ") : "暂无明显高分化"}</strong>
+      <strong>${hasConclusion ? (summary.split_elements.length ? summary.split_elements.map((item) => `${item.element}号`).join(" / ") : "暂无明显高分化") : "暂不判断"}</strong>
     </div>
   `;
+  if (!hasConclusion) {
+    $("teamEvidenceBars").innerHTML = `
+      <div class="team-empty-state">
+        <strong>已有 ${Number(summary.member_count || 0)}/3 人</strong>
+        <p>先把邀请链接发给成员，满3人后这里会自动生成团队总图。</p>
+      </div>
+    `;
+    return;
+  }
   $("teamEvidenceBars").innerHTML = `
     <div class="evidence-title">团队1-9号证据条</div>
+    <p class="evidence-legend">红=否定 · 黄=不确定 · 绿=确定 · 虚线=50%</p>
+    <p class="team-summary-insight">${escapeHtml(teamMainInsight(summary))}</p>
     ${[1,2,3,4,5,6,7,8,9].map((element) => {
       const item = summary.stats[element] || {};
       return `
@@ -3690,6 +3964,23 @@ function renderTeamSummary(summary) {
       `;
     }).join("")}
   `;
+}
+
+function teamMainInsight(summary) {
+  const dominant = (summary.dominant_elements || []).slice(0, 3).map((item) => Number(item.element)).filter(Boolean);
+  if (!dominant.length) return "先看样本数量，再判断团队倾向。";
+  const words = {
+    1: "标准校准",
+    2: "关系支持",
+    3: "目标推进",
+    4: "真实表达",
+    5: "信息理解",
+    6: "风险验证",
+    7: "可能性探索",
+    8: "边界承担",
+    9: "稳定氛围"
+  };
+  return `这个团队更容易把注意力放在${dominant.map((element) => words[element]).join("、")}上；复盘时先确认共识、卡点和需要被支持的部分。`;
 }
 
 function renderSubtypeTeamSummary(summary) {
@@ -3741,6 +4032,13 @@ function formatDate(value) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
+function formatShortDate(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return `${date.getMonth() + 1}月${date.getDate()}日`;
+}
+
 function formatDateTime(value) {
   if (!value) return "";
   const date = new Date(value);
@@ -3750,6 +4048,11 @@ function formatDateTime(value) {
   const hour = String(date.getHours()).padStart(2, "0");
   const minute = String(date.getMinutes()).padStart(2, "0");
   return `${date.getFullYear()}年${month}月${day}日 ${hour}:${minute}`;
+}
+
+function formatCount(value) {
+  const number = Math.max(0, Math.floor(Number(value) || 0));
+  return number.toLocaleString("zh-CN");
 }
 
 function escapeHtml(value) {

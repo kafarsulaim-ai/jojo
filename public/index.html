@@ -8,7 +8,7 @@
     <link rel="icon" href="/jojo-icon.svg" type="image/svg+xml">
     <link rel="icon" href="/jojo-icon.png" type="image/png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <link rel="stylesheet" href="/styles.css?v=20260523-security-v7">
+    <link rel="stylesheet" href="/styles.css?v=20260523-v12-result-polish">
   </head>
   <body>
     <div class="app-shell">
@@ -61,6 +61,7 @@
           <div class="start-copy">
             <p class="eyebrow" id="startEyebrow">选择测试入口</p>
             <h1>jojo测九型</h1>
+            <p class="home-tested-count" id="homeTestedCount" aria-live="polite"><strong>--</strong><span>人次已测试过</span></p>
             <p class="start-line" id="startLine">先选地图。</p>
 
             <div class="team-invite" id="teamInvite" hidden>
@@ -190,12 +191,12 @@
         </section>
 
         <section class="screen screen-result" id="resultScreen">
-          <section class="share-deck" id="shareDeck" aria-label="三张结果分享卡">
+          <section class="share-deck" id="shareDeck" aria-label="结果分享卡">
             <article class="share-card share-card-primary" id="shareCard" aria-label="结果主卡">
               <div class="share-watermark" id="shareNumber" aria-hidden="true">9</div>
               <div class="share-top">
                 <span class="share-brand"><img src="/jojo-icon.svg" alt="">jojo测九型</span>
-                <span>01 / 03</span>
+                <span>01 / 02</span>
               </div>
               <div class="share-body">
                 <div class="share-core">
@@ -212,15 +213,15 @@
               </div>
             </article>
 
-            <article class="share-card share-card-evidence" id="shareEvidenceCard" aria-label="朋友翻译卡">
+            <article class="share-card share-card-evidence" id="shareEvidenceCard" aria-label="简要解读卡">
               <div class="share-watermark" id="shareEvidenceWatermark" aria-hidden="true">jo</div>
               <div class="share-top">
                 <span class="share-brand"><img src="/jojo-icon.svg" alt="">jojo测九型</span>
-                <span>02 / 03</span>
+                <span>02 / 02</span>
               </div>
               <div class="share-core share-card-stack">
-                <p class="share-label" id="shareEvidenceKicker">朋友翻译卡</p>
-                <h3 id="shareEvidenceTitle">这结果像什么</h3>
+                <p class="share-label" id="shareEvidenceKicker">简要解读</p>
+                <h3 id="shareEvidenceTitle">结果说明</h3>
                 <p id="shareEvidenceLine"></p>
                 <div class="poster-analysis" id="shareEvidenceVisual"></div>
               </div>
@@ -230,14 +231,14 @@
               </div>
             </article>
 
-            <article class="share-card share-card-next" id="shareNextCard" aria-label="我的使用说明卡">
+            <article class="share-card share-card-next" id="shareNextCard" aria-label="下一步卡" hidden>
               <div class="share-watermark" id="shareNextWatermark" aria-hidden="true">go</div>
               <div class="share-top">
                 <span class="share-brand"><img src="/jojo-icon.svg" alt="">jojo测九型</span>
                 <span>03 / 03</span>
               </div>
               <div class="share-core share-card-stack">
-                <p class="share-label" id="shareNextKicker">我的使用说明卡</p>
+                <p class="share-label" id="shareNextKicker">下一步</p>
                 <h3 id="shareNextTitle">靠近方式</h3>
                 <p id="shareNextLine"></p>
                 <div class="poster-qr-block" id="shareNextQr"></div>
@@ -250,7 +251,7 @@
           </section>
 
           <div class="result-actions share-export-actions">
-            <button class="primary-action compact" id="shareSaveButton" type="button">保存三张图片</button>
+            <button class="primary-action compact" id="shareSaveButton" type="button">保存结果图片</button>
           </div>
 
           <nav class="result-utility-nav" aria-label="结果页入口">
@@ -341,7 +342,7 @@
             <p class="start-line" id="combinedNote"></p>
             <div id="combinedContent"></div>
             <div class="result-actions">
-              <button class="primary-action compact" id="combinedPrintButton" type="button">保存三张图片</button>
+              <button class="primary-action compact" id="combinedPrintButton" type="button">保存结果图片</button>
               <button class="ghost-action compact" id="combinedBackButton" type="button">返回记录</button>
               <span class="quiet-code" id="combinedCodes"></span>
             </div>
@@ -422,7 +423,7 @@
       <div class="modal-panel share-image-panel" role="dialog" aria-modal="true" aria-labelledby="shareImageTitle">
         <span class="modal-badge marker-logo" aria-hidden="true"><img src="/jojo-icon.svg" alt=""></span>
         <span class="modal-kicker">图片已生成</span>
-        <h2 id="shareImageTitle">长按保存三张图</h2>
+        <h2 id="shareImageTitle">长按保存结果图</h2>
         <div class="share-image-list" id="shareImageList"></div>
         <button class="ghost-action compact" id="shareImageCloseButton" type="button">关闭</button>
       </div>
@@ -485,6 +486,6 @@
       </div>
     </div>
 
-    <script src="/app.js?v=20260523-security-v7"></script>
+    <script src="/app.js?v=20260523-v12-result-polish"></script>
   </body>
 </html>

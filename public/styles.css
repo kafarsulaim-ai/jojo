@@ -2532,6 +2532,12 @@ select:focus {
   padding: 14px 0 30px;
 }
 
+.main-only-share-deck .share-card-primary .share-body {
+  grid-template-rows: auto 1fr;
+  gap: 14px;
+  padding: 16px 0 34px;
+}
+
 .share-core {
   min-width: 0;
 }
@@ -2551,6 +2557,12 @@ select:focus {
   line-height: 1.08;
 }
 
+.main-only-share-deck .share-card-primary .share-body h3 {
+  max-width: 82%;
+  font-size: clamp(25px, 3vw, 34px);
+  line-height: 1.12;
+}
+
 .share-body p {
   max-width: 360px;
   color: var(--soft-ink);
@@ -2561,6 +2573,12 @@ select:focus {
   max-width: 92%;
   font-size: 13px;
   line-height: 1.48;
+}
+
+.main-only-share-deck .share-card-primary .share-body p {
+  max-width: 88%;
+  font-size: 12.5px;
+  line-height: 1.52;
 }
 
 .share-body p:empty,
@@ -2584,17 +2602,57 @@ select:focus {
   gap: 3px;
 }
 
+.identity-main-only-visual {
+  display: grid;
+  align-self: stretch;
+  gap: 8px;
+  min-height: 0;
+  padding: 11px 12px 12px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(20, 33, 38, 0.07);
+  border-radius: 8px;
+}
+
+.main-only-visual-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.main-only-visual-head strong {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 920;
+}
+
+.main-only-visual-head span {
+  color: rgba(52, 73, 81, 0.58);
+  font-size: 9px;
+  font-weight: 820;
+  white-space: nowrap;
+}
+
 .identity-main-only-bars .poster-main-bars {
-  gap: 5px;
+  gap: 6px;
   max-width: 100%;
 }
 
 .identity-main-only-bars .poster-main-track {
-  height: 10px;
+  height: 11px;
 }
 
 .identity-main-only-bars .poster-main-legend {
-  margin-bottom: 2px;
+  display: none;
+}
+
+.identity-main-only-bars .poster-main-row {
+  grid-template-columns: 17px minmax(0, 1fr);
+  gap: 7px;
+}
+
+.identity-main-only-bars .poster-main-row > span {
+  font-size: 10.5px;
 }
 
 .identity-main-bars .poster-main-track {
@@ -2752,6 +2810,11 @@ select:focus {
   margin: 0;
   font-size: clamp(25px, 3vw, 37px);
   line-height: 1.08;
+}
+
+.share-card-evidence .share-card-stack h3 {
+  font-size: clamp(24px, 2.8vw, 34px);
+  line-height: 1.16;
 }
 
 .share-card-stack > p {
@@ -5375,6 +5438,11 @@ select:focus {
     gap: 7px;
   }
 
+  .main-only-share-deck .share-card-primary .share-body {
+    gap: 10px;
+    padding: 12px 0 34px;
+  }
+
   .share-watermark {
     right: 10px;
     top: 8px;
@@ -5386,7 +5454,18 @@ select:focus {
   }
 
   .share-card-primary .share-body h3 {
-    font-size: 29px;
+    font-size: 28px;
+  }
+
+  .main-only-share-deck .share-card-primary .share-body h3 {
+    max-width: 86%;
+    font-size: 27px;
+  }
+
+  .main-only-share-deck .share-card-primary .share-body p {
+    max-width: 96%;
+    font-size: 12px;
+    line-height: 1.42;
   }
 
   .share-body p {
@@ -5406,7 +5485,20 @@ select:focus {
   }
 
   .identity-main-only-bars .poster-main-track {
-    height: 9px;
+    height: 10px;
+  }
+
+  .identity-main-only-visual {
+    gap: 7px;
+    padding: 9px 10px 10px;
+  }
+
+  .main-only-visual-head strong {
+    font-size: 12px;
+  }
+
+  .main-only-visual-head span {
+    font-size: 8px;
   }
 
   .identity-subtype-only {
@@ -5471,6 +5563,10 @@ select:focus {
 
   .share-card-stack h3 {
     font-size: 25px;
+  }
+
+  .share-card-evidence .share-card-stack h3 {
+    font-size: 23px;
   }
 
   .poster-evidence .evidence-row,

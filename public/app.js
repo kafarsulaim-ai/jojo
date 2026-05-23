@@ -1,6 +1,6 @@
 const TYPE_NAMES = {
   1: "人间校准仪",
-  2: "爱意外卖员",
+  2: "心意接线员",
   3: "人生项目经理",
   4: "情绪收藏家",
   5: "信息囤积者",
@@ -2889,20 +2889,21 @@ function renderShareDeck(result, bundle = null) {
   const mainOnly = Boolean(main && !hasSubtype);
   const topText = main
     ? (main.top_types || []).slice(0, 3).map((item) => `${item.element}号`).join(" / ")
-    : "主型待补";
+    : "主型可补";
   const subtypeRank = subtypeRankText(subtype);
 
+  $("shareDeck")?.classList.toggle("main-only-share-deck", mainOnly);
   setShareDeckType(cardType);
   $("shareNumber").textContent = main ? `${primary}` : "sx";
   $("hiddenCode").textContent = `ref ${code}`;
-  $("sharePrimaryKicker").textContent = mainOnly ? "本次主位" : "身份卡";
+  $("sharePrimaryKicker").textContent = mainOnly ? "主型结果" : "身份卡";
   $("shareTitle").textContent = mainOnly ? mainOnlyTitle(main) : identity;
   $("shareLine").textContent = mainOnly
-    ? "这次先看主型分布；副型可以之后补充，不影响本次主结果。"
+    ? "本次结果先以主型为主；副型像补光，之后可加测，不影响这张主图。"
     : (main ? "" : "副型先看排序，主型补齐后更完整。");
   $("shareChips").innerHTML = identityChips(deck, code, { mainOnly }).filter((text) => !text.startsWith("ref ")).map((text) => `<span>${escapeHtml(text)}</span>`).join("");
   $("shareMiniMap").innerHTML = identityVisualHtml(deck);
-  $("shareTopTypes").textContent = main ? `前三 ${topText.replace(/号/g, "")}${hasSubtype ? ` · ${subtypeRank.split(" / ")[0]}` : ""}` : `副型 ${subtypeRank.split(" / ").slice(0, 2).join(" / ")}`;
+  $("shareTopTypes").textContent = main ? `${mainOnly ? "本次主型分布" : "前三"} ${topText.replace(/号/g, "")}${hasSubtype ? ` · ${subtypeRank.split(" / ")[0]}` : ""}` : `副型 ${subtypeRank.split(" / ").slice(0, 2).join(" / ")}`;
 
   $("shareEvidenceTitle").textContent = translation.friend;
   $("shareEvidenceKicker").textContent = "朋友翻译卡";
@@ -2964,7 +2965,7 @@ function mainTypeCode(main) {
 
 function mainOnlyTitle(main) {
   const primary = getMainPrimary(main);
-  const typeName = primary ? (main?.share?.title || TYPE_NAMES[primary] || `${primary}号`) : "主型结果";
+  const typeName = primary ? (TYPE_NAMES[primary] || main?.share?.title || `${primary}号`) : "主型结果";
   return `${mainTypeCode(main)} ${typeName}`;
 }
 
@@ -2972,12 +2973,12 @@ function identityTitle(bundle) {
   const main = bundle.main;
   const subtype = bundle.subtype;
   const primary = getMainPrimary(main);
-  const typeName = primary ? (main?.share?.title || TYPE_NAMES[primary] || `${primary}号`) : "";
+  const typeName = primary ? (TYPE_NAMES[primary] || main?.share?.title || `${primary}号`) : "";
   const typeCode = primary ? mainTypeCode(main) : "副型待拼图";
   const topSubtype = getSubtypeTop(subtype);
   const subtypeName = topSubtype
     ? `${SUBTYPE_SHORT_NAMES[topSubtype.key] || SUBTYPE_NAMES[topSubtype.key] || topSubtype.label}优先`
-    : "副型待补";
+    : "副型可补";
   if (!primary) {
     return `我是 ${subtypeName}的注意力入口`;
   }
@@ -2992,12 +2993,13 @@ function identityChips(bundle, code, options = {}) {
   if (options.mainOnly && primary) {
     return [
       `主型 ${mainTypeCode(main)}`,
-      "本次主位",
+      "本次主型",
+      "副型可补",
       `ref ${code}`
     ];
   }
   return [
-    primary ? `主型 ${mainTypeCode(main)}` : "主型待测",
+    primary ? `主型 ${mainTypeCode(main)}` : "主型可补",
     topSubtype ? `${SUBTYPE_SHORT_NAMES[topSubtype.key] || SUBTYPE_NAMES[topSubtype.key] || topSubtype.label}优先` : "",
     `ref ${code}`
   ].filter(Boolean);
@@ -3005,7 +3007,7 @@ function identityChips(bundle, code, options = {}) {
 
 function subtypeRankText(subtype) {
   const ranked = subtype?.subtype_ranked || [];
-  if (!ranked.length) return "待补";
+  if (!ranked.length) return "可补";
   return ranked.slice(0, 3).map((item) => `${SUBTYPE_NAMES[item.key] || item.label}${Math.round(item.percent || 0)}%`).join(" / ");
 }
 
@@ -3015,7 +3017,13 @@ function identityVisualHtml(bundle) {
   if (main) {
     if (!isPersonalSubtypeResult(subtype)) {
       return `
-        <div class="identity-main-only-bars">${mainResultDistributionHtml(main)}</div>
+        <div class="identity-main-only-visual">
+          <div class="main-only-visual-head">
+            <strong>主型分布</strong>
+            <span>红否 · 黄不确定 · 绿是</span>
+          </div>
+          <div class="identity-main-only-bars">${mainResultDistributionHtml(main)}</div>
+        </div>
       `;
     }
     const subtypeBlock = `<div class="identity-subtype-triangle">${subtypeTriangleHtml(subtype)}</div>`;
@@ -3041,8 +3049,8 @@ function subtypeTriangleHtml(subtype) {
   if (!ranked.length) {
     return `
       <div class="subtype-triangle-empty">
-        <strong>副型待补</strong>
-        <span>补测后显示入口排序</span>
+        <strong>副型可补</strong>
+        <span>加测后显示入口排序</span>
       </div>
     `;
   }
@@ -3146,6 +3154,7 @@ function renderResultUtilities(result) {
 function renderAnonymousTeamSubtypeShareDeck(result) {
   const code = result.verification_code || "------";
   const teamName = result.team?.name || "团队";
+  $("shareDeck")?.classList.remove("main-only-share-deck");
   $("shareCard").dataset.type = 6;
   $("shareNumber").textContent = "team";
   $("hiddenCode").textContent = `ref ${code}`;
@@ -3217,8 +3226,8 @@ function getTeamOrGroupQrHtml(result) {
 function groupQrFallbackHtml(code) {
   return `
     <div class="poster-qr-empty">
-      <span>副型待测</span>
-      <p>先保留主型结果，进群后可找老师继续补副型</p>
+      <span>副型可补</span>
+      <p>本次主型结果已生成，之后可加测副型把入口看得更细</p>
       <small>ref ${escapeHtml(code)}</small>
     </div>
   `;
@@ -3399,9 +3408,12 @@ function sharePosterSvgFromCard(card, index, total) {
   const rows = posterRowsFromCard(card);
   const blocks = posterBlocksFromCard(card);
   const qr = card.querySelector(".poster-qr-block") ? posterQrSvgBlock(footer) : "";
-  const titleLines = svgTextLines(title, index === 0 ? 12 : 11, 3);
+  const isLongTitle = Array.from(title).length > 24;
+  const titleSize = index === 0 ? 58 : (isLongTitle ? 45 : 52);
+  const titleStep = index === 0 ? 70 : (isLongTitle ? 56 : 64);
+  const titleLines = svgTextLines(title, index === 0 ? 12 : (isLongTitle ? 13 : 11), 3);
   const bodyLines = svgTextLines(body, 22, 2);
-  const yAfterTitle = 242 + titleLines.length * 70;
+  const yAfterTitle = 242 + titleLines.length * titleStep;
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
   <defs>
@@ -3420,7 +3432,7 @@ function sharePosterSvgFromCard(card, index, total) {
       .brand { fill: #7c938d; font-size: 25px; font-weight: 900; }
       .page { fill: rgba(20,33,38,.42); font-size: 28px; font-weight: 900; }
       .kicker { fill: ${palette.main}; font-size: 31px; font-weight: 930; }
-      .title { fill: #153a3e; font-size: ${index === 0 ? 58 : 52}px; font-weight: 950; }
+      .title { fill: #153a3e; font-size: ${titleSize}px; font-weight: 950; }
       .body { fill: #38666a; font-size: 28px; font-weight: 720; }
       .chip { fill: #153a3e; font-size: 23px; font-weight: 880; }
       .muted { fill: rgba(52,73,81,.56); font-size: 22px; font-weight: 850; }
@@ -3437,7 +3449,7 @@ function sharePosterSvgFromCard(card, index, total) {
   <text x="760" y="85" class="page">0${index + 1} / 0${total}</text>
   <text x="615" y="246" fill="rgba(20,33,38,.055)" font-size="190" font-weight="950">${escapeSvg(card.querySelector(".share-watermark")?.textContent.trim() || "")}</text>
   <text x="64" y="174" class="kicker">${escapeSvg(label)}</text>
-  ${titleLines.map((line, lineIndex) => `<text x="64" y="${258 + lineIndex * 70}" class="title">${escapeSvg(line)}</text>`).join("")}
+  ${titleLines.map((line, lineIndex) => `<text x="64" y="${258 + lineIndex * titleStep}" class="title">${escapeSvg(line)}</text>`).join("")}
   ${bodyLines.map((line, lineIndex) => `<text x="64" y="${yAfterTitle + 20 + lineIndex * 40}" class="body">${escapeSvg(line)}</text>`).join("")}
   ${chips.map((chip, chipIndex) => {
     const x = 64 + chipIndex * 172;

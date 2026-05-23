@@ -314,6 +314,8 @@ document.addEventListener("DOMContentLoaded", () => {
   $("resumeDiscardButton").addEventListener("click", discardDraft);
   $("modalContinue").addEventListener("click", closeEncouragement);
   $("markerSkipButton").addEventListener("click", skipRecoveryMarker);
+  $("markerResumeButton").addEventListener("click", resumeFromRecoveryMarker);
+  $("markerRestartButton").addEventListener("click", restartFromRecoveryMarker);
   $("teamCopyInviteButton").addEventListener("click", copyCreatedTeamInvite);
   $("teamStartTestButton").addEventListener("click", startCreatedTeamTest);
   $("teamReuseConfirmButton").addEventListener("click", confirmReuseTeamMain);
@@ -528,7 +530,7 @@ function getSavedDraft() {
     const draft = JSON.parse(raw);
     const updatedAt = new Date(draft.updatedAt || 0).getTime();
     const expired = !updatedAt || Date.now() - updatedAt > DRAFT_TTL_MS;
-    const valid = draft?.session?.questions?.length && typeof draft.answers === "object";
+    const valid = draft?.session?.questions?.length && draft.session.session_token && typeof draft.answers === "object";
     if (expired || !valid) {
       localStorage.removeItem(DRAFT_KEY);
       return null;
@@ -545,7 +547,7 @@ function renderResumeCard() {
   if (!card) return;
   const draft = getSavedDraft();
   const historyActive = screens.history?.classList.contains("active");
-  if (!historyActive || !hasHistoryIdentity() || !draft) {
+  if (!historyActive || !draft) {
     card.hidden = true;
     return;
   }
@@ -696,6 +698,7 @@ async function openHistory() {
   await ensureGlobalIdentity(2);
   if (!hasHistoryIdentity()) {
     renderHistory([]);
+    renderResumeCard();
     updateWechatStatus();
     return;
   }
@@ -730,6 +733,7 @@ async function openHistory() {
   } catch {
     state.historyHasResults = false;
     renderHistory([]);
+    renderResumeCard();
     if (hasHistoryIdentity()) {
       $("wechatPanel").hidden = true;
       return;
@@ -1509,7 +1513,43 @@ async function loadTeamSummary(code) {
 async function startTest(event) {
   event.preventDefault();
   unlockAudio();
+  if (shouldPromptDraftResume()) {
+    showDraftResumeMarker();
+    return;
+  }
+  if (shouldPromptRecoveryMarker()) {
+    showRecoveryMarker();
+    return;
+  }
   await beginTest();
+}
+
+function shouldPromptDraftResume() {
+  const draft = getSavedDraft();
+  if (!draft) return false;
+  const draftMode = draft.mode || draft.session?.mode || "";
+  const currentMode = $("modeInput").value || state.mode;
+  const draftTeamCode = draft.team?.code || draft.session?.team?.code || "";
+  const currentTeamCode = $("joinTeamInput").checked ? $("teamCodeInput").value.trim() : "";
+  return Boolean(draftMode === currentMode && draftTeamCode === currentTeamCode);
+}
+
+function showDraftResumeMarker() {
+  const draft = getSavedDraft();
+  const total = draft?.session?.questions?.length || 0;
+  const answered = Object.keys(draft?.answers || {}).length;
+  $("recoveryKicker").hidden = false;
+  $("recoveryKicker").textContent = "上次答题";
+  $("recoveryTitle").textContent = "继续上次";
+  $("recoveryBody").hidden = false;
+  $("recoveryBody").textContent = `${answered}/${total} 已保存`;
+  $("markerWechatButton").hidden = true;
+  $("markerSkipButton").hidden = true;
+  $("markerResumeButton").hidden = false;
+  $("markerRestartButton").hidden = false;
+  $("recoveryModal").dataset.mode = "resume";
+  $("recoveryModal").hidden = false;
+  trackEvent("draft_resume_prompt", { mode: state.mode, answered, total });
 }
 
 function shouldPromptRecoveryMarker() {
@@ -1522,10 +1562,14 @@ function shouldPromptRecoveryMarker() {
 
 function showRecoveryMarker() {
   const modeLabel = modeShortLabel(state.mode, MODE_COPY[state.mode]?.eyebrow);
+  $("recoveryModal").dataset.mode = "login";
   $("recoveryKicker").textContent = `${modeLabel}`;
   $("recoveryTitle").textContent = "选择进入方式";
   $("recoveryBody").hidden = true;
   $("recoveryBody").textContent = "";
+  $("markerSkipButton").hidden = false;
+  $("markerResumeButton").hidden = true;
+  $("markerRestartButton").hidden = true;
   updateWechatStatus();
   $("recoveryModal").hidden = false;
   trackEvent("recovery_marker_prompt", { mode: state.mode });
@@ -1536,6 +1580,26 @@ async function skipRecoveryMarker() {
   state.recoveryMarkerConfirmed = true;
   $("recoveryModal").hidden = true;
   trackEvent("recovery_marker_skipped", { mode: state.mode });
+  await beginTest();
+}
+
+function resumeFromRecoveryMarker() {
+  $("recoveryModal").hidden = true;
+  resumeDraft();
+}
+
+async function restartFromRecoveryMarker() {
+  const draft = getSavedDraft();
+  localStorage.removeItem(DRAFT_KEY);
+  $("recoveryModal").hidden = true;
+  trackEvent("draft_resume_restart", {
+    mode: draft?.mode || state.mode,
+    answered: Object.keys(draft?.answers || {}).length
+  });
+  if (shouldPromptRecoveryMarker()) {
+    showRecoveryMarker();
+    return;
+  }
   await beginTest();
 }
 
@@ -1733,7 +1797,10 @@ function onAnswerClick(event) {
 
   if (encouragement && !state.shownMilestones.has(encouragement.at)) {
     state.shownMilestones.add(encouragement.at);
-    window.setTimeout(() => showEncouragement(encouragement, next), 80);
+    window.setTimeout(() => {
+      clearAnswerButtons(true);
+      showEncouragement(encouragement, next);
+    }, 80);
   } else {
     window.setTimeout(next, 80);
   }
@@ -2320,6 +2387,7 @@ async function submitResult() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         session_id: state.session.session_id,
+        session_token: state.session.session_token,
         mode: state.session.mode || state.mode,
         team_code: state.team?.code || "",
         device_token: state.deviceToken,

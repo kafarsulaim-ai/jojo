@@ -34,6 +34,7 @@ html {
   color: var(--ink);
   font-family: "SF Pro Rounded", "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   letter-spacing: 0;
+  overflow-x: hidden;
   touch-action: manipulation;
   -webkit-text-size-adjust: 100%;
 }
@@ -823,11 +824,13 @@ select:focus {
 .screen-test {
   min-height: calc(100svh - 52px);
   padding: clamp(14px, 4vw, 34px) clamp(14px, 5vw, 42px);
+  overflow-x: clip;
 }
 
 .question-shell {
   width: min(760px, 100%);
   margin: 0 auto;
+  overflow-x: clip;
 }
 
 .question-meta,
@@ -3726,6 +3729,16 @@ select:focus {
   line-height: 1.48;
 }
 
+#recoveryModal[data-mode="resume"] .marker-panel {
+  width: min(300px, 100%);
+}
+
+#recoveryModal[data-mode="resume"] .marker-panel p {
+  margin-bottom: 13px;
+  color: var(--muted);
+  font-weight: 820;
+}
+
 .marker-actions {
   display: grid;
   grid-template-columns: 1fr;
@@ -5036,6 +5049,7 @@ select:focus {
 
   .question-panel {
     padding: 19px 17px 18px;
+    max-width: 100%;
   }
 
   .question-panel h2 {

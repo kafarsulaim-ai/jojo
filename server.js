@@ -26,6 +26,7 @@ const ADMIN_ACCOUNTS_FILE = path.join(DATA_DIR, "admin_accounts.json");
 const ADMIN_INVITES_FILE = path.join(DATA_DIR, "admin_invites.json");
 const ADMIN_SESSIONS_FILE = path.join(DATA_DIR, "admin_sessions.json");
 const SITE_SETTINGS_FILE = path.join(DATA_DIR, "site_settings.json");
+const SESSION_SECRET_FILE = path.join(DATA_DIR, "session_secret.txt");
 const CONTENT_DIR = path.join(APP_ROOT, "content");
 const LOCAL_QUESTION_MD = path.join(CONTENT_DIR, "main_questions.md");
 const LEGACY_QUESTION_MD = path.resolve(APP_ROOT, "../../docs/enneagram_kb/28_九型人格地图270题母题库_v2.md");
@@ -60,6 +61,7 @@ const DEFAULT_SITE_SETTINGS = {
   updated_at: ""
 };
 const MAX_IMAGE_SOURCE_LENGTH = 1_900_000;
+const TEST_SESSION_TTL_MS = 8 * 24 * 60 * 60 * 1000;
 
 const SHARE_NAMES = {
   1: { name: "人间校准仪", line: "不是我想管，是我真的看不得事情歪在那里。" },
@@ -282,6 +284,7 @@ function ensureDataFiles() {
   if (!fs.existsSync(ADMIN_ACCOUNTS_FILE)) fs.writeFileSync(ADMIN_ACCOUNTS_FILE, "[]", "utf8");
   if (!fs.existsSync(ADMIN_INVITES_FILE)) fs.writeFileSync(ADMIN_INVITES_FILE, "[]", "utf8");
   if (!fs.existsSync(ADMIN_SESSIONS_FILE)) fs.writeFileSync(ADMIN_SESSIONS_FILE, "[]", "utf8");
+  if (!fs.existsSync(SESSION_SECRET_FILE)) fs.writeFileSync(SESSION_SECRET_FILE, crypto.randomBytes(32).toString("base64url"), { encoding: "utf8", mode: 0o600 });
 }
 
 function readSiteSettings() {
@@ -423,6 +426,82 @@ function makeEncouragements(total, mode = "main90") {
   return cards;
 }
 
+function sessionSigningSecret() {
+  ensureDataFiles();
+  let secret = "";
+  try {
+    secret = fs.readFileSync(SESSION_SECRET_FILE, "utf8").trim();
+  } catch {
+    secret = "";
+  }
+  if (!secret) {
+    secret = crypto.randomBytes(32).toString("base64url");
+    fs.writeFileSync(SESSION_SECRET_FILE, secret, { encoding: "utf8", mode: 0o600 });
+  }
+  return secret;
+}
+
+function sessionTokenPayload(session) {
+  return {
+    session_id: session.session_id,
+    mode: session.mode,
+    team_code: session.team?.code || "",
+    question_ids: (session.questions || []).map((question) => question.id),
+    exp: Date.now() + TEST_SESSION_TTL_MS
+  };
+}
+
+function signSessionPayload(payload) {
+  const encoded = toBase64Url(Buffer.from(JSON.stringify(payload), "utf8"));
+  const signature = crypto.createHmac("sha256", sessionSigningSecret()).update(encoded).digest("base64url");
+  return `${encoded}.${signature}`;
+}
+
+function attachSessionToken(session) {
+  return {
+    ...session,
+    session_token: signSessionPayload(sessionTokenPayload(session))
+  };
+}
+
+function verifySessionToken(token) {
+  if (typeof token !== "string") return null;
+  const [encoded, signature] = token.split(".");
+  if (!encoded || !signature) return null;
+  const expected = crypto.createHmac("sha256", sessionSigningSecret()).update(encoded).digest("base64url");
+  const actualBuffer = Buffer.from(signature);
+  const expectedBuffer = Buffer.from(expected);
+  if (actualBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(actualBuffer, expectedBuffer)) return null;
+  try {
+    const payload = JSON.parse(fromBase64Url(encoded).toString("utf8"));
+    if (!payload || Date.now() > Number(payload.exp || 0)) return null;
+    if (!Array.isArray(payload.question_ids) || !payload.question_ids.length) return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+function validateSessionSubmission(payload) {
+  const claims = verifySessionToken(payload.session_token);
+  if (!claims) {
+    const err = new Error("测试会话已失效，请重新开始");
+    err.status = 400;
+    throw err;
+  }
+  const mode = normalizeMode(payload.mode);
+  const teamCode = cleanTeamCode(payload.team_code || "");
+  const answerIds = Array.isArray(payload.answers) ? payload.answers.map((item) => cleanText(item.question_id || "", 80)) : [];
+  const expectedIds = claims.question_ids.map((id) => cleanText(id || "", 80));
+  const matchesQuestions = answerIds.length === expectedIds.length && answerIds.every((id, index) => id === expectedIds[index]);
+  if (payload.session_id !== claims.session_id || mode !== claims.mode || teamCode !== claims.team_code || !matchesQuestions) {
+    const err = new Error("测试题目与会话不匹配，请重新开始");
+    err.status = 400;
+    throw err;
+  }
+  return claims;
+}
+
 function selectMainQuestions(mode) {
   const config = MAIN_SELECTION[mode] || MAIN_SELECTION.main90;
   const selected = [];
@@ -465,7 +544,7 @@ function makeSession(options = {}) {
 
   const selected = selectMainQuestions(mode);
   const ordered = softenOrder(shuffle(selected));
-  return {
+  const session = {
     session_id: `S${Date.now().toString(36).toUpperCase()}${crypto.randomBytes(3).toString("hex").toUpperCase()}`,
     mode,
     mode_label: MODE_LABELS[mode],
@@ -479,6 +558,7 @@ function makeSession(options = {}) {
       text: q.text
     }))
   };
+  return attachSessionToken(session);
 }
 
 function makeSubtypeSession(mode, options = {}) {
@@ -486,7 +566,7 @@ function makeSubtypeSession(mode, options = {}) {
   if (!bank) throw new Error(`Unknown subtype mode: ${mode}`);
   const selected = selectSubtypeQuestions(mode, bank.questions);
   const ordered = shuffle(selected);
-  return {
+  const session = {
     session_id: `S${Date.now().toString(36).toUpperCase()}${crypto.randomBytes(3).toString("hex").toUpperCase()}`,
     mode,
     mode_label: MODE_LABELS[mode],
@@ -503,6 +583,7 @@ function makeSubtypeSession(mode, options = {}) {
       text: q.text
     }))
   };
+  return attachSessionToken(session);
 }
 
 function selectSubtypeQuestions(mode, questions) {
@@ -537,6 +618,7 @@ function percentile(value, max) {
 }
 
 function computeResult(payload, req = null) {
+  validateSessionSubmission(payload);
   const mode = normalizeMode(payload.mode);
   if (SUBTYPE_MODES.has(mode)) return computeSubtypeResult(payload, mode, req);
 
@@ -4103,6 +4185,7 @@ const server = http.createServer(async (req, res) => {
         }
         return sendJson(res, 401, { error: "unauthorized" });
       }
+      if (!account) return sendJson(res, 401, { error: "unauthorized" });
       return sendJson(res, 200, {
         account: publicAdminSelfAccount(account),
         permissions: publicAdminPermissions(account)
@@ -4161,7 +4244,13 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === "POST" && reqUrl.pathname === "/api/admin/auth/logout") {
       revokeAdminSession(req);
-      return sendJson(res, 200, { ok: true }, { "Set-Cookie": [clearAdminCookie(req), buildAdminLogoutCookie(req)] });
+      return sendJson(res, 200, { ok: true }, {
+        "Set-Cookie": [
+          clearAdminCookie(req),
+          buildAdminLogoutCookie(req),
+          userCookieHeader("", req, 0)
+        ]
+      });
     }
     if (req.method === "GET" && reqUrl.pathname === "/api/admin/dashboard") {
       const account = requireAdmin(req, reqUrl);

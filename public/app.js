@@ -190,6 +190,13 @@ const GROUP_LINES = [
   "收尾别硬撑，按最近的自己来"
 ];
 
+const RESULT_FEEDBACK_COPY = {
+  fit: "收到。这个“挺像”，会帮助jojo继续校准。",
+  unsure: "收到。拿不准也很正常，可以带着编号找老师复核。"
+};
+
+const SHARE_ASSET_CACHE = new Map();
+
 const INFO_PAGES = {
   method: {
     route: "/method",
@@ -341,6 +348,7 @@ document.addEventListener("DOMContentLoaded", () => {
   byId("resultTeamButton")?.addEventListener("click", openResultTeamEntry);
   byId("resultHistoryButton")?.addEventListener("click", openHistory);
   byId("resultGroupChatButton")?.addEventListener("click", openGroupChatModal);
+  byId("resultFeedback")?.addEventListener("click", onResultFeedback);
   $("methodButton").addEventListener("click", () => showInfo("method"));
   $("calibrationButton").addEventListener("click", () => showInfo("calibration"));
   $("noticeButton").addEventListener("click", () => showInfo("notice"));
@@ -3030,6 +3038,19 @@ function renderShareDeck(result, bundle = null) {
   $("shareNextCard").hidden = true;
   updateShareCardPagination($("resultScreen"));
   renderResultUtilities(result);
+  resetResultFeedback();
+}
+
+function resetResultFeedback() {
+  const holder = byId("resultFeedback");
+  if (!holder) return;
+  holder.classList.remove("answered");
+  const text = holder.querySelector("span");
+  if (text) text.textContent = "这个结果像你吗？";
+  holder.querySelectorAll("button[data-feedback]").forEach((item) => {
+    item.disabled = false;
+    item.classList.remove("selected");
+  });
 }
 
 function updateShareCardPagination(root = document) {
@@ -3146,7 +3167,8 @@ function resultOverviewLine(bundle) {
     return `主型看长期动机，副型看注意力入口。本次副型前两项为 ${SUBTYPE_NAMES[first?.key] || first?.label || "待确认"}${second ? ` / ${SUBTYPE_NAMES[second.key] || second.label}` : ""}。`;
   }
   if (main) {
-    return TYPE_RESULT_LINES[primary] || "本次先呈现主型分布；副型可之后补充，不影响主型结果查看。";
+    const line = TYPE_RESULT_LINES[primary] || "本次先呈现主型分布。";
+    return `${line} 副型之后可补，本次先看主位。`;
   }
   const ranked = subtype?.subtype_ranked || [];
   if (ranked.length) {
@@ -3184,7 +3206,7 @@ function briefAnalysisTitle(bundle) {
 
 function briefAnalysisLine(bundle) {
   if (bundle.main && bundle.subtype) return "网页只做有限解读，真正精准的部分要结合你的真实场景。";
-  if (bundle.main) return "先看倾向，不急着给自己贴死标签。";
+  if (bundle.main) return "先看主位和分布，不急着把自己贴死。";
   return "副型用于补充主型，不建议单独定论。";
 }
 
@@ -3233,7 +3255,7 @@ function teacherCtaHtml(result) {
     <div class="teacher-cta-card">
       <div>
         <strong>想看得更准</strong>
-        <span>把编号发给老师，结合真实经历、关系和职场场景复核，会比自动报告更匹配。</span>
+        <span>截图或发编号给老师，结合真实经历、关系和职场场景复核，会比自动结果更匹配。</span>
       </div>
       <em>ref ${escapeHtml(code)}</em>
     </div>
@@ -3452,8 +3474,28 @@ function renderResultUtilities(result) {
   if (teamButton) {
     const hasTeam = Boolean(result?.team?.code || state.team?.code || getRecentLocalResults({ maxAgeMs: TEN_DAYS_MS }).some((item) => item.team?.code));
     teamButton.classList.toggle("muted", !hasTeam);
-    teamButton.textContent = hasTeam ? "团队测试结果查看" : "团队测试结果查看";
+    teamButton.textContent = "团队结果";
   }
+}
+
+function onResultFeedback(event) {
+  const button = event.target.closest("button[data-feedback]");
+  if (!button || button.disabled) return;
+  const value = button.dataset.feedback;
+  document.querySelectorAll("#resultFeedback button[data-feedback]").forEach((item) => {
+    item.disabled = true;
+    item.classList.toggle("selected", item === button);
+  });
+  const holder = $("resultFeedback");
+  const text = holder?.querySelector("span");
+  if (holder) holder.classList.add("answered");
+  if (text) text.textContent = RESULT_FEEDBACK_COPY[value] || "收到反馈，谢谢你。";
+  trackEvent("result_feedback", {
+    value,
+    code: state.result?.verification_code || "",
+    test_mode: state.result?.test_mode || "",
+    result_kind: isSubtypeResult(state.result) ? "subtype" : "main"
+  }, { keepalive: true });
 }
 
 function renderAnonymousTeamSubtypeShareDeck(result) {
@@ -3502,6 +3544,7 @@ function renderAnonymousTeamSubtypeShareDeck(result) {
   $("shareNextCard").dataset.type = 6;
   $("shareNextCard").hidden = false;
   updateShareCardPagination($("resultScreen"));
+  resetResultFeedback();
 }
 
 function getGroupQrHtml(result) {
@@ -3685,7 +3728,13 @@ async function saveVisibleShareCards(scope = "result") {
 }
 
 async function cardToShareImage(card, index, total) {
-  const svg = sharePosterSvgFromCard(card, index, total);
+  let logoDataUrl = "";
+  try {
+    logoDataUrl = await loadShareAssetDataUrl("/jojo-logo.png");
+  } catch {
+    logoDataUrl = "";
+  }
+  const svg = sharePosterSvgFromCard(card, index, total, { logoDataUrl });
   const dataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
   const image = new Image();
   image.decoding = "sync";
@@ -3704,9 +3753,27 @@ async function cardToShareImage(card, index, total) {
   return canvas.toDataURL("image/png", 0.96);
 }
 
-function sharePosterSvgFromCard(card, index, total) {
+async function loadShareAssetDataUrl(src) {
+  if (SHARE_ASSET_CACHE.has(src)) return SHARE_ASSET_CACHE.get(src);
+  const promise = fetch(src, { cache: "force-cache" })
+    .then((response) => {
+      if (!response.ok) throw new Error("asset_failed");
+      return response.blob();
+    })
+    .then((blob) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(reader.error || new Error("asset_read_failed"));
+      reader.readAsDataURL(blob);
+    }));
+  SHARE_ASSET_CACHE.set(src, promise);
+  return promise;
+}
+
+function sharePosterSvgFromCard(card, index, total, options = {}) {
   const type = Number(card.dataset.type || state.result?.share?.primary_type || getMainPrimary(state.result) || 6);
   const palette = posterPalette(type);
+  const logoDataUrl = options.logoDataUrl || "";
   const label = card.querySelector(".share-label")?.textContent.trim() || `0${index + 1} / 0${total}`;
   const title = card.querySelector("h3")?.textContent.trim() || "jojo测九型";
   const body = card.querySelector(".share-core > p:not(.share-label), .share-body p:not(.share-label)")?.textContent.trim() || "";
@@ -3723,6 +3790,9 @@ function sharePosterSvgFromCard(card, index, total) {
   const bodyLines = svgTextLines(body, 22, 2);
   const yAfterTitle = 242 + titleLines.length * titleStep;
   const blockStartY = yAfterTitle + (bodyLines.length ? 150 : 118);
+  const brandSvg = logoDataUrl
+    ? `<image href="${escapeSvg(logoDataUrl)}" x="64" y="42" width="114" height="46" preserveAspectRatio="xMinYMid meet"/><text x="194" y="78" class="brand">测九型</text>`
+    : `<circle cx="88" cy="75" r="18" fill="#fff" stroke="${palette.main}" stroke-width="5"/><circle cx="88" cy="75" r="5" fill="${palette.main}"/><text x="124" y="85" class="brand">jojo测九型</text>`;
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
   <defs>
@@ -3752,9 +3822,7 @@ function sharePosterSvgFromCard(card, index, total) {
     </style>
   </defs>
   <rect x="0" y="0" width="900" height="1200" rx="34" fill="url(#bg)"/>
-  <circle cx="88" cy="75" r="18" fill="#fff" stroke="${palette.main}" stroke-width="5"/>
-  <circle cx="88" cy="75" r="5" fill="${palette.main}"/>
-  <text x="124" y="85" class="brand">jojo测九型</text>
+  ${brandSvg}
   <text x="760" y="85" class="page">0${index + 1} / 0${total}</text>
   <text x="615" y="246" fill="rgba(20,33,38,.055)" font-size="190" font-weight="950">${escapeSvg(card.querySelector(".share-watermark")?.textContent.trim() || "")}</text>
   <text x="64" y="174" class="kicker">${escapeSvg(label)}</text>

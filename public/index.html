@@ -8,7 +8,7 @@
     <link rel="icon" href="/jojo-icon.svg" type="image/svg+xml">
     <link rel="icon" href="/jojo-icon.png" type="image/png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <link rel="stylesheet" href="/styles.css?v=20260523-v12-result-polish">
+    <link rel="stylesheet" href="/styles.css?v=20260529-v13-experience-polish">
   </head>
   <body>
     <div class="app-shell">
@@ -63,6 +63,11 @@
             <h1>jojo测九型</h1>
             <p class="home-tested-count" id="homeTestedCount" aria-live="polite"><strong>--</strong><span>人次已测试过</span></p>
             <p class="start-line" id="startLine">先选地图。</p>
+            <div class="home-trust-strip" aria-label="测试说明">
+              <span>3级快选</span>
+              <span>自动保存</span>
+              <span>结果可找老师复核</span>
+            </div>
 
             <div class="team-invite" id="teamInvite" hidden>
               <strong id="teamInviteName">团队测试</strong>
@@ -255,10 +260,16 @@
           </div>
 
           <nav class="result-utility-nav" aria-label="结果页入口">
-            <button type="button" id="resultTeamButton">团队测试结果查看</button>
-            <button type="button" id="resultHistoryButton">历史记录</button>
+            <button type="button" id="resultTeamButton" aria-label="团队测试结果查看">团队结果</button>
+            <button type="button" id="resultHistoryButton">历史测试</button>
             <button type="button" id="resultGroupChatButton">添加群聊</button>
           </nav>
+
+          <section class="result-feedback" id="resultFeedback" aria-label="结果反馈">
+            <span>这个结果像你吗？</span>
+            <button type="button" data-feedback="fit">挺像</button>
+            <button type="button" data-feedback="unsure">有点拿不准</button>
+          </section>
 
         </section>
 
@@ -486,6 +497,6 @@
       </div>
     </div>
 
-    <script src="/app.js?v=20260523-v12-result-polish"></script>
+    <script src="/app.js?v=20260529-v13-experience-polish"></script>
   </body>
 </html>

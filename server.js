@@ -4476,7 +4476,7 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, {
         ok: true,
         record: publicRecord,
-        result: { ...publicResult(result), teacher_note: publicRecord }
+        result: { ...privateAdminResult(result), teacher_note: publicRecord }
       });
     }
     if (req.method === "POST" && reqUrl.pathname === "/api/admin/activity/note") {
@@ -4592,6 +4592,16 @@ function publicResult(result) {
     wechat: null,
     team,
     reused_from: result.reused_from || null
+  };
+}
+
+function privateAdminResult(result) {
+  if (!result) return null;
+  return {
+    ...publicResult(result),
+    user: result.user || null,
+    answers: Array.isArray(result.answers) ? result.answers : [],
+    question_ids: Array.isArray(result.question_ids) ? result.question_ids : []
   };
 }
 

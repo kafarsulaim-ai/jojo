@@ -1933,14 +1933,68 @@ function publicTeacherActivity(item) {
     viewed_at: item.viewed_at || "",
     diagnosed_at: item.diagnosed_at || "",
     created_at: item.created_at || "",
-    diagnosis_nickname: item.diagnosis_nickname || ""
+    diagnosis_nickname: item.diagnosis_nickname || "",
+    note_name: item.note_name || "",
+    note_summary: item.note_summary || "",
+    note_followup: item.note_followup || "",
+    note_updated_at: item.note_updated_at || ""
+  };
+}
+
+function teacherActivitySort(a, b) {
+  return Date.parse(b.created_at || b.note_updated_at || 0) - Date.parse(a.created_at || a.note_updated_at || 0);
+}
+
+function latestTeacherNote(teacherId, code) {
+  const cleanedCode = cleanText(code || "", 12).toUpperCase();
+  if (!teacherId || !cleanedCode) return null;
+  return readAdminTeacherActivity()
+    .filter((item) => item.teacher_id === teacherId && item.verification_code === cleanedCode && (item.action === "note" || item.note_name || item.note_summary || item.note_followup))
+    .sort((a, b) => Date.parse(b.note_updated_at || b.created_at || 0) - Date.parse(a.note_updated_at || a.created_at || 0))[0] || null;
+}
+
+function teacherNotesByCode(teacherId) {
+  const notes = new Map();
+  if (!teacherId) return notes;
+  for (const item of readAdminTeacherActivity().filter((activity) => activity.teacher_id === teacherId)) {
+    const code = item.verification_code || "";
+    if (!code || !(item.action === "note" || item.note_name || item.note_summary || item.note_followup)) continue;
+    const previous = notes.get(code);
+    const currentTime = Date.parse(item.note_updated_at || item.created_at || 0);
+    const previousTime = Date.parse(previous?.note_updated_at || previous?.created_at || 0);
+    if (!previous || currentTime >= previousTime) notes.set(code, publicTeacherActivity(item));
+  }
+  return notes;
+}
+
+function teacherHasDiagnosedCode(teacherId, code) {
+  const cleanedCode = cleanText(code || "", 12).toUpperCase();
+  if (!teacherId || !cleanedCode) return false;
+  return readAdminTeacherActivity().some((item) => (
+    item.teacher_id === teacherId
+    && item.verification_code === cleanedCode
+    && item.action === "diagnose"
+  ));
+}
+
+function withTeacherNote(item, notes) {
+  const activity = publicTeacherActivity(item);
+  const note = notes.get(activity.verification_code);
+  if (!note) return activity;
+  return {
+    ...activity,
+    note_name: note.note_name || "",
+    note_summary: note.note_summary || "",
+    note_followup: note.note_followup || "",
+    note_updated_at: note.note_updated_at || ""
   };
 }
 
 function buildTeacherDashboard(account) {
   const activities = readAdminTeacherActivity().filter((item) => item.teacher_id === account.id);
-  const views = activities.filter((item) => item.action === "view").sort((a, b) => Date.parse(b.created_at || 0) - Date.parse(a.created_at || 0));
-  const diagnoses = activities.filter((item) => item.action === "diagnose").sort((a, b) => Date.parse(b.created_at || 0) - Date.parse(a.created_at || 0));
+  const notes = teacherNotesByCode(account.id);
+  const views = activities.filter((item) => item.action === "view").sort(teacherActivitySort);
+  const diagnoses = activities.filter((item) => item.action === "diagnose").sort(teacherActivitySort);
   const diagnosisKeys = new Set();
   for (const item of diagnoses) {
     diagnosisKeys.add([item.verification_code || "", item.user_nickname || "", item.test_mode || ""].join("|").toLowerCase());
@@ -1957,13 +2011,17 @@ function buildTeacherDashboard(account) {
       diagnosed_people_count: uniquePeople.size,
       diagnosis_item_count: diagnosisKeys.size
     },
-    recent_views: views.slice(0, 8).map(publicTeacherActivity),
-    recent_diagnoses: diagnoses.slice(0, 8).map(publicTeacherActivity)
+    recent_views: views.slice(0, 8).map((item) => withTeacherNote(item, notes)),
+    recent_diagnoses: diagnoses.slice(0, 8).map((item) => withTeacherNote(item, notes))
   };
 }
 
 function logTeacherActivity(account, item) {
   if (!account || !item?.action) return null;
+  const previousNote = latestTeacherNote(account.id, item.verification_code);
+  const noteName = Object.prototype.hasOwnProperty.call(item, "note_name") ? item.note_name : previousNote?.note_name;
+  const noteSummary = Object.prototype.hasOwnProperty.call(item, "note_summary") ? item.note_summary : previousNote?.note_summary;
+  const noteFollowup = Object.prototype.hasOwnProperty.call(item, "note_followup") ? item.note_followup : previousNote?.note_followup;
   const record = {
     id: `AT${Date.now().toString(36).toUpperCase()}${crypto.randomBytes(3).toString("hex").toUpperCase()}`,
     teacher_id: account.id,
@@ -1976,10 +2034,45 @@ function logTeacherActivity(account, item) {
     viewed_at: item.viewed_at || "",
     diagnosed_at: item.diagnosed_at || "",
     diagnosis_nickname: cleanText(item.diagnosis_nickname || "", 50),
+    note_name: cleanAdminText(noteName || "", 60),
+    note_summary: cleanAdminText(noteSummary || "", 300),
+    note_followup: cleanAdminText(noteFollowup || "", 180),
+    note_updated_at: item.note_updated_at || previousNote?.note_updated_at || "",
     created_at: new Date().toISOString()
   };
   appendAdminTeacherActivity(record);
   return record;
+}
+
+function saveTeacherNote(account, payload) {
+  const code = cleanText(payload.verification_code || "", 12).toUpperCase();
+  if (!code) {
+    const err = new Error("missing_verification_code");
+    err.status = 400;
+    throw err;
+  }
+  const result = findResultByCode(code);
+  if (!result) {
+    const err = new Error("result_not_found");
+    err.status = 404;
+    throw err;
+  }
+  if (account.role !== "super_admin" && !teacherHasDiagnosedCode(account.id, code)) {
+    const err = new Error("note_requires_diagnosis");
+    err.status = 403;
+    throw err;
+  }
+  const previous = latestTeacherNote(account.id, code);
+  const record = logTeacherActivity(account, {
+    ...publicAdminDashboardActivity(result, "note"),
+    action: "note",
+    diagnosis_nickname: cleanAdminText(payload.diagnosis_nickname || previous?.diagnosis_nickname || "", 50),
+    note_name: cleanAdminText(payload.note_name || "", 60),
+    note_summary: cleanAdminText(payload.note_summary || "", 300),
+    note_followup: cleanAdminText(payload.note_followup || "", 180),
+    note_updated_at: new Date().toISOString()
+  });
+  return publicTeacherActivity(record);
 }
 
 function listAdminTeachers() {
@@ -4379,11 +4472,18 @@ const server = http.createServer(async (req, res) => {
         action: "diagnose",
         diagnosis_nickname: nickname
       });
+      const publicRecord = publicTeacherActivity(record);
       return sendJson(res, 200, {
         ok: true,
-        record: publicTeacherActivity(record),
-        result: publicResult(result)
+        record: publicRecord,
+        result: { ...publicResult(result), teacher_note: publicRecord }
       });
+    }
+    if (req.method === "POST" && reqUrl.pathname === "/api/admin/activity/note") {
+      const account = requireAdmin(req, reqUrl);
+      const payload = await readBody(req);
+      const note = saveTeacherNote(account, payload);
+      return sendJson(res, 200, { ok: true, note });
     }
     if (req.method === "GET" && reqUrl.pathname === "/api/admin/invites") {
       requireAdmin(req, reqUrl, ["super_admin"]);

@@ -352,9 +352,12 @@ function renderTeacherDashboard(data) {
   $("teacherRecentTableBody").innerHTML = items.map((item) => `
     <tr>
       <td>${escapeHtml(formatDateTime(item.viewed_at || item.created_at))}</td>
-      <td>${escapeHtml(item.user_nickname || item.diagnosis_nickname || "未填写")}</td>
+      <td>
+        <strong class="table-main-text">${escapeHtml(item.note_name || item.user_nickname || item.diagnosis_nickname || "未填写")}</strong>
+        <small>${escapeHtml(item.verification_code || "")}</small>
+      </td>
       <td>${escapeHtml(modeText(item.test_mode))}</td>
-      <td>${escapeHtml(formatDateTime(item.test_time))}</td>
+      <td>${escapeHtml(compactNoteText(item) || formatDateTime(item.test_time))}</td>
     </tr>
   `).join("");
 }
@@ -492,6 +495,7 @@ async function submitTeacherDiagnosis(event) {
       state.results = [data.result];
       renderQualitySummary({ total: 1, flagged: data.result.quality_flags?.length ? 1 : 0, modes: [], top_flags: [] });
       renderList();
+      if (data.record) data.result.teacher_note = data.record;
       renderDetail(data.result, "teacherDiagnosisDetail");
     } else {
       await loadResults();
@@ -499,6 +503,37 @@ async function submitTeacherDiagnosis(event) {
     await loadTeacherDashboard();
   } catch (err) {
     setMessage("diagnosisMessage", err.status === 404 ? "没有查到这个测试编号" : (err.message || "查询失败"));
+  }
+}
+
+async function saveTeacherResultNote(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const code = form.dataset.code || "";
+  const button = form.querySelector("button[type='submit']");
+  const status = form.querySelector("[data-note-status]");
+  if (!code) return;
+  if (button) button.disabled = true;
+  if (status) status.textContent = "正在保存...";
+  try {
+    const data = await adminFetch("/api/admin/activity/note", {
+      method: "POST",
+      body: {
+        verification_code: code,
+        note_name: form.elements.note_name?.value.trim() || "",
+        note_summary: form.elements.note_summary?.value.trim() || "",
+        note_followup: form.elements.note_followup?.value.trim() || "",
+        diagnosis_nickname: $("diagnosisNicknameInput")?.value.trim() || ""
+      }
+    });
+    const item = state.results.find((result) => result.verification_code === code);
+    if (item) item.teacher_note = data.note;
+    if (status) status.textContent = "已保存";
+    await loadTeacherDashboard();
+  } catch (err) {
+    if (status) status.textContent = err.status === 403 ? "请先通过昵称和编号打开结果" : (err.message || "保存失败");
+  } finally {
+    if (button) button.disabled = false;
   }
 }
 
@@ -1002,6 +1037,7 @@ function renderDetail(item, targetId = "resultDetail") {
       </div>
       <button class="ghost-action compact" type="button" data-copy-json="true">复制JSON</button>
     </div>
+    ${teacherNotePanel(item, targetId)}
     <div class="detail-grid">
       <div class="detail-cell"><span>昵称</span><strong>${escapeHtml(item.user?.nickname || "未填写")}</strong></div>
       <div class="detail-cell"><span>联系方式</span><strong>${escapeHtml(item.user?.contact || "未填写")}</strong></div>
@@ -1049,6 +1085,7 @@ function renderDetail(item, targetId = "resultDetail") {
     </table>
   `;
   $(targetId).querySelector("[data-copy-json='true']")?.addEventListener("click", (event) => copyJson(item, event.currentTarget));
+  bindTeacherNoteForm(targetId);
   recordResultView(item.verification_code);
   if (targetId === "resultDetail") renderList();
 }
@@ -1068,6 +1105,7 @@ function renderSubtypeDetail(item, targetId = "resultDetail") {
       </div>
       <button class="ghost-action compact" type="button" data-copy-json="true">复制JSON</button>
     </div>
+    ${teacherNotePanel(item, targetId)}
     <div class="detail-grid">
       <div class="detail-cell"><span>昵称</span><strong>${escapeHtml(item.user?.nickname || "未填写")}</strong></div>
       <div class="detail-cell"><span>联系方式</span><strong>${escapeHtml(item.user?.contact || "未填写")}</strong></div>
@@ -1104,6 +1142,7 @@ function renderSubtypeDetail(item, targetId = "resultDetail") {
     </table>
   `;
   $(targetId).querySelector("[data-copy-json='true']")?.addEventListener("click", (event) => copyJson(item, event.currentTarget));
+  bindTeacherNoteForm(targetId);
   recordResultView(item.verification_code);
   if (targetId === "resultDetail") renderList();
 }
@@ -1117,6 +1156,7 @@ function renderAnonymousTeamSubtypeDetail(item, targetId = "resultDetail") {
         <p class="muted">${escapeHtml(formatDate(item.created_at))}</p>
       </div>
     </div>
+    ${teacherNotePanel(item, targetId)}
     <div class="detail-grid">
       <div class="detail-cell"><span>测试模式</span><strong>团队副型</strong></div>
       <div class="detail-cell"><span>团队</span><strong>${escapeHtml(item.team?.name || "团队")}</strong></div>
@@ -1124,8 +1164,45 @@ function renderAnonymousTeamSubtypeDetail(item, targetId = "resultDetail") {
     </div>
     <p class="muted">团队副型不展示个人副型排序，只进入团队层面的汇总。</p>
   `;
+  bindTeacherNoteForm(targetId);
   recordResultView(item.verification_code);
   if (targetId === "resultDetail") renderList();
+}
+
+function teacherNotePanel(item, targetId) {
+  if (targetId !== "teacherDiagnosisDetail") return "";
+  const note = item.teacher_note || {};
+  return `
+    <form class="teacher-note-panel" data-teacher-note-form data-code="${escapeHtml(item.verification_code || "")}">
+      <div class="teacher-note-head">
+        <strong>老师备注</strong>
+        <span>${escapeHtml(note.note_updated_at ? `更新 ${formatDateTime(note.note_updated_at)}` : "")}</span>
+      </div>
+      <div class="teacher-note-grid">
+        <label>
+          <span>备注姓名</span>
+          <input name="note_name" maxlength="60" value="${escapeHtml(note.note_name || item.user?.nickname || "")}" placeholder="方便以后认人">
+        </label>
+        <label>
+          <span>下次跟进点</span>
+          <input name="note_followup" maxlength="180" value="${escapeHtml(note.note_followup || "")}" placeholder="下次重点聊什么">
+        </label>
+      </div>
+      <label>
+        <span>沟通主要内容</span>
+        <textarea name="note_summary" maxlength="300" rows="3" placeholder="记录本次沟通重点、用户关心的问题、老师判断方向">${escapeHtml(note.note_summary || "")}</textarea>
+      </label>
+      <div class="teacher-note-actions">
+        <button class="ghost-action compact" type="submit">保存备注</button>
+        <p class="muted" data-note-status></p>
+      </div>
+    </form>
+  `;
+}
+
+function bindTeacherNoteForm(targetId) {
+  const form = $(targetId)?.querySelector("[data-teacher-note-form]");
+  if (form) form.addEventListener("submit", saveTeacherResultNote);
 }
 
 function recordResultView(code) {
@@ -1187,6 +1264,12 @@ function formatDateTime(value) {
   } catch {
     return value || "-";
   }
+}
+
+function compactNoteText(item) {
+  const text = [item.note_summary, item.note_followup].filter(Boolean).join(" / ");
+  if (!text) return "";
+  return Array.from(text).slice(0, 34).join("") + (Array.from(text).length > 34 ? "..." : "");
 }
 
 function modeText(mode) {

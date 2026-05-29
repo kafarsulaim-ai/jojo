@@ -4637,6 +4637,72 @@ select:focus {
   font-weight: 930;
 }
 
+.teacher-note-panel {
+  display: grid;
+  gap: 8px;
+  margin: 8px 0 10px;
+  padding: 10px;
+  background: rgba(255, 253, 248, 0.7);
+  border: 1px solid rgba(22, 49, 55, 0.075);
+  border-radius: var(--radius);
+}
+
+.teacher-note-head,
+.teacher-note-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.teacher-note-head strong {
+  font-size: 14px;
+  font-weight: 920;
+}
+
+.teacher-note-head span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 760;
+}
+
+.teacher-note-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.teacher-note-panel label {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.teacher-note-panel input,
+.teacher-note-panel textarea {
+  width: 100%;
+  min-height: 34px;
+  padding: 8px 9px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(22, 49, 55, 0.09);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: 12px;
+  resize: vertical;
+}
+
+.teacher-note-actions {
+  justify-content: flex-start;
+}
+
+.teacher-note-actions .muted {
+  min-height: 18px;
+}
+
 .teacher-profile-head {
   display: flex;
   align-items: center;
@@ -5033,6 +5099,21 @@ select:focus {
   background: rgba(255, 255, 255, 0.92);
   font-size: 11px;
   font-weight: 850;
+}
+
+.data-table small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 760;
+}
+
+.table-main-text {
+  display: block;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @keyframes settleIn {
@@ -5588,6 +5669,10 @@ select:focus {
 
   .teacher-stats-row strong {
     font-size: 18px;
+  }
+
+  .teacher-note-grid {
+    grid-template-columns: 1fr;
   }
 
   .site-settings-form {

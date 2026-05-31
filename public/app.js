@@ -22,6 +22,114 @@ const TYPE_RESULT_LINES = {
   9: "重点关注和谐、稳定和冲突降噪，常能把局面先缓下来。"
 };
 
+const TYPE_IDENTITY_LINES = {
+  1: "把标准放在心里，也把世界一点点调顺。",
+  2: "很会捕捉关系里的需要，也容易把连接看得很重。",
+  3: "自带推进感，目标一清楚就会开始往前跑。",
+  4: "对真实感很敏锐，不太愿意把自己活成模板。",
+  5: "先理解，再投入；脑内常有一间安静资料室。",
+  6: "会提前看风险，也很在意这件事到底靠不靠谱。",
+  7: "总能看到新出口，生活不能只剩一种打开方式。",
+  8: "边界感和行动力都很明显，关键时刻会站出来。",
+  9: "擅长给现场降噪，也容易先把关系和局面稳住。"
+};
+
+const TYPE_PERSONA_NAMES = {
+  1: "人间校准仪",
+  2: "关系补给站",
+  3: "进度推进器",
+  4: "真实感捕手",
+  5: "信息整理师",
+  6: "安全预案官",
+  7: "可能性雷达",
+  8: "边界守护者",
+  9: "气氛降噪师"
+};
+
+const TYPE_ANALYSIS = {
+  1: {
+    focus: "核心在标准、原则和改进感。你会自然看见哪里还能更好，也容易把责任感放在前面。",
+    motive: "把事情做对",
+    strength: "校准标准，发现漏洞",
+    pressure: "不合理会被放大",
+    relation: "讲清标准会更安心"
+  },
+  2: {
+    focus: "核心在关系、回应和被需要。你很容易看见别人的需求，也会通过支持建立连接。",
+    motive: "确认连接存在",
+    strength: "接住情绪，补位支持",
+    pressure: "容易先证明自己有用",
+    relation: "真诚回应比客套更重要"
+  },
+  3: {
+    focus: "核心在目标、效率和成果反馈。你会把注意力放在可见进展上，也擅长推动局面往前。",
+    motive: "把结果做出来",
+    strength: "定目标，提速度，拿结果",
+    pressure: "容易用忙碌压住感受",
+    relation: "看见努力会很补能"
+  },
+  4: {
+    focus: "核心在真实感、独特性和深层感受。你会捕捉细微变化，也在意自己是否被真正理解。",
+    motive: "活得真实有意义",
+    strength: "识别感受，创造表达",
+    pressure: "容易被缺失感牵动",
+    relation: "先理解，再建议"
+  },
+  5: {
+    focus: "核心在理解、边界和信息掌控。你倾向先看清结构，再决定投入多少精力。",
+    motive: "先弄明白再进入",
+    strength: "拆解复杂，建立框架",
+    pressure: "容易退回观察位",
+    relation: "给空间，比催促有效"
+  },
+  6: {
+    focus: "核心在安全感、可信度和风险预案。你会提前看见不确定，也会为重要事情准备备选方案。",
+    motive: "确认这事靠谱",
+    strength: "预判风险，稳住系统",
+    pressure: "容易进入预案循环",
+    relation: "确定感和解释很重要"
+  },
+  7: {
+    focus: "核心在可能性、选择感和新鲜出口。你会主动寻找新的路径，也很怕生活只剩一种答案。",
+    motive: "保留更多可能",
+    strength: "打开局面，带来活力",
+    pressure: "容易快速寻找出口",
+    relation: "别把选择感一次锁死"
+  },
+  8: {
+    focus: "核心在边界、主动权和保护。你会在关键时刻扛事，也不太喜欢被绕弯控制。",
+    motive: "守住边界和主动权",
+    strength: "直接决断，保护弱处",
+    pressure: "容易先进入掌控模式",
+    relation: "直接坦诚最省力"
+  },
+  9: {
+    focus: "核心在稳定、和谐和冲突降噪。你会自然缓和现场，也容易把自己的需要放到后面。",
+    motive: "让关系和局面稳下来",
+    strength: "整合差异，降低冲突",
+    pressure: "容易先顺着局面走",
+    relation: "慢慢问，认真听"
+  }
+};
+
+const SUBTYPE_IDENTITY_LINES = {
+  social: "先看自己在关系网、团队和群体里的位置。",
+  one_to_one: "更容易被关键关系、强连接和真实回应点亮。",
+  self_preservation: "会优先照顾节奏、资源、身体感和基本盘。"
+};
+
+const SUBTYPE_PERSONA_NAMES = {
+  social: "关系雷达",
+  one_to_one: "连接火花",
+  self_preservation: "安定派"
+};
+
+const SUBTYPE_PARENT_LINES = {
+  social: "孩子会更在意同伴、归属和自己在小集体里的位置。",
+  one_to_one: "孩子更容易被一对一的陪伴、回应和专属感点亮。",
+  self_preservation: "孩子更需要稳定节奏、熟悉环境和可预期的照顾。"
+};
+
 const FLAG_COPY = {
   straight_line_risk: "本次出现连续同类选择，建议老师结合访谈确认是否存在快速作答。",
   uncertainty_risk: "不确定选项偏多，结果适合先看方向，不宜直接定型。",
@@ -42,32 +150,50 @@ const MODE_COPY = {
   main90: {
     eyebrow: "选择测试入口",
     line: "先选地图。",
-    button: "开始主型90题"
+    button: "开始主型90题",
+    testBadge: "主型快测",
+    testTitle: "90题 · 每10题一组",
+    testHint: "按最近真实反应选"
   },
   main180: {
     eyebrow: "专业深测入口",
     line: "深一点。",
-    button: "开始深测180题"
+    button: "开始深测180题",
+    testBadge: "主型深测",
+    testTitle: "180题 · 深一点",
+    testHint: "慢一点也没关系"
   },
   main270: {
     eyebrow: "专业深测入口",
     line: "深一点。",
-    button: "开始深测180题"
+    button: "开始深测180题",
+    testBadge: "主型深测",
+    testTitle: "180题 · 深一点",
+    testHint: "慢一点也没关系"
   },
   subtype_adult: {
     eyebrow: "副型补充入口",
     line: "补一张入口图。",
-    button: "开始个人副型"
+    button: "开始个人副型",
+    testBadge: "个人副型",
+    testTitle: "30题 · 看注意力入口",
+    testHint: "看第一、第二副型排序"
   },
   subtype_child: {
     eyebrow: "亲子观察入口",
     line: "给孩子看入口。",
-    button: "开始少儿副型"
+    button: "开始少儿副型",
+    testBadge: "少儿副型",
+    testTitle: "30题 · 亲子观察版",
+    testHint: "按近三个月状态选"
   },
   team_subtype: {
     eyebrow: "匿名团队副型测试",
     line: "匿名汇总。",
-    button: "开始团队副型"
+    button: "开始团队副型",
+    testBadge: "团队副型",
+    testTitle: "60题 · 匿名汇总",
+    testHint: "只看团队整体，不看个人明细"
   }
 };
 
@@ -192,7 +318,9 @@ const GROUP_LINES = [
 
 const RESULT_FEEDBACK_COPY = {
   fit: "收到。这个“挺像”，会帮助jojo继续校准。",
-  unsure: "收到。拿不准也很正常，可以带着编号找老师复核。"
+  unsure: "收到。拿不准也很正常，可以带着编号找老师复核。",
+  helpful: "收到。先把它当作亲子观察入口，慢慢看就好。",
+  review: "收到。少儿结果更建议结合年龄、家庭互动和老师复核。"
 };
 
 const SHARE_ASSET_CACHE = new Map();
@@ -256,6 +384,7 @@ const state = {
   mode: "main90",
   team: null,
   createdTeam: null,
+  currentTeamSummary: null,
   reusableTeamMain: null,
   deviceToken: "",
   accountToken: "",
@@ -349,6 +478,11 @@ document.addEventListener("DOMContentLoaded", () => {
   byId("resultHistoryButton")?.addEventListener("click", openHistory);
   byId("resultGroupChatButton")?.addEventListener("click", openGroupChatModal);
   byId("resultFeedback")?.addEventListener("click", onResultFeedback);
+  byId("teamCopyInviteLinkButton")?.addEventListener("click", copyCurrentTeamInvite);
+  byId("teamGroupChatButton")?.addEventListener("click", openGroupChatModal);
+  byId("teamImageLink")?.addEventListener("click", (event) => {
+    if (event.currentTarget?.getAttribute("aria-disabled") === "true") event.preventDefault();
+  });
   $("methodButton").addEventListener("click", () => showInfo("method"));
   $("calibrationButton").addEventListener("click", () => showInfo("calibration"));
   $("noticeButton").addEventListener("click", () => showInfo("notice"));
@@ -816,6 +950,27 @@ function openResultTeamEntry() {
     return;
   }
   showSaveToast("暂无团队结果，先从团队链接完成一次测试");
+}
+
+function copyCurrentTeamInvite() {
+  const team = state.currentTeamSummary?.team || state.team || null;
+  const code = team?.code || "";
+  if (!code) {
+    showSaveToast("暂无可复制的团队链接");
+    return;
+  }
+  const button = byId("teamCopyInviteLinkButton");
+  const inviteUrl = new URL(`/t/${code}`, window.location.origin).href;
+  writeClipboardText(inviteUrl).then(() => {
+    if (button) button.textContent = "已复制";
+    showSaveToast("团队邀请链接已复制");
+    window.setTimeout(() => {
+      if (button) button.textContent = "复制邀请链接";
+    }, 1200);
+  }).catch(() => {
+    if (button) button.textContent = "请手动复制";
+    showSaveToast(inviteUrl);
+  });
 }
 
 function saveAccount(account, token) {
@@ -1317,7 +1472,7 @@ function onModeClick(event) {
     $("profileForm").hidden = true;
     $("startScreen").classList.remove("team-invite-active");
     $("startEyebrow").textContent = "创建团队测试链接";
-    $("startLine").textContent = "填团队名，发给成员，系统自动汇总。";
+    $("startLine").textContent = "起个队名，发给大家。";
     window.setTimeout(() => $("teamCreateForm").scrollIntoView({ block: "nearest", behavior: "smooth" }), 40);
     return;
   }
@@ -1360,7 +1515,7 @@ async function createTeam(event) {
     state.createdTeam = { team: data.team, inviteUrl, summaryUrl };
     $("teamInviteUrlInput").value = inviteUrl;
     $("teamCreatedTitle").textContent = "团队链接已创建";
-    $("teamCreatedBody").textContent = `${data.team.name} · 有效至 ${formatShortDate(data.team.expires_at)}`;
+    $("teamCreatedBody").textContent = `${data.team.name} · ${formatShortDate(data.team.expires_at)}前有效`;
     $("teamCreatedSummaryLink").href = summaryUrl;
     $("teamCopyInviteButton").textContent = "复制邀请链接";
     $("teamStartTestButton").textContent = "我也开始测试";
@@ -1439,8 +1594,8 @@ async function loadTeamInvite(code) {
     $("startScreen").classList.toggle("team-invite-active", Boolean(data.team.active));
     const isSubtypeTeam = data.team.test_kind === "subtype";
     $("teamInviteMeta").textContent = data.team.active
-      ? `${data.team.mode_label || "团队测试"} · 有效至 ${formatShortDate(data.team.expires_at)}`
-      : "链接已过期，本次测试不会计入团队";
+      ? `${data.team.mode_label || "团队测试"} · ${formatShortDate(data.team.expires_at)}前有效`
+      : "链接已过期";
     $("joinTeamInput").checked = data.team.active;
     $("joinTeamInput").disabled = !data.team.active;
     if (isSubtypeTeam && data.team.active) {
@@ -1450,7 +1605,7 @@ async function loadTeamInvite(code) {
       });
       $("modeGrid").hidden = true;
       $("startEyebrow").textContent = "匿名团队副型测试";
-      $("startLine").textContent = "完成60题后，结果只进入团队副型匿名汇总，不展示个人明细。";
+      $("startLine").textContent = "匿名提交，只看整体。";
       return;
     }
     setMode("main90");
@@ -1460,8 +1615,8 @@ async function loadTeamInvite(code) {
     $("modeGrid").hidden = data.team.active;
     $("startEyebrow").textContent = data.team.active ? "团队主型测试" : "团队链接已过期";
     $("startLine").textContent = data.team.active
-      ? "这次只做团队主型90题，完成后自动计入团队总图。"
-      : "你仍可以完成个人测试，但结果不会计入该团队。";
+      ? "完成后进入团队总图。"
+      : "可继续个人测试。";
     $("startButton").querySelector("span").textContent = data.team.active ? "开始团队主型90题" : "开始个人主型90题";
     if (data.team.active) checkRecentMainForTeam(data.team);
   } catch {
@@ -1487,7 +1642,7 @@ async function checkRecentMainForTeam(team) {
     const data = response.ok ? await response.json() : {};
     if (!data.reusable?.source_code) return;
     state.reusableTeamMain = data.reusable;
-    $("teamReuseBody").textContent = `${formatDateTime(data.reusable.created_at)} 的${modeShortLabel(data.reusable.test_mode, data.reusable.mode_label)}可以直接计入「${team.name}」。`;
+    $("teamReuseBody").textContent = `发现一份近10天主型结果，可直接加入「${team.name}」。`;
     $("teamReuseModal").hidden = false;
   } catch {}
 }
@@ -1738,7 +1893,15 @@ function renderQuestion() {
   const inGroup = state.currentIndex - groupStart + 1;
   const groupSize = Math.min(10, total - groupStart);
   const groupPercent = Math.round((inGroup / groupSize) * 100);
+  const modeCopy = MODE_COPY[state.mode] || MODE_COPY.main90;
+  const isTeamMain = Boolean(state.team?.code && state.team?.test_kind !== "subtype");
+  const modeBadge = isTeamMain ? "团队主型" : modeCopy.testBadge;
+  const modeTitle = isTeamMain ? "90题 · 计入团队总图" : modeCopy.testTitle;
+  const modeHint = isTeamMain ? "完成后自动汇总" : modeCopy.testHint;
 
+  $("testModeBadge").textContent = modeBadge || "jojo测试";
+  $("testModeTitle").textContent = modeTitle || `${total}题 · 每10题一组`;
+  $("testModeHint").textContent = modeHint || "按最近真实反应选";
   $("questionCount").textContent = `本组 ${inGroup}/${groupSize}`;
   $("answeredCount").textContent = `已完成 ${percent}%`;
   $("topProgressText").textContent = "";
@@ -1796,15 +1959,27 @@ function renderAnswerButtons(selected, disabled = false) {
 function renderGroupProgress(groupTotal, currentGroup, inGroup, groupSize) {
   const total = Math.max(1, groupTotal);
   const fill = Math.max(0, Math.min(1, inGroup / Math.max(1, groupSize)));
-  const steps = Array.from({ length: total }, (_, index) => {
+  const maxDots = 10;
+  const useCompact = total > maxDots;
+  const dots = useCompact ? maxDots : total;
+  const currentDot = useCompact
+    ? Math.min(dots, Math.max(1, Math.ceil((currentGroup / total) * dots)))
+    : currentGroup;
+  const steps = Array.from({ length: dots }, (_, index) => {
     const groupNumber = index + 1;
-    const status = groupNumber < currentGroup ? "complete" : groupNumber === currentGroup ? "current" : "upcoming";
-    const style = status === "current" ? ` style="--fill:${Math.round(fill * 100)}%"` : "";
+    const status = groupNumber < currentDot ? "complete" : groupNumber === currentDot ? "current" : "upcoming";
+    const compactProgress = useCompact
+      ? Math.max(0, Math.min(1, ((currentGroup - 1) + fill) / total))
+      : fill;
+    const style = status === "current" ? ` style="--fill:${Math.round(compactProgress * 100)}%"` : "";
     return `<span class="jo-step ${status}"${style} aria-hidden="true"><span></span></span>`;
   });
   const split = Math.ceil(total / 2);
-  $("groupProgressTop").innerHTML = steps.slice(0, split).join("");
-  $("groupProgressBottom").innerHTML = steps.slice(split).join("");
+  const visualSplit = Math.ceil(dots / 2);
+  $("groupProgressTop").innerHTML = steps.slice(0, visualSplit).join("");
+  $("groupProgressBottom").innerHTML = steps.slice(visualSplit).join("");
+  $("groupProgressTop").classList.toggle("compact-groups", useCompact);
+  $("groupProgressBottom").classList.toggle("compact-groups", useCompact);
   $("groupProgressTop").setAttribute("aria-label", `共 ${total} 组，已完成 ${Math.max(0, currentGroup - 1)} 组，当前第 ${currentGroup} 组`);
 }
 
@@ -1934,14 +2109,14 @@ function showEncouragement(item, onClose) {
   const done = Math.min(item.at, total);
   const group = Math.ceil(done / 10);
   const percent = total ? Math.round((done / total) * 100) : 0;
-  const lines = ["自动保存好了", "下一组，轻轻来", "不用满分，真实就行", "喝口水也算进度"];
+  const lines = ["自动保存好了", "真实比标准答案值钱", "不用满分，像你就行", "喝口水也算进度"];
   $("encouragementModal").dataset.tone = String((group - 1) % 5);
   $("modalKicker").textContent = `第 ${group} 组已收好`;
   $("modalTitle").textContent = item.title;
   $("modalBody").textContent = item.body;
   $("modalProgressBar").style.width = `${percent}%`;
   $("modalPercent").textContent = `${percent}%`;
-  $("modalMeta").textContent = `${done}/${total} · ${lines[(group - 1) % lines.length]}`;
+  $("modalMeta").textContent = `${done}/${total} 题 · ${lines[(group - 1) % lines.length]}`;
   $("modalBadge").innerHTML = `<img src="/jojo-icon.svg" alt="">`;
   $("modalContinue").textContent = done >= total ? "看结果" : "继续轻轻答";
   $("encouragementModal").hidden = false;
@@ -2816,7 +2991,7 @@ function teamSubtypeSnapshotHtml(result) {
     <div class="snapshot-card hero">
       <span>提交状态</span>
       <strong>已进入匿名汇总</strong>
-      <p>老师端只看团队层面的分布，不展示个人副型明细。</p>
+      <p>团队页只看整体，不看单个人。</p>
     </div>
     <div class="snapshot-card">
       <span>团队</span>
@@ -2824,9 +2999,9 @@ function teamSubtypeSnapshotHtml(result) {
       <p>本次结果会计入团队副型总图。</p>
     </div>
     <div class="snapshot-card soft">
-      <span>匿名规则</span>
-      <strong>不展示个人</strong>
-      <p>只保留团队层面的注意力入口。</p>
+      <span>匿名提交</span>
+      <strong>只看整体</strong>
+      <p>个人排序不公开。</p>
     </div>
   `;
 }
@@ -2834,8 +3009,8 @@ function teamSubtypeSnapshotHtml(result) {
 function teamSubtypeTopHtml(result) {
   return `
     <div class="top-type-item">
-      <span>匿名规则</span>
-      <strong>不展示个人明细</strong>
+      <span>匿名提交</span>
+      <strong>只看整体</strong>
     </div>
     <div class="top-type-item">
       <span>团队汇总</span>
@@ -2904,7 +3079,7 @@ function renderCombinedReport(data) {
       <article class="share-card share-card-primary" data-type="${escapeHtml(primary)}">
         <div class="share-watermark" aria-hidden="true">${escapeHtml(String(primary))}</div>
         <div class="share-top">
-          <span class="share-brand"><img src="/jojo-icon.svg" alt="">jojo测九型</span>
+          <span class="share-brand full-logo"><img src="/jojo-logo.png" alt="jojo测九型"></span>
           <span>01 / 02</span>
         </div>
         <div class="share-body">
@@ -2927,7 +3102,7 @@ function renderCombinedReport(data) {
       <article class="share-card share-card-evidence" data-type="${escapeHtml(primary)}">
         <div class="share-watermark" aria-hidden="true">02</div>
         <div class="share-top">
-          <span class="share-brand"><img src="/jojo-icon.svg" alt="">jojo测九型</span>
+          <span class="share-brand full-logo"><img src="/jojo-logo.png" alt="jojo测九型"></span>
           <span>02 / 02</span>
         </div>
         <div class="share-core share-card-stack">
@@ -2946,7 +3121,7 @@ function renderCombinedReport(data) {
       <article class="share-card share-card-next" data-type="${escapeHtml(primary)}" hidden>
         <div class="share-watermark" aria-hidden="true">go</div>
         <div class="share-top">
-          <span class="share-brand"><img src="/jojo-icon.svg" alt="">jojo测九型</span>
+          <span class="share-brand full-logo"><img src="/jojo-logo.png" alt="jojo测九型"></span>
           <span>03 / 03</span>
         </div>
         <div class="share-core share-card-stack">
@@ -2956,7 +3131,7 @@ function renderCombinedReport(data) {
           <div class="poster-qr-block">${getGroupQrHtml(main)}</div>
         </div>
         <div class="share-footer">
-          <span>进群继续看结果</span>
+          <span>保存图片 / 老师校准</span>
           <span class="hidden-code">ref ${escapeHtml(codeText)}</span>
         </div>
       </article>
@@ -3002,40 +3177,41 @@ function renderShareDeck(result, bundle = null) {
   const usage = main ? translation : subtypeUsage(subtype);
   const mainOnly = Boolean(main && !hasSubtype);
   const isSubtypeOnly = Boolean(!main && hasSubtype);
-  const topText = main
-    ? (main.top_types || []).slice(0, 3).map((item) => `${item.element}号`).join(" / ")
-    : "主型可补";
-  const subtypeRank = subtypeRankText(subtype);
 
   $("shareDeck")?.classList.remove("team-subtype-share-deck");
   $("shareDeck")?.classList.toggle("main-only-share-deck", mainOnly);
   $("shareDeck")?.classList.toggle("subtype-only-share-deck", isSubtypeOnly);
+  $("shareDeck")?.classList.toggle("combined-result-share-deck", Boolean(main && hasSubtype));
+  $("shareDeck")?.classList.toggle("child-subtype-share-deck", Boolean(subtype?.test_mode === "subtype_child"));
   setShareDeckType(cardType);
   $("shareNumber").textContent = main ? `${primary}` : "sx";
   $("hiddenCode").textContent = `ref ${code}`;
-  $("sharePrimaryKicker").textContent = resultOverviewKicker(deck);
-  $("shareTitle").textContent = resultOverviewTitle(deck);
-  $("shareLine").textContent = resultOverviewLine(deck);
-  $("shareChips").innerHTML = resultOverviewChips(deck).map((text) => `<span>${escapeHtml(text)}</span>`).join("");
+  $("sharePrimaryKicker").textContent = identityCardKicker(deck);
+  $("shareTitle").textContent = identityCardTitle(deck);
+  $("shareLine").textContent = identityCardLine(deck, result);
+  $("shareChips").innerHTML = identityCardChips(deck, result).map((text) => `<span>${escapeHtml(text)}</span>`).join("");
   $("shareMiniMap").innerHTML = identityVisualHtml(deck);
-  $("shareTopTypes").textContent = main?.team?.code
-    ? `已计入团队 · 前三 ${topText.replace(/号/g, "")}`
-    : (main ? `${mainOnly ? "本次主型分布" : "前三"} ${topText.replace(/号/g, "")}${hasSubtype ? ` · ${subtypeRank.split(" / ")[0]}` : ""}` : `副型 ${subtypeRank.split(" / ").slice(0, 2).join(" / ")}`);
+  $("shareTopTypes").textContent = identityCardFooter(deck, result);
 
-  $("shareEvidenceTitle").textContent = briefAnalysisTitle(deck);
-  $("shareEvidenceKicker").textContent = "简要解读";
-  $("shareEvidenceLine").textContent = briefAnalysisLine(deck);
+  $("shareEvidenceTitle").textContent = briefAnalysisTitle(deck, result);
+  $("shareEvidenceKicker").textContent = "结果重点";
+  $("shareEvidenceLine").textContent = briefAnalysisLine(deck, result);
   $("shareEvidenceVisual").innerHTML = briefAnalysisHtml(deck, translation, usage, result);
-  $("shareEvidenceFoot").textContent = "自动结果仅供参考 · 老师解读更精准";
+  $("shareEvidenceFoot").textContent = "带编号深看";
   $("shareEvidenceCode").textContent = `ref ${code}`;
 
-  $("shareNextKicker").textContent = "使用说明卡";
-  $("shareNextTitle").textContent = "我的使用说明";
-  $("shareNextLine").textContent = "";
-  $("shareNextQr").innerHTML = usageGuideHtml(usage, result);
-  $("shareNextFoot").textContent = "进群继续看结果";
-  $("shareNextCode").textContent = `ref ${code}`;
-  $("shareNextCard").hidden = true;
+  const showNextCard = shouldShowNextCard(deck, result);
+  $("shareEvidenceCard").dataset.type = cardType;
+  $("shareNextCard").dataset.type = cardType;
+  $("shareNextCard").hidden = !showNextCard;
+  if (showNextCard) {
+    $("shareNextKicker").textContent = nextCardKicker(deck, result);
+    $("shareNextTitle").textContent = nextCardTitle(deck, result);
+    $("shareNextLine").textContent = nextCardLine(deck, result);
+    $("shareNextQr").innerHTML = nextCardHtml(deck, usage, result);
+    $("shareNextFoot").textContent = nextCardFooter(deck, result);
+    $("shareNextCode").textContent = `ref ${code}`;
+  }
   updateShareCardPagination($("resultScreen"));
   renderResultUtilities(result);
   resetResultFeedback();
@@ -3044,12 +3220,25 @@ function renderShareDeck(result, bundle = null) {
 function resetResultFeedback() {
   const holder = byId("resultFeedback");
   if (!holder) return;
+  const result = state.result || {};
+  const isTeamResult = Boolean(result?.team?.code || isTeamSubtypeResult(result));
+  holder.hidden = isTeamResult;
+  if (isTeamResult) return;
   holder.classList.remove("answered");
   const text = holder.querySelector("span");
-  if (text) text.textContent = "这个结果像你吗？";
-  holder.querySelectorAll("button[data-feedback]").forEach((item) => {
+  const childResult = isChildSubtypeResult(result);
+  if (text) text.textContent = childResult ? "这个观察有帮助吗？" : "这个结果像你吗？";
+  holder.querySelectorAll("button[data-feedback]").forEach((item, index) => {
     item.disabled = false;
     item.classList.remove("selected");
+    if (index === 0) {
+      item.dataset.feedback = childResult ? "helpful" : "fit";
+      item.textContent = childResult ? "有帮助" : "挺像";
+    }
+    if (index === 1) {
+      item.dataset.feedback = childResult ? "review" : "unsure";
+      item.textContent = childResult ? "想复核" : "有点拿不准";
+    }
   });
 }
 
@@ -3060,7 +3249,7 @@ function updateShareCardPagination(root = document) {
     if (page) page.textContent = `${String(index + 1).padStart(2, "0")} / ${String(cards.length).padStart(2, "0")}`;
   });
   const saveButton = root.querySelector("#shareSaveButton, #combinedPrintButton");
-  if (saveButton) saveButton.textContent = cards.length > 2 ? "保存三张图片" : "保存结果图片";
+  if (saveButton) saveButton.textContent = `保存${cards.length}张图片`;
 }
 
 function renderSubtypeShareDeck(result, bundle = null) {
@@ -3113,6 +3302,164 @@ function mainOnlyTitle(main) {
   const primary = getMainPrimary(main);
   const typeName = primary ? (TYPE_NAMES[primary] || main?.share?.title || `${primary}号`) : "主型结果";
   return primary ? `${mainTypeCode(main)} · ${typeName}` : typeName;
+}
+
+function mainPersonaName(main) {
+  const primary = getMainPrimary(main);
+  return primary ? (TYPE_PERSONA_NAMES[primary] || TYPE_NAMES[primary] || `${primary}号`) : "九型探索者";
+}
+
+function subtypePersonaName(subtype) {
+  const top = getSubtypeTop(subtype);
+  return top ? (SUBTYPE_PERSONA_NAMES[top.key] || SUBTYPE_SHORT_NAMES[top.key] || SUBTYPE_NAMES[top.key] || top.label) : "副型待补";
+}
+
+function subtypeTopName(subtype, short = false) {
+  const top = getSubtypeTop(subtype);
+  if (!top) return short ? "副型待补" : "副型待补";
+  return short
+    ? (SUBTYPE_SHORT_NAMES[top.key] || SUBTYPE_NAMES[top.key] || top.label)
+    : (SUBTYPE_NAMES[top.key] || top.label);
+}
+
+function subtypeSecondName(subtype) {
+  const second = getSubtypeSecond(subtype);
+  return second ? (SUBTYPE_NAMES[second.key] || second.label) : "";
+}
+
+function mainIdentitySentence(main) {
+  const primary = getMainPrimary(main);
+  return primary ? (TYPE_IDENTITY_LINES[primary] || TYPE_RESULT_LINES[primary] || "先把结果当成一张地图。") : "先把结果当成一张地图。";
+}
+
+function subtypeIdentitySentence(subtype) {
+  const top = getSubtypeTop(subtype);
+  if (!top) return "副型可以之后补，本次先看主位。";
+  if (isChildSubtypeResult(subtype)) return SUBTYPE_PARENT_LINES[top.key] || "先观察孩子更常进入的注意力入口。";
+  return SUBTYPE_IDENTITY_LINES[top.key] || "副型看注意力入口，不是单一标签。";
+}
+
+function resultConfidenceLabel(result) {
+  if (result?.quality_flags?.length) return "建议复核";
+  if (result?.subtype_confidence) {
+    return {
+      clear: "较集中",
+      leaning: "有方向",
+      mixed: "双倾向"
+    }[result.subtype_confidence] || "可参考";
+  }
+  return "可参考";
+}
+
+function shouldShowNextCard(deck, result) {
+  if (deck.main?.team?.code) return false;
+  if (isChildSubtypeResult(deck.subtype || result)) return false;
+  if (!deck.main && deck.subtype) return false;
+  return Boolean(deck.main && deck.subtype);
+}
+
+function isChildSubtypeResult(result) {
+  return Boolean(result?.test_mode === "subtype_child");
+}
+
+function bundleCurrentKind(deck) {
+  if (deck.current?.team?.code && isMainResult(deck.current)) return "team_main";
+  if (isChildSubtypeResult(deck.current)) return "child_subtype";
+  if (isPersonalSubtypeResult(deck.current)) return "subtype";
+  if (isMainResult(deck.current)) return "main";
+  return "result";
+}
+
+function bundleHasRecentMerge(deck, result) {
+  if (!deck.main || !deck.subtype) return false;
+  const currentCode = result?.verification_code || deck.current?.verification_code || "";
+  return Boolean(currentCode && currentCode !== deck.main.verification_code || currentCode && currentCode !== deck.subtype.verification_code);
+}
+
+function topTypesText(main, separator = "/") {
+  return (main?.top_types || []).slice(0, 3).map((item) => item.element).join(separator) || "-";
+}
+
+function subtypePairText(subtype, withPercent = false) {
+  const ranked = subtype?.subtype_ranked || [];
+  return ranked.slice(0, 2).map((item) => {
+    const name = SUBTYPE_NAMES[item.key] || item.label || "副型";
+    return withPercent ? `${name}${Math.round(item.percent || 0)}%` : name;
+  }).join(" / ") || "副型待补";
+}
+
+function identityCardKicker(deck) {
+  const kind = bundleCurrentKind(deck);
+  if (kind === "team_main") return "我的团队主型提交";
+  if (kind === "child_subtype") return "亲子观察卡";
+  if (deck.main && deck.subtype) return "我的九型身份卡";
+  if (deck.main) return "我的主型身份卡";
+  return "我的副型身份卡";
+}
+
+function identityCardTitle(deck) {
+  const main = deck.main;
+  const subtype = deck.subtype;
+  if (main && subtype) {
+    return `我是 ${mainTypeCode(main)} · ${subtypeTopName(subtype, true)}优先的${mainPersonaName(main)}`;
+  }
+  if (main?.team?.code) return `我以 ${mainTypeCode(main)} 计入团队总图`;
+  if (main) return `我是 ${mainTypeCode(main)} 的${mainPersonaName(main)}`;
+  if (isChildSubtypeResult(subtype)) return `${subtypeTopName(subtype)}优先的亲子观察`;
+  if (subtype) return `${subtypeTopName(subtype)}优先的${subtypePersonaName(subtype)}`;
+  return "结果待确认";
+}
+
+function identityCardLine(deck, result) {
+  const main = deck.main;
+  const subtype = deck.subtype;
+  if (main?.team?.code) {
+    return "个人主位只在你这里展示；团队页只看汇总分布，不给单个人贴标签。";
+  }
+  if (main && subtype) {
+    const prefix = bundleHasRecentMerge(deck, result) ? "已结合你近10天内的另一份测试。" : "";
+    return `${prefix}${mainIdentitySentence(main)} ${subtypeIdentitySentence(subtype)}`;
+  }
+  if (main) {
+    return `${mainIdentitySentence(main)} 这张卡先呈现你的主型和侧翼。`;
+  }
+  if (isChildSubtypeResult(subtype)) {
+    return `${subtypeIdentitySentence(subtype)} 这不是标签，是亲子沟通的观察入口。`;
+  }
+  return `${subtypeIdentitySentence(subtype)} 这张卡先看副型排序；补上主型后，老师能读得更稳。`;
+}
+
+function identityCardChips(deck, result) {
+  const main = deck.main;
+  const subtype = deck.subtype;
+  const chips = [];
+  if (main) {
+    chips.push(`主型 ${mainTypeCode(main)}`);
+    chips.push(`前三 ${topTypesText(main)}`);
+    if (main.team?.code) {
+      chips.push("已入团队");
+      if (main?.quality_flags?.length) chips.push("建议复核");
+      return chips.filter(Boolean).slice(0, 4);
+    }
+  } else {
+    chips.push(isChildSubtypeResult(subtype) ? "亲子观察" : "主型可补");
+  }
+  if (isPersonalSubtypeResult(subtype)) {
+    const topSubtype = getSubtypeTop(subtype);
+    chips.push(topSubtype ? `${SUBTYPE_SHORT_NAMES[topSubtype.key] || SUBTYPE_NAMES[topSubtype.key] || topSubtype.label}优先` : "副型待确认");
+  } else if (main) {
+    chips.push("副型可补");
+  }
+  if (bundleHasRecentMerge(deck, result)) chips.push("近10天合并");
+  if (main?.quality_flags?.length || subtype?.quality_flags?.length) chips.push("建议复核");
+  return chips.filter(Boolean).slice(0, 4);
+}
+
+function identityCardFooter(deck, result) {
+  if (deck.main?.team?.code) return `团队提交 · 前三 ${topTypesText(deck.main, " / ")}`;
+  if (deck.main && deck.subtype) return `主型 ${topTypesText(deck.main, " / ")} · 副型 ${subtypePairText(deck.subtype, true)}`;
+  if (deck.main) return `主位 ${topTypesText(deck.main, " / ")} · ${resultConfidenceLabel(deck.main)}`;
+  return `副型 ${subtypePairText(deck.subtype, true)}`;
 }
 
 function identityTitle(bundle) {
@@ -3168,7 +3515,7 @@ function resultOverviewLine(bundle) {
   }
   if (main) {
     const line = TYPE_RESULT_LINES[primary] || "本次先呈现主型分布。";
-    return `${line} 副型之后可补，本次先看主位。`;
+    return `${line} 本次先呈现主型与侧翼。`;
   }
   const ranked = subtype?.subtype_ranked || [];
   if (ranked.length) {
@@ -3198,44 +3545,137 @@ function resultOverviewChips(bundle) {
   return chips.filter(Boolean).slice(0, 4);
 }
 
-function briefAnalysisTitle(bundle) {
-  if (bundle.main && bundle.subtype) return "先看主型，再看副型入口";
-  if (bundle.main) return "这份主型结果，可以先这样理解";
-  return "这份副型排序，可以先这样理解";
+function briefAnalysisTitle(bundle, result = null) {
+  if (bundle.main?.team?.code) return "团队主型样本";
+  if (isChildSubtypeResult(bundle.subtype || result)) return `${subtypeTopName(bundle.subtype || result)}亲子观察`;
+  if (bundle.main && bundle.subtype) return `${mainTypeCode(bundle.main)}主副型特征`;
+  if (bundle.main) return `${mainTypeCode(bundle.main)}核心特征`;
+  return `${subtypeTopName(bundle.subtype || result)}副型特征`;
 }
 
-function briefAnalysisLine(bundle) {
-  if (bundle.main && bundle.subtype) return "网页只做有限解读，真正精准的部分要结合你的真实场景。";
-  if (bundle.main) return "先看主位和分布，不急着把自己贴死。";
-  return "副型用于补充主型，不建议单独定论。";
+function briefAnalysisLine(bundle, result = null) {
+  if (bundle.main?.team?.code) return "团队看分布，不给个人打分。";
+  if (isChildSubtypeResult(bundle.subtype || result)) return "先看入口，再看家庭里的靠近方式。";
+  if (bundle.main && bundle.subtype) return "主型看动力，副型看这个动力的入口。";
+  if (bundle.main) return "抓核心动力，也看优势、压力和一句话翻译。";
+  return "看第一、第二入口如何影响日常表现。";
 }
 
 function briefAnalysisHtml(bundle, translation, usage, result) {
+  if (isChildSubtypeResult(bundle.subtype || result)) {
+    const subtype = bundle.subtype || result;
+    const ranked = subtype?.subtype_ranked || [];
+    const first = ranked[0];
+    const second = ranked[1];
+    const firstName = first ? SUBTYPE_NAMES[first.key] || first.label : "待观察";
+    const secondName = second ? SUBTYPE_NAMES[second.key] || second.label : "暂不明显";
+    return analysisOneBoxHtml({
+      eyebrow: "亲子观察重点",
+      title: `${firstName}优先的靠近方式`,
+      lead: `${subtypeIdentitySentence(subtype)} 这张卡适合先帮助家长看见孩子的入口，而不是急着给孩子定性。`,
+      tags: [`第一 ${firstName}`, `第二 ${secondName}`, "先观察再沟通"],
+      items: [
+        ["第一入口", first ? `${SUBTYPE_NAMES[first.key] || first.label} ${Math.round(first.percent || 0)}%，更像孩子默认会先使用的靠近方式。` : "待继续观察。"],
+        ["第二入口", second ? `${SUBTYPE_NAMES[second.key] || second.label}会一起影响亲近方式，尤其在家庭关系里容易出现。` : "暂不明显，先不急着补结论。"],
+        ["家庭提示", "先接住孩子的入口，再谈要求和规则；把一次表现当线索，不把孩子固定成标签。"],
+        ["老师校准", "少儿版一定要结合年龄、家庭互动和真实事件再判断。"]
+      ],
+      teacher: "亲子教育和亲密关系里，真实互动比单次分数更重要。"
+    });
+  }
   if (bundle.main) {
-    return `
-      <div class="result-brief-grid">
-        ${briefItemHtml("朋友视角", translation.friend)}
-        ${briefItemHtml("工作表现", translation.work)}
-        ${briefItemHtml("压力反应", translation.pressure)}
-        ${briefItemHtml("靠近方式", usage.near)}
-        ${briefItemHtml("避雷方式", usage.avoid)}
-        ${briefItemHtml("补能方式", usage.charge)}
-      </div>
-      ${teacherCtaHtml(result)}
-    `;
+    const main = bundle.main;
+    if (main.team?.code) {
+      return teamMainSubmissionAnalysisHtml(main, result);
+    }
+    const primary = getMainPrimary(main);
+    const analysis = TYPE_ANALYSIS[primary] || {
+      focus: mainIdentitySentence(main),
+      motive: "核心动力待复核",
+      strength: translation.work,
+      pressure: translation.pressure,
+      relation: usage.near
+    };
+    const hasSubtype = isPersonalSubtypeResult(bundle.subtype);
+    const subtype = bundle.subtype;
+    const fourthLabel = hasSubtype ? "副型影响" : "一句话";
+    const fourthText = hasSubtype
+      ? `${subtypeTopName(subtype)}优先，会让这个主型更常从「${SUBTYPE_NAMES[getSubtypeTop(subtype)?.key] || subtypeTopName(subtype)}」入口表现出来。`
+      : translation.friend;
+    const typeTitle = primary ? `${primary}号 · ${TYPE_NAMES[primary] || "主型"}` : "核心动力";
+    const usageText = `朋友翻译：${fourthText} 靠近：${usage.near}；避雷：${usage.avoid}；补能：${usage.charge}。`;
+    return analysisOneBoxHtml({
+      eyebrow: "核心特征",
+      title: typeTitle,
+      lead: analysis.focus,
+      tags: [analysis.motive, shortFeatureTag(analysis.strength), resultConfidenceLabel(main)],
+      items: [
+        ["核心想要", `${analysis.motive}。这是你反复会回到的内在驱动力。`],
+        ["高频优势", `${analysis.strength}。用在合适场景，会变成很稳定的个人力量。`],
+        ["压力姿势", `${analysis.pressure}。压力大时会更明显，先看见它，再调整节奏。`],
+        ["相处方式", usageText]
+      ],
+      teacher: "想看得更深，把编号和真实场景一起给老师。"
+    });
   }
   const subtype = bundle.subtype;
   const ranked = subtype?.subtype_ranked || [];
   const first = ranked[0];
   const second = ranked[1];
+  const firstName = first ? SUBTYPE_NAMES[first.key] || first.label : "待确认";
+  const secondName = second ? SUBTYPE_NAMES[second.key] || second.label : "待确认";
+  return analysisOneBoxHtml({
+    eyebrow: "副型重点",
+    title: `${firstName}优先${second ? ` · ${secondName}跟上` : ""}`,
+    lead: first ? `你的注意力更容易先进入「${firstName}」，第二入口会一起影响日常表现。副型看的是入口排序，不是给人贴单选标签。` : "先看排序，再和主型一起校准。",
+    tags: [`第一 ${firstName}`, `第二 ${secondName}`, resultConfidenceLabel(subtype)],
+    items: [
+      ["第一入口", first ? `${SUBTYPE_NAMES[first.key] || first.label} ${Math.round(first.percent || 0)}%，更像你进入生活和压力场景的默认入口。` : "待确认。"],
+      ["第二入口", second ? `${SUBTYPE_NAMES[second.key] || second.label} ${Math.round(second.percent || 0)}%，会影响你的表达方式和关系节奏。` : "待确认。"],
+      ["怎么理解", "第一副型像默认入口，第二副型像常用辅助手；两者组合起来，才更接近日常的你。"],
+      ["下一步", "补上主型，再带真实场景一起看，会更稳。"]
+    ],
+    teacher: "先当入口排序看，别急着给自己下结论。"
+  });
+}
+
+function teamMainSubmissionAnalysisHtml(main, result) {
+  const primary = getMainPrimary(main);
+  const top = topTypesText(main, " / ");
+  const status = main?.quality_flags?.length ? "建议老师复核" : "已计入团队";
+  return analysisOneBoxHtml({
+    eyebrow: "团队样本",
+    title: `${mainTypeCode(main)} 已进入团队总图`,
+    lead: "你的主型已加入团队分布。团队页只看整体高位、低位和分化。",
+    tags: [`前三 ${topTypesText(main)}`, "团队分布", status],
+    items: [
+      ["个人主位", `${mainTypeCode(main)} · 前三 ${top}。`],
+      ["团队会看", "1-9号整体分布、共同高位、低位和成员分化。"],
+      ["老师会核", "岗位结构、团队目标和真实协作场景。"],
+      ["下一步", "截图或编号给老师，放进团队目标里读。"]
+    ],
+    teacher: "团队主型适合看协作结构，不适合用来给单个人贴标签。"
+  });
+}
+
+function analysisOneBoxHtml({ eyebrow = "", title = "", lead = "", tags = [], items = [], teacher = "" } = {}) {
+  const itemHtml = items.filter(Boolean).slice(0, 5).map(([label, text]) => `
+    <p>
+      <strong>${escapeHtml(label)}</strong>
+      <span>${escapeHtml(text || "-")}</span>
+    </p>
+  `).join("");
   return `
-    <div class="result-brief-grid subtype-brief-grid">
-      ${briefItemHtml("第一副型", first ? `${SUBTYPE_NAMES[first.key] || first.label} ${Math.round(first.percent || 0)}%` : "待确认")}
-      ${briefItemHtml("第二副型", second ? `${SUBTYPE_NAMES[second.key] || second.label} ${Math.round(second.percent || 0)}%` : "待确认")}
-      ${briefItemHtml("理解方式", "副型看注意力入口，不是单选标签。")}
-      ${briefItemHtml("使用建议", "与主型结合后，会更接近真实生活表现。")}
+    <div class="analysis-one-box" data-poster-box="analysis">
+      <em>${escapeHtml(eyebrow)}</em>
+      <strong>${escapeHtml(title)}</strong>
+      <span class="analysis-lead">${escapeHtml(lead)}</span>
+      ${featureTagsHtml(tags)}
+      <div class="analysis-one-list">
+        ${itemHtml}
+      </div>
+      ${teacher ? `<small>${escapeHtml(teacher)}</small>` : ""}
     </div>
-    ${teacherCtaHtml(result)}
   `;
 }
 
@@ -3243,7 +3683,20 @@ function briefItemHtml(label, text) {
   return `<p><strong>${escapeHtml(label)}</strong><span>${escapeHtml(text || "-")}</span></p>`;
 }
 
-function teacherCtaHtml(result) {
+function featureTagsHtml(items = []) {
+  const tags = items.filter(Boolean).slice(0, 3);
+  if (!tags.length) return "";
+  return `<div class="feature-tags">${tags.map((item) => `<i>${escapeHtml(item)}</i>`).join("")}</div>`;
+}
+
+function shortFeatureTag(text) {
+  return String(text || "")
+    .split(/[，,。；;]/)[0]
+    .replace(/\s+/g, "")
+    .slice(0, 8);
+}
+
+function teacherCtaHtml(result, textOverride = "") {
   const code = result?.verification_code || "------";
   const settings = state.siteSettings || {};
   const qr = settings.group_chat_qr_image_url || "";
@@ -3254,8 +3707,8 @@ function teacherCtaHtml(result) {
   return `
     <div class="teacher-cta-card">
       <div>
-        <strong>想看得更准</strong>
-        <span>截图或发编号给老师，结合真实经历、关系和职场场景复核，会比自动结果更匹配。</span>
+        <strong>想看得更准，交给老师</strong>
+        <span>${escapeHtml(textOverride || "基础结果先给方向；截图或发编号给老师，结合真实经历校准。")}</span>
       </div>
       <em>ref ${escapeHtml(code)}</em>
     </div>
@@ -3418,20 +3871,93 @@ function translationCardHtml(item) {
 }
 
 function usageGuideHtml(usage, result) {
-  const settings = state.siteSettings || {};
-  const qr = settings.group_chat_qr_image_url || "";
-  const caption = settings.group_chat_qr_caption || "扫码加入群聊";
-  const qrHtml = qr
-    ? `<img src="${escapeHtml(qr)}" alt="${escapeHtml(caption)}"><p>${escapeHtml(caption)}</p>`
-    : `<div class="poster-qr-empty compact"><span>进群入口</span><p>添加群聊里查看</p></div>`;
   return `
-    <div class="usage-guide-list">
-      <p><strong>靠近</strong><span>${escapeHtml(usage.near)}</span></p>
-      <p><strong>避雷</strong><span>${escapeHtml(usage.avoid)}</span></p>
+    <div class="brief-focus-card feature-portrait usage-feature-card">
+      <em>相处小抄</em>
+      <strong>和我配合，先抓这三件事</strong>
+      <span>${escapeHtml(`靠近我时，${usage.near}；容易踩雷的是，${usage.avoid}；真正补能的是，${usage.charge}。`)}</span>
+      ${featureTagsHtml([usage.near, usage.avoid, usage.charge])}
+    </div>
+    <div class="usage-guide-list usage-guide-enhanced">
+      <p><strong>靠近方式</strong><span>${escapeHtml(usage.near)}</span></p>
+      <p><strong>避雷方式</strong><span>${escapeHtml(usage.avoid)}</span></p>
       <p><strong>充电口</strong><span>${escapeHtml(usage.charge)}</span></p>
     </div>
-    <div class="poster-qr-block usage-guide-qr">${qrHtml}</div>
+    ${teacherMiniStripHtml(result, "职场、关系和真实场景，交给老师会更准。")}
   `;
+}
+
+function teacherMiniStripHtml(result, text = "") {
+  const code = result?.verification_code || "------";
+  return `
+    <div class="teacher-mini-strip">
+      <strong>专业老师校准</strong>
+      <span>${escapeHtml(text || "截图或发送编号，结合真实经历会更准。")}</span>
+      <em>${escapeHtml(code)}</em>
+    </div>
+  `;
+}
+
+function nextCardKicker(deck, result) {
+  if (deck.main?.team?.code) return "团队下一步";
+  if (isChildSubtypeResult(deck.subtype || result)) return "家庭小抄";
+  if (!deck.main && deck.subtype) return "下一步";
+  return "相处小抄";
+}
+
+function nextCardTitle(deck, result) {
+  if (deck.main?.team?.code) return "查看团队结果";
+  if (isChildSubtypeResult(deck.subtype || result)) return "怎么靠近孩子";
+  if (!deck.main && deck.subtype) return "补上主型会更准";
+  return "我的相处小抄";
+}
+
+function nextCardLine(deck, result) {
+  if (deck.main?.team?.code) return "团队总图不是个人评价，适合由老师结合团队样本和访谈解释。";
+  if (isChildSubtypeResult(deck.subtype || result)) return "把这张图当成观察入口，不把孩子固定成某一种人。";
+  if (!deck.main && deck.subtype) return "副型先看入口排序，补上主型会更完整。";
+  if (deck.main && deck.subtype) return "这张卡最适合转发给亲近的人，让对方知道怎么和你配合。";
+  return "本次先看主型；副型可以之后补，不影响这次主位结果。";
+}
+
+function nextCardFooter(deck, result) {
+  if (deck.main?.team?.code) return "团队页 / 老师解读";
+  if (isChildSubtypeResult(deck.subtype || result)) return "亲子沟通参考";
+  return "保存图片 / 老师校准";
+}
+
+function nextCardHtml(deck, usage, result) {
+  if (deck.main?.team?.code) {
+    return `
+      <div class="usage-guide-list">
+        ${briefItemHtml("团队结果", "点击下方团队结果，查看团队总图。")}
+        ${briefItemHtml("老师解读", "样本足够后，再结合团队目标和真实沟通场景。")}
+        ${briefItemHtml("个人补充", "个人副型可之后补测，不影响本次团队主型提交。")}
+      </div>
+      <div class="poster-qr-block usage-guide-qr">${getTeamOrGroupQrHtml(result)}</div>
+    `;
+  }
+  if (isChildSubtypeResult(deck.subtype || result)) {
+    return `
+      <div class="usage-guide-list">
+        ${briefItemHtml("靠近方式", "先接住感受和节奏，再谈要求。")}
+        ${briefItemHtml("避雷方式", "别把一次表现直接定义成性格。")}
+        ${briefItemHtml("充电口", "稳定回应、具体陪伴、少一点急着纠正。")}
+      </div>
+      <div class="poster-qr-block usage-guide-qr">${nextStepQrHtml(result?.verification_code || "------", "找老师看亲子版", "亲子版更需要结合年龄、家庭互动和真实事件。")}</div>
+    `;
+  }
+  if (!deck.main && deck.subtype) {
+    return `
+      <div class="usage-guide-list">
+        ${briefItemHtml("现在能看", "副型排序和注意力入口。")}
+        ${briefItemHtml("还差一步", "补测主型后，才能判断核心动机。")}
+        ${briefItemHtml("找老师看", "把主型编号和副型编号一起发过去。")}
+      </div>
+      <div class="poster-qr-block usage-guide-qr">${nextStepQrHtml(result?.verification_code || "------", "补主型 / 找老师", "副型已完成，补上主型会更好看懂。")}</div>
+    `;
+  }
+  return usageGuideHtml(usage, result);
 }
 
 function subtypeTranslation(subtype) {
@@ -3459,7 +3985,7 @@ function subtypeTranslation(subtype) {
 function subtypeUsage(subtype) {
   const top = getSubtypeTop(subtype);
   const key = top?.key || "social";
-  const line = "副型先说明注意力入口，主型补完后会更像完整说明书。";
+  const line = "副型先看注意力入口，补上主型后会更完整。";
   return {
     social: { line, near: "给我位置感", avoid: "把我排除在局面外", charge: "一起做成点什么" },
     one_to_one: { line, near: "认真、直接、有回应", avoid: "含糊和冷处理", charge: "高质量连接" },
@@ -3500,38 +4026,39 @@ function onResultFeedback(event) {
 
 function renderAnonymousTeamSubtypeShareDeck(result) {
   const code = result.verification_code || "------";
-  const teamName = result.team?.name || "团队";
   $("shareDeck")?.classList.remove("main-only-share-deck", "subtype-only-share-deck");
   $("shareDeck")?.classList.add("team-subtype-share-deck");
   $("shareCard").dataset.type = 6;
   $("shareNumber").textContent = "team";
   $("hiddenCode").textContent = `ref ${code}`;
-  $("sharePrimaryKicker").textContent = "团队副型";
-  $("shareTitle").textContent = "已匿名计入";
-  $("shareLine").textContent = "";
+  $("sharePrimaryKicker").textContent = "团队副型提交凭证";
+  $("shareTitle").textContent = "我已匿名提交团队副型";
+  $("shareLine").textContent = "你的排序已匿名进入团队总图，只看整体。";
   $("shareChips").innerHTML = [
-    `团队 ${teamName}`,
-    "匿名汇总"
+    "团队总图",
+    "匿名汇总",
+    "个人不展示"
   ].map((text) => `<span>${escapeHtml(text)}</span>`).join("");
-  $("shareMiniMap").innerHTML = `
-    <div class="poster-qr-empty">
-      <span>个人明细已隐藏</span>
-      <p>老师端查看团队层面的注意力入口分布</p>
-    </div>
-  `;
-  $("shareTopTypes").textContent = "团队副型匿名提交";
+  $("shareMiniMap").innerHTML = teamSubtypeIdentityHtml(result);
+  $("shareTopTypes").textContent = "团队副型匿名提交 · 只看整体";
 
-  $("shareEvidenceTitle").textContent = "为什么匿名";
-  $("shareEvidenceKicker").textContent = "简要说明";
-  $("shareEvidenceLine").textContent = "";
-  $("shareEvidenceVisual").innerHTML = `
-    <div class="poster-analysis-list">
-      <p><strong>个人</strong>不公开副型排序，减少被贴标签。</p>
-      <p><strong>团队</strong>只汇总整体倾向，适合复盘氛围和协作入口。</p>
-      <p><strong>老师</strong>结合团队主型和访谈再做解释。</p>
-    </div>
-  `;
-  $("shareEvidenceFoot").textContent = "匿名汇总，不展示个人明细";
+  $("shareEvidenceTitle").textContent = "团队副型怎么看";
+  $("shareEvidenceKicker").textContent = "结果重点";
+  $("shareEvidenceLine").textContent = "团队副型看的是整体注意力入口，不看个人标签。";
+  $("shareEvidenceVisual").innerHTML = analysisOneBoxHtml({
+    eyebrow: "团队副型重点",
+    title: "团队默认会先关注什么",
+    lead: "有人先看资源节奏，有人先看关键连接，也有人先看群体位置；汇总后才适合判断团队氛围和协作入口。",
+    tags: ["匿名汇总", "只看整体", "老师解读"],
+    items: [
+      ["自保入口", "资源、节奏、边界和基本盘。高时团队更重视稳定、可持续和风险缓冲。"],
+      ["一对一入口", "关键连接、真实回应和关系强度。高时团队更容易被强关系和关键人物牵动。"],
+      ["社群入口", "群体位置、协作氛围和共同目标。高时团队更关注位置、共识和集体方向。"],
+      ["专业老师", "要和团队主型、岗位结构、真实协作一起看，不能只看一个汇总图。"]
+    ],
+    teacher: "团队副型只服务团队观察，不看单个人。"
+  });
+  $("shareEvidenceFoot").textContent = "匿名汇总 · 只看整体";
   $("shareEvidenceCode").textContent = `ref ${code}`;
 
   $("shareNextKicker").textContent = "团队入口";
@@ -3542,9 +4069,33 @@ function renderAnonymousTeamSubtypeShareDeck(result) {
   $("shareNextCode").textContent = `ref ${code}`;
   $("shareEvidenceCard").dataset.type = 6;
   $("shareNextCard").dataset.type = 6;
-  $("shareNextCard").hidden = false;
+  $("shareNextCard").hidden = true;
   updateShareCardPagination($("resultScreen"));
   resetResultFeedback();
+}
+
+function teamSubtypeIdentityHtml(result) {
+  return `
+    <div class="team-anon-visual">
+      <div class="team-anon-route" aria-label="团队副型匿名流程">
+        <span>你的排序</span>
+        <i></i>
+        <strong>匿名池</strong>
+        <i></i>
+        <span>团队总图</span>
+      </div>
+      <div class="team-anon-steps">
+        <p><strong>不公开</strong><span>个人副型排序</span></p>
+        <p><strong>只统计</strong><span>团队整体入口</span></p>
+        <p><strong>再解读</strong><span>结合主型和访谈</span></p>
+      </div>
+      <div class="team-anon-badge">
+        <span>已加入</span>
+        <strong>团队副型总图</strong>
+        <small>匿名汇总，只看整体</small>
+      </div>
+    </div>
+  `;
 }
 
 function getGroupQrHtml(result) {
@@ -3553,7 +4104,7 @@ function getGroupQrHtml(result) {
   const caption = settings.group_chat_qr_caption || "扫码加入群聊";
   return qr
     ? `<div class="poster-qr-copy"><strong>进群找老师</strong><span>长按识别，继续看结果</span></div><img src="${escapeHtml(qr)}" alt="${escapeHtml(caption)}"><p>${escapeHtml(caption)}</p>`
-    : `<div class="poster-qr-empty"><span>群二维码待上传</span><p>管理员后台可配置</p></div>`;
+    : `<div class="poster-qr-empty"><span>找老师继续看</span><p>保存结果图或发送编号，结合真实经历会更准</p></div>`;
 }
 
 function getTeamOrGroupQrHtml(result) {
@@ -3574,17 +4125,17 @@ function getTeamOrGroupQrHtml(result) {
   return getGroupQrHtml(result);
 }
 
-function groupQrFallbackHtml(code) {
+function groupQrFallbackHtml(code, title = "继续校准", text = "保存结果图或发送编号，结合真实经历会更准") {
   return `
     <div class="poster-qr-empty">
-      <span>副型可补</span>
-      <p>本次主型结果已生成，之后可加测副型把入口看得更细</p>
+      <span>${escapeHtml(title)}</span>
+      <p>${escapeHtml(text)}</p>
       <small>ref ${escapeHtml(code)}</small>
     </div>
   `;
 }
 
-function nextStepQrHtml(code, title = "继续补全") {
+function nextStepQrHtml(code, title = "继续补全", text = "长按保存后，带编号继续校准。") {
   const settings = state.siteSettings || {};
   const qr = settings.group_chat_qr_image_url || "";
   const caption = settings.group_chat_qr_caption || "扫码加入群聊";
@@ -3598,7 +4149,7 @@ function nextStepQrHtml(code, title = "继续补全") {
       <p>${escapeHtml(caption)}</p>
     `;
   }
-  return groupQrFallbackHtml(code);
+  return groupQrFallbackHtml(code, title, text);
 }
 
 function mainResultDistributionHtml(result) {
@@ -3723,7 +4274,7 @@ async function saveVisibleShareCards(scope = "result") {
     saved_count: previews.length
   });
   window.setTimeout(() => {
-    if (button) button.textContent = cards.length > 2 ? "保存三张图片" : "保存结果图片";
+    if (button) button.textContent = `保存${cards.length}张图片`;
   }, 1500);
 }
 
@@ -3777,11 +4328,14 @@ function sharePosterSvgFromCard(card, index, total, options = {}) {
   const label = card.querySelector(".share-label")?.textContent.trim() || `0${index + 1} / 0${total}`;
   const title = card.querySelector("h3")?.textContent.trim() || "jojo测九型";
   const body = card.querySelector(".share-core > p:not(.share-label), .share-body p:not(.share-label)")?.textContent.trim() || "";
+  const quote = card.querySelector(".brief-quote span")?.textContent.trim() || "";
   const chips = [...card.querySelectorAll(".share-chips span")].map((item) => item.textContent.trim()).filter(Boolean).slice(0, 3);
   const footer = card.querySelector(".share-footer > span:first-child")?.textContent.trim() || "";
   const code = card.querySelector(".hidden-code")?.textContent.trim() || "";
   const rows = posterRowsFromCard(card);
-  const blocks = posterBlocksFromCard(card);
+  const analysisBox = posterAnalysisFromCard(card);
+  const identityVisual = (!rows.length && !analysisBox) ? posterIdentityVisualFromCard(card) : null;
+  const blocks = analysisBox ? [] : posterBlocksFromCard(card);
   const cta = posterTeacherCtaFromCard(card);
   const isLongTitle = Array.from(title).length > 24;
   const titleSize = index === 0 ? 54 : (isLongTitle ? 45 : 52);
@@ -3789,9 +4343,9 @@ function sharePosterSvgFromCard(card, index, total, options = {}) {
   const titleLines = svgTextLines(title, index === 0 ? 17 : (isLongTitle ? 14 : 12), 3);
   const bodyLines = svgTextLines(body, 22, 2);
   const yAfterTitle = 242 + titleLines.length * titleStep;
-  const blockStartY = yAfterTitle + (bodyLines.length ? 150 : 118);
+  const blockStartY = yAfterTitle + (bodyLines.length ? 150 : 118) + (quote ? 116 : 0);
   const brandSvg = logoDataUrl
-    ? `<image href="${escapeSvg(logoDataUrl)}" x="64" y="42" width="114" height="46" preserveAspectRatio="xMinYMid meet"/><text x="194" y="78" class="brand">测九型</text>`
+    ? `<image href="${escapeSvg(logoDataUrl)}" x="64" y="32" width="176" height="76" preserveAspectRatio="xMinYMid meet"/>`
     : `<circle cx="88" cy="75" r="18" fill="#fff" stroke="${palette.main}" stroke-width="5"/><circle cx="88" cy="75" r="5" fill="${palette.main}"/><text x="124" y="85" class="brand">jojo测九型</text>`;
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
@@ -3819,6 +4373,8 @@ function sharePosterSvgFromCard(card, index, total, options = {}) {
       .barlabel { fill: #6c8581; font-size: 21px; font-weight: 900; }
       .blockLabel { fill: ${palette.main}; font-size: 24px; font-weight: 930; }
       .blockText { fill: #2f6064; font-size: 25px; font-weight: 760; }
+      .analysisText { fill: #2f6064; font-size: 22px; font-weight: 780; }
+      .analysisTitle { fill: #153a3e; font-size: 34px; font-weight: 950; }
     </style>
   </defs>
   <rect x="0" y="0" width="900" height="1200" rx="34" fill="url(#bg)"/>
@@ -3828,14 +4384,17 @@ function sharePosterSvgFromCard(card, index, total, options = {}) {
   <text x="64" y="174" class="kicker">${escapeSvg(label)}</text>
   ${titleLines.map((line, lineIndex) => `<text x="64" y="${258 + lineIndex * titleStep}" class="title">${escapeSvg(line)}</text>`).join("")}
   ${bodyLines.map((line, lineIndex) => `<text x="64" y="${yAfterTitle + 20 + lineIndex * 40}" class="body">${escapeSvg(line)}</text>`).join("")}
+  ${quote ? posterQuoteSvg(quote, yAfterTitle + (bodyLines.length ? 110 : 74), palette) : ""}
   ${chips.map((chip, chipIndex) => {
     const x = 64 + chipIndex * 172;
     return `<rect x="${x}" y="${yAfterTitle + 92}" width="148" height="48" rx="24" fill="#fff" stroke="rgba(246,111,127,.28)"/>
   <text x="${x + 22}" y="${yAfterTitle + 124}" class="chip">${escapeSvg(chip)}</text>`;
   }).join("")}
   ${rows.length ? posterBarsSvg(rows, yAfterTitle + 210) : ""}
+  ${analysisBox ? posterAnalysisBoxSvg(analysisBox, blockStartY, palette) : ""}
+  ${identityVisual ? posterIdentityVisualSvg(identityVisual, yAfterTitle + 196, palette) : ""}
   ${blocks.length ? posterBlocksSvg(blocks, blockStartY) : ""}
-  ${cta ? posterTeacherCtaSvg(cta, blocks.length ? blockStartY + Math.min(blocks.length, 6) * 102 + 20 : 820) : ""}
+  ${cta ? posterTeacherCtaSvg(cta, analysisBox ? blockStartY + 606 : (blocks.length ? blockStartY + Math.min(blocks.length, 6) * 102 + 20 : 820)) : ""}
   <text x="64" y="1110" class="muted">${escapeSvg(footer)}</text>
   <text x="670" y="1110" class="code">${escapeSvg(code)}</text>
 </svg>`;
@@ -3867,11 +4426,116 @@ function posterRowsFromCard(card) {
 }
 
 function posterBlocksFromCard(card) {
-  const listItems = [...card.querySelectorAll(".friend-translation-list p, .usage-guide-list p, .poster-analysis-list p, .result-brief-grid p")];
-  return listItems.map((item) => ({
+  const focus = [...card.querySelectorAll(".brief-focus-card")].map((item) => ({
+    label: item.querySelector("strong")?.textContent.trim() || "",
+    text: item.querySelector("span")?.textContent.trim() || ""
+  }));
+  const mini = [...card.querySelectorAll(".teacher-mini-strip")].map((item) => ({
+    label: item.querySelector("strong")?.textContent.trim() || "",
+    text: item.querySelector("span")?.textContent.trim() || item.querySelector("em")?.textContent.trim() || ""
+  }));
+  const listItems = [...card.querySelectorAll(".friend-translation-list p, .usage-guide-list p, .poster-analysis-list p, .result-brief-grid p, .brief-list-panel p")].map((item) => ({
     label: item.querySelector("strong")?.textContent.trim() || "",
     text: item.querySelector("span")?.textContent.trim() || item.textContent.replace(item.querySelector("strong")?.textContent || "", "").trim()
-  })).filter((item) => item.label || item.text).slice(0, 6);
+  }));
+  return [...focus, ...listItems, ...mini].filter((item) => item.label || item.text).slice(0, 6);
+}
+
+function posterIdentityVisualFromCard(card) {
+  const pieItems = [...card.querySelectorAll(".poster-pie-legend span")].map((item) => {
+    const text = item.textContent.trim();
+    const percent = Number(text.match(/(\d+)%/)?.[1] || 0);
+    const label = text
+      .replace(/^\d+/, "")
+      .replace(/\s*\d+%\s*$/, "")
+      .trim();
+    return { label, percent };
+  }).filter((item) => item.label);
+  if (pieItems.length) return { kind: "subtype", items: pieItems };
+  const teamAnon = card.querySelector(".team-anon-visual");
+  if (teamAnon) {
+    const route = [...teamAnon.querySelectorAll(".team-anon-route span, .team-anon-route strong")]
+      .map((item) => item.textContent.trim())
+      .filter(Boolean);
+    const steps = [...teamAnon.querySelectorAll(".team-anon-steps p")].map((item) => ({
+      label: item.querySelector("strong")?.textContent.trim() || "",
+      text: item.querySelector("span")?.textContent.trim() || ""
+    })).filter((item) => item.label || item.text);
+    const badge = {
+      label: teamAnon.querySelector(".team-anon-badge span")?.textContent.trim() || "",
+      title: teamAnon.querySelector(".team-anon-badge strong")?.textContent.trim() || "",
+      text: teamAnon.querySelector(".team-anon-badge small")?.textContent.trim() || ""
+    };
+    return { kind: "teamAnon", route, steps, badge };
+  }
+  return null;
+}
+
+function posterIdentityVisualSvg(visual, startY, palette) {
+  if (visual.kind === "teamAnon") return posterTeamAnonSvg(visual, startY, palette);
+  return posterSubtypeIdentitySvg(visual.items || [], startY, palette);
+}
+
+function posterSubtypeIdentitySvg(items, startY, palette) {
+  const y = Math.min(startY, 560);
+  const max = Math.max(...items.map((item) => item.percent || 0), 100);
+  const colors = ["#ff7166", "#27c7ee", "#ffc83d"];
+  return `<rect x="64" y="${y}" width="772" height="360" rx="30" fill="rgba(255,255,255,.78)" stroke="${palette.main}" stroke-opacity=".18" stroke-width="3"/>
+  <text x="96" y="${y + 52}" class="blockLabel">副型排序</text>
+  <text x="96" y="${y + 96}" fill="#153a3e" font-size="40" font-weight="950">${escapeSvg(items[0]?.label || "副型待确认")}优先</text>
+  <circle cx="696" cy="${y + 92}" r="62" fill="${colors[0]}" fill-opacity=".16" stroke="${colors[0]}" stroke-width="16"/>
+  <text x="696" y="${y + 86}" text-anchor="middle" class="blockLabel">第一</text>
+  <text x="696" y="${y + 121}" text-anchor="middle" fill="#153a3e" font-size="33" font-weight="950">${Math.round(items[0]?.percent || 0)}%</text>
+  ${items.slice(0, 3).map((item, index) => {
+    const rowY = y + 156 + index * 62;
+    const barWidth = Math.max(16, 472 * (Number(item.percent || 0) / max));
+    return `<text x="96" y="${rowY + 22}" class="blockLabel">${index + 1}. ${escapeSvg(item.label)}</text>
+  <rect x="292" y="${rowY}" width="472" height="28" rx="14" fill="rgba(20,33,38,.08)"/>
+  <rect x="292" y="${rowY}" width="${barWidth}" height="28" rx="14" fill="${colors[index] || palette.main}"/>
+  <text x="784" y="${rowY + 22}" class="chip">${Math.round(item.percent || 0)}%</text>`;
+  }).join("")}
+  <text x="96" y="${y + 332}" class="muted">副型看入口排序，第一和第二一起读会更接近日常表现。</text>`;
+}
+
+function posterTeamAnonSvg(visual, startY, palette) {
+  const y = Math.min(startY, 560);
+  const route = (visual.route || ["你的排序", "匿名池", "团队总图"]).slice(0, 3);
+  const steps = (visual.steps || []).slice(0, 3);
+  return `<rect x="64" y="${y}" width="772" height="360" rx="30" fill="rgba(255,255,255,.78)" stroke="${palette.main}" stroke-opacity=".18" stroke-width="3"/>
+  <text x="96" y="${y + 52}" class="blockLabel">匿名汇总路径</text>
+  ${route.map((item, index) => {
+    const x = 96 + index * 248;
+    return `<rect x="${x}" y="${y + 82}" width="184" height="72" rx="26" fill="${index === 1 ? palette.main : "#fff"}" fill-opacity="${index === 1 ? ".14" : ".78"}" stroke="${palette.main}" stroke-opacity=".16"/>
+  <text x="${x + 92}" y="${y + 128}" text-anchor="middle" fill="#153a3e" font-size="26" font-weight="930">${escapeSvg(item)}</text>
+  ${index < route.length - 1 ? `<line x1="${x + 190}" y1="${y + 118}" x2="${x + 236}" y2="${y + 118}" stroke="${palette.main}" stroke-opacity=".38" stroke-width="5" stroke-linecap="round"/>` : ""}`;
+  }).join("")}
+  ${steps.map((step, index) => {
+    const x = 96 + index * 234;
+    const textLines = svgTextLines(step.text, 8, 2);
+    return `<text x="${x}" y="${y + 210}" class="blockLabel">${escapeSvg(step.label)}</text>
+  ${textLines.map((line, lineIndex) => `<text x="${x}" y="${y + 246 + lineIndex * 29}" class="blockText">${escapeSvg(line)}</text>`).join("")}`;
+  }).join("")}
+  <rect x="96" y="${y + 302}" width="708" height="38" rx="19" fill="${palette.main}" fill-opacity=".08"/>
+  <text x="120" y="${y + 328}" class="muted">${escapeSvg(visual.badge?.text || "匿名汇总，只看整体")}</text>`;
+}
+
+function posterAnalysisFromCard(card) {
+  const box = card.querySelector(".analysis-one-box");
+  if (!box) return null;
+  const directStrong = [...box.children].find((item) => item.tagName === "STRONG");
+  const directSmall = [...box.children].find((item) => item.tagName === "SMALL");
+  const items = [...box.querySelectorAll(".analysis-one-list p")].map((item) => ({
+    label: item.querySelector("strong")?.textContent.trim() || "",
+    text: item.querySelector("span")?.textContent.trim() || ""
+  })).filter((item) => item.label || item.text);
+  return {
+    eyebrow: box.querySelector("em")?.textContent.trim() || "",
+    title: directStrong?.textContent.trim() || "",
+    lead: box.querySelector(".analysis-lead")?.textContent.trim() || "",
+    tags: [...box.querySelectorAll(".feature-tags i")].map((item) => item.textContent.trim()).filter(Boolean).slice(0, 3),
+    items,
+    teacher: directSmall?.textContent.trim() || ""
+  };
 }
 
 function posterBarsSvg(rows, startY) {
@@ -3906,6 +4570,62 @@ function posterBlocksSvg(blocks, startY) {
   <text x="92" y="${y + 36}" class="blockLabel">${escapeSvg(block.label)}</text>
   ${textLines.map((line, lineIndex) => `<text x="238" y="${y + 36 + lineIndex * 30}" class="blockText">${escapeSvg(line)}</text>`).join("")}`;
   }).join("");
+}
+
+function posterAnalysisBoxSvg(analysis, startY, palette) {
+  const y = Math.min(startY, 400);
+  const boxHeight = 640;
+  const titleLines = svgTextLines(analysis.title, 18, 2);
+  const leadLines = svgTextLines(analysis.lead, 21, 3);
+  const tags = (analysis.tags || []).slice(0, 3);
+  const tagY = y + 242;
+  const listStart = y + 308;
+  let currentY = listStart;
+  const itemSvg = (analysis.items || []).slice(0, 5).map((item) => {
+    const isUsage = item.label === "使用说明";
+    const textLines = svgTextLines(item.text, 21, isUsage ? 3 : 2);
+    const rowHeight = isUsage ? 104 : 76;
+    const itemY = currentY;
+    currentY += rowHeight;
+    return `<line x1="96" y1="${itemY - 14}" x2="804" y2="${itemY - 14}" stroke="rgba(20,33,38,.075)" stroke-width="2"/>
+  <text x="96" y="${itemY + 16}" class="blockLabel">${escapeSvg(item.label)}</text>
+  ${textLines.map((line, lineIndex) => `<text x="252" y="${itemY + 16 + lineIndex * 28}" class="analysisText">${escapeSvg(line)}</text>`).join("")}`;
+  }).join("");
+  const teacherLines = svgTextLines(analysis.teacher, 32, 2);
+  const canShowTeacher = teacherLines.length && currentY < y + boxHeight - 78;
+  const teacherY = y + boxHeight - 72;
+  return `<rect x="64" y="${y}" width="772" height="${boxHeight}" rx="28" fill="rgba(255,255,255,.78)" stroke="${palette.main}" stroke-opacity=".22" stroke-width="3"/>
+  <circle cx="790" cy="${y + 54}" r="20" fill="${palette.main}" fill-opacity=".12"/>
+  <text x="96" y="${y + 42}" class="blockLabel">${escapeSvg(analysis.eyebrow)}</text>
+  ${titleLines.map((line, lineIndex) => `<text x="96" y="${y + 92 + lineIndex * 40}" class="analysisTitle">${escapeSvg(line)}</text>`).join("")}
+  ${leadLines.map((line, lineIndex) => `<text x="96" y="${y + 166 + lineIndex * 30}" class="analysisText">${escapeSvg(line)}</text>`).join("")}
+  ${posterTagPillsSvg(tags, tagY, palette)}
+  ${itemSvg}
+  ${canShowTeacher ? `<rect x="92" y="${teacherY}" width="716" height="54" rx="18" fill="${palette.main}" fill-opacity=".07"/>
+  ${teacherLines.map((line, lineIndex) => `<text x="116" y="${teacherY + 23 + lineIndex * 24}" class="muted">${escapeSvg(line)}</text>`).join("")}` : ""}`;
+}
+
+function posterTagPillsSvg(tags, y, palette) {
+  let x = 96;
+  const nodes = [];
+  for (const tag of (tags || []).slice(0, 3)) {
+    const text = String(tag || "").replace(/\s*\/\s*/g, "/").trim();
+    const chars = Array.from(text);
+    const label = chars.length > 10 ? `${chars.slice(0, 10).join("")}…` : text;
+    const width = Math.min(238, Math.max(126, Array.from(label).length * 21 + 42));
+    if (x + width > 804) break;
+    nodes.push(`<rect x="${x}" y="${y}" width="${width}" height="42" rx="21" fill="${palette.main}" fill-opacity=".08" stroke="${palette.main}" stroke-opacity=".16"/>
+  <text x="${x + 20}" y="${y + 28}" class="chip">${escapeSvg(label)}</text>`);
+    x += width + 22;
+  }
+  return nodes.join("");
+}
+
+function posterQuoteSvg(text, startY, palette) {
+  const lines = svgTextLines(text, 21, 2);
+  return `<rect x="64" y="${startY}" width="772" height="96" rx="22" fill="rgba(255,255,255,.76)" stroke="${palette.main}" stroke-opacity=".18"/>
+  <text x="92" y="${startY + 38}" class="blockLabel">朋友视角</text>
+  ${lines.map((line, lineIndex) => `<text x="92" y="${startY + 70 + lineIndex * 30}" class="blockText">${escapeSvg(line)}</text>`).join("")}`;
 }
 
 function posterTeacherCtaFromCard(card) {
@@ -3973,49 +4693,74 @@ function closeShareImageModal() {
   $("shareImageList").innerHTML = "";
 }
 
+function setTeamImageLinkState(enabled, label) {
+  const link = $("teamImageLink");
+  if (!link) return;
+  link.hidden = false;
+  link.textContent = label || (enabled ? "导出图片" : "样本满后可导出");
+  link.setAttribute("aria-disabled", enabled ? "false" : "true");
+  link.classList.toggle("is-disabled", !enabled);
+  if (!enabled) link.removeAttribute("href");
+}
+
 function renderTeamSummary(summary) {
   if (summary.kind === "subtype") {
     renderSubtypeTeamSummary(summary);
     return;
   }
+  state.currentTeamSummary = summary;
   const hasConclusion = Number(summary.member_count || 0) >= 3;
+  const missingCount = Math.max(0, 3 - Number(summary.member_count || 0));
   document.querySelector("#teamScreen .eyebrow").textContent = "团队九型总图";
-  $("teamSummaryTitle").textContent = summary.team.name;
-  $("teamSummaryNote").textContent = summary.sample_note;
-  $("teamImageLink").href = `/api/team/${encodeURIComponent(summary.team.code)}/report.svg`;
-  $("teamImageLink").hidden = false;
+  $("teamSummaryTitle").textContent = hasConclusion ? "团队主型总图" : "团队主型收集中";
+  $("teamSummaryNote").textContent = hasConclusion
+    ? teamMainInsight(summary)
+    : `还差 ${missingCount} 人亮起总图。`;
+  if (hasConclusion) {
+    $("teamImageLink").href = `/api/team/${encodeURIComponent(summary.team.code)}/report.svg`;
+  }
+  setTeamImageLinkState(hasConclusion, hasConclusion ? "导出图片" : `还差${missingCount}人`);
   $("teamSummaryMeta").innerHTML = `
+    <span>${escapeHtml(summary.team.name)}</span>
     <span>成员 ${summary.member_count} 人</span>
-    <span>有效至 ${formatDate(summary.team.expires_at)}</span>
+    <span>至 ${formatDate(summary.team.expires_at)}</span>
     <span>${summary.team.active ? "进行中" : "已过期"}</span>
   `;
   $("teamSummaryGrid").innerHTML = `
-    <div class="top-type-item">
-      <span>团队主导元素</span>
+    <div class="top-type-item team-kpi-item">
+      <span>主导元素</span>
       <strong>${hasConclusion ? summary.dominant_elements.map((item) => `${item.element}号`).join(" / ") : "等待样本"}</strong>
+      <small>${hasConclusion ? "团队更常调用的能量" : "还差" + missingCount + "人"}</small>
     </div>
-    <div class="top-type-item">
-      <span>团队低位元素</span>
-      <strong>${hasConclusion ? summary.low_elements.map((item) => `${item.element}号`).join(" / ") : "满3人生成"}</strong>
+    <div class="top-type-item team-kpi-item">
+      <span>低位元素</span>
+      <strong>${hasConclusion ? summary.low_elements.map((item) => `${item.element}号`).join(" / ") : "待亮起"}</strong>
+      <small>${hasConclusion ? "需要补位或被看见的视角" : "避免过早判断"}</small>
     </div>
-    <div class="top-type-item">
+    <div class="top-type-item team-kpi-item">
       <span>分化元素</span>
       <strong>${hasConclusion ? (summary.split_elements.length ? summary.split_elements.map((item) => `${item.element}号`).join(" / ") : "暂无明显高分化") : "暂不判断"}</strong>
+      <small>${hasConclusion ? "成员差异较大的位置" : "等待更多成员"}</small>
     </div>
   `;
   if (!hasConclusion) {
     $("teamEvidenceBars").innerHTML = `
       <div class="team-empty-state">
         <strong>已有 ${Number(summary.member_count || 0)}/3 人</strong>
-        <p>先把邀请链接发给成员，满3人后这里会自动生成团队总图。</p>
+        <p>再来 ${missingCount} 人，团队总图就亮。</p>
       </div>
     `;
     return;
   }
   $("teamEvidenceBars").innerHTML = `
-    <div class="evidence-title">团队1-9号证据条</div>
+    <div class="team-chart-head">
+      <div>
+        <strong>团队1-9号证据条</strong>
+        <span>红=否定 · 黄=不确定 · 绿=确定 · 虚线=50%</span>
+      </div>
+      <em>${Number(summary.member_count || 0)}人样本</em>
+    </div>
     <p class="evidence-legend">红=否定 · 黄=不确定 · 绿=确定 · 虚线=50%</p>
-    <p class="team-summary-insight">${escapeHtml(teamMainInsight(summary))}</p>
     ${[1,2,3,4,5,6,7,8,9].map((element) => {
       const item = summary.stats[element] || {};
       return `
@@ -4052,33 +4797,59 @@ function teamMainInsight(summary) {
 }
 
 function renderSubtypeTeamSummary(summary) {
+  state.currentTeamSummary = summary;
+  const hasConclusion = Number(summary.member_count || 0) >= 5;
+  const missingCount = Math.max(0, 5 - Number(summary.member_count || 0));
   document.querySelector("#teamScreen .eyebrow").textContent = "团队副型总图";
-  $("teamSummaryTitle").textContent = summary.team.name;
-  $("teamSummaryNote").textContent = `${summary.sample_note} 本页为匿名汇总，仅展示团队层面的注意力入口。`;
-  $("teamImageLink").href = `/api/team/${encodeURIComponent(summary.team.code)}/report.svg`;
-  $("teamImageLink").hidden = false;
+  $("teamSummaryTitle").textContent = hasConclusion ? "团队副型总图" : "团队副型收集中";
+  $("teamSummaryNote").textContent = hasConclusion
+    ? teamSubtypeInsight(summary)
+    : `还差 ${missingCount} 人亮起入口排序。`;
+  if (hasConclusion) {
+    $("teamImageLink").href = `/api/team/${encodeURIComponent(summary.team.code)}/report.svg`;
+  }
+  setTeamImageLinkState(hasConclusion, hasConclusion ? "导出图片" : `还差${missingCount}人`);
   $("teamSummaryMeta").innerHTML = `
+    <span>${escapeHtml(summary.team.name)}</span>
     <span>匿名样本 ${summary.member_count} 人</span>
-    <span>有效至 ${formatDate(summary.team.expires_at)}</span>
+    <span>至 ${formatDate(summary.team.expires_at)}</span>
     <span>${summary.team.active ? "进行中" : "已过期"}</span>
   `;
   $("teamSummaryGrid").innerHTML = `
-    <div class="top-type-item">
+    <div class="top-type-item team-kpi-item">
       <span>主导入口</span>
-      <strong>${summary.dominant_subtypes.map((item) => escapeHtml(item.label)).join(" / ") || "暂无"}</strong>
+      <strong>${hasConclusion ? summary.dominant_subtypes.map((item) => escapeHtml(item.label)).join(" / ") : "等待样本"}</strong>
+      <small>${hasConclusion ? "团队更常进入的注意力入口" : "还差" + missingCount + "人"}</small>
     </div>
-    <div class="top-type-item">
+    <div class="top-type-item team-kpi-item">
       <span>分化入口</span>
-      <strong>${summary.split_subtypes.length ? summary.split_subtypes.map((item) => escapeHtml(item.label)).join(" / ") : "暂无明显高分化"}</strong>
+      <strong>${hasConclusion ? (summary.split_subtypes.length ? summary.split_subtypes.map((item) => escapeHtml(item.label)).join(" / ") : "暂无明显高分化") : "暂不判断"}</strong>
+      <small>${hasConclusion ? "不同成员差异较大的入口" : "等待更多成员"}</small>
     </div>
-    <div class="top-type-item">
-      <span>匿名规则</span>
-      <strong>不展示个人明细</strong>
+    <div class="top-type-item team-kpi-item">
+      <span>匿名提交</span>
+      <strong>只看整体</strong>
+      <small>个人排序不公开</small>
     </div>
   `;
   const stats = Object.values(summary.subtype_stats || {});
+  if (!hasConclusion) {
+    $("teamEvidenceBars").innerHTML = `
+      <div class="team-empty-state team-subtype-waiting">
+        <strong>已有 ${Number(summary.member_count || 0)}/5 人匿名提交</strong>
+        <p>再来 ${missingCount} 人，入口排序就亮。</p>
+      </div>
+    `;
+    return;
+  }
   $("teamEvidenceBars").innerHTML = `
-    <div class="evidence-title">团队副型入口均值</div>
+    <div class="team-chart-head">
+      <div>
+        <strong>团队副型入口均值</strong>
+        <span>均值 / 分化</span>
+      </div>
+      <em>${Number(summary.member_count || 0)}人匿名</em>
+    </div>
     ${stats.map((item) => `
       <div class="evidence-row team-subtype">
         <span class="evidence-label">${escapeHtml(item.label || item.full || item.key)}</span>
@@ -4091,6 +4862,22 @@ function renderSubtypeTeamSummary(summary) {
       <p class="team-stat-note">中位 ${Math.round(item.median || 0)} · 标准差 ${Math.round(item.sd || 0)} · IQR ${Math.round(item.iqr || 0)}</p>
     `).join("")}
   `;
+}
+
+function teamSubtypeInsight(summary) {
+  const dominant = (summary.dominant_subtypes || []).slice(0, 2).map((item) => item.label).filter(Boolean);
+  if (!dominant.length) return "先看匿名样本数量，再判断团队副型倾向。";
+  const first = dominant[0];
+  const second = dominant[1];
+  const copy = {
+    "自保型": "这个团队更容易先关注资源、节奏和基本盘",
+    "一对一型": "这个团队更容易先关注关键连接、真实回应和关系强度",
+    "社群型": "这个团队更容易先关注群体位置、协作氛围和共同目标"
+  };
+  const firstLine = copy[first] || `这个团队更容易先进入${first}入口`;
+  return second
+    ? `${firstLine}；${second}会作为第二入口影响团队氛围。`
+    : `${firstLine}。`;
 }
 
 function formatDate(value) {

@@ -8,7 +8,7 @@
     <link rel="icon" href="/jojo-icon.svg" type="image/svg+xml">
     <link rel="icon" href="/jojo-icon.png" type="image/png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <link rel="stylesheet" href="/styles.css?v=20260529-v13-experience-polish">
+    <link rel="stylesheet" href="/styles.css?v=20260531-v15-copy-polish">
   </head>
   <body>
     <div class="app-shell">
@@ -63,11 +63,6 @@
             <h1>jojo测九型</h1>
             <p class="home-tested-count" id="homeTestedCount" aria-live="polite"><strong>--</strong><span>人次已测试过</span></p>
             <p class="start-line" id="startLine">先选地图。</p>
-            <div class="home-trust-strip" aria-label="测试说明">
-              <span>3级快选</span>
-              <span>自动保存</span>
-              <span>结果可找老师复核</span>
-            </div>
 
             <div class="team-invite" id="teamInvite" hidden>
               <strong id="teamInviteName">团队测试</strong>
@@ -111,14 +106,14 @@
                   <input type="radio" name="teamKind" value="main" checked>
                   <span>
                     <strong>团队主型</strong>
-                    <small>90题，汇总1-9号团队总图</small>
+                    <small>1-9号总图</small>
                   </span>
                 </label>
                 <label>
                   <input type="radio" name="teamKind" value="subtype">
                   <span>
                     <strong>团队副型</strong>
-                    <small>60题匿名汇总，适合高级复盘</small>
+                    <small>匿名入口图</small>
                   </span>
                 </label>
               </div>
@@ -136,7 +131,7 @@
               </label>
               <label class="profile-inline-field" hidden>
                 <span>联系方式</span>
-                <input id="contactInput" name="contact" maxlength="80" autocomplete="tel" placeholder="方便老师回访，可不填">
+                <input id="contactInput" name="contact" maxlength="80" autocomplete="tel" placeholder="可不填">
               </label>
               <input id="sourceInput" name="source" type="hidden" value="H5">
               <input id="modeInput" name="mode" type="hidden" value="main90">
@@ -163,6 +158,13 @@
 
         <section class="screen screen-test" id="testScreen" aria-live="polite">
           <div class="question-shell">
+            <div class="test-context">
+              <div>
+                <span id="testModeBadge">主型快测</span>
+                <strong id="testModeTitle">90题 · 每10题一组</strong>
+              </div>
+              <small id="testModeHint">按最近真实反应选</small>
+            </div>
             <div class="question-meta">
               <span id="questionCount">第 1 / 90 题</span>
               <span id="answeredCount">已完成 0%</span>
@@ -200,7 +202,7 @@
             <article class="share-card share-card-primary" id="shareCard" aria-label="结果主卡">
               <div class="share-watermark" id="shareNumber" aria-hidden="true">9</div>
               <div class="share-top">
-                <span class="share-brand"><img src="/jojo-icon.svg" alt="">jojo测九型</span>
+                <span class="share-brand full-logo"><img src="/jojo-logo.png" alt="jojo测九型"></span>
                 <span>01 / 02</span>
               </div>
               <div class="share-body">
@@ -221,12 +223,12 @@
             <article class="share-card share-card-evidence" id="shareEvidenceCard" aria-label="简要解读卡">
               <div class="share-watermark" id="shareEvidenceWatermark" aria-hidden="true">jo</div>
               <div class="share-top">
-                <span class="share-brand"><img src="/jojo-icon.svg" alt="">jojo测九型</span>
+                <span class="share-brand full-logo"><img src="/jojo-logo.png" alt="jojo测九型"></span>
                 <span>02 / 02</span>
               </div>
               <div class="share-core share-card-stack">
                 <p class="share-label" id="shareEvidenceKicker">简要解读</p>
-                <h3 id="shareEvidenceTitle">结果说明</h3>
+                <h3 id="shareEvidenceTitle">结果重点</h3>
                 <p id="shareEvidenceLine"></p>
                 <div class="poster-analysis" id="shareEvidenceVisual"></div>
               </div>
@@ -239,14 +241,14 @@
             <article class="share-card share-card-next" id="shareNextCard" aria-label="下一步卡" hidden>
               <div class="share-watermark" id="shareNextWatermark" aria-hidden="true">go</div>
               <div class="share-top">
-                <span class="share-brand"><img src="/jojo-icon.svg" alt="">jojo测九型</span>
+                <span class="share-brand full-logo"><img src="/jojo-logo.png" alt="jojo测九型"></span>
                 <span>03 / 03</span>
               </div>
               <div class="share-core share-card-stack">
                 <p class="share-label" id="shareNextKicker">下一步</p>
                 <h3 id="shareNextTitle">靠近方式</h3>
                 <p id="shareNextLine"></p>
-                <div class="poster-qr-block" id="shareNextQr"></div>
+                <div class="share-next-content" id="shareNextQr"></div>
               </div>
               <div class="share-footer">
                 <span id="shareNextFoot"></span>
@@ -380,8 +382,10 @@
             <div class="team-summary-meta" id="teamSummaryMeta"></div>
             <div class="team-summary-grid" id="teamSummaryGrid"></div>
             <div class="evidence-bars" id="teamEvidenceBars"></div>
-            <div class="result-actions">
-              <a class="primary-action compact" href="/">返回首页</a>
+            <div class="result-actions team-summary-actions">
+              <button class="primary-action compact" id="teamCopyInviteLinkButton" type="button">复制邀请链接</button>
+              <button class="ghost-action compact" id="teamGroupChatButton" type="button">添加群聊</button>
+              <a class="ghost-link compact" id="teamHomeLink" href="/">返回首页</a>
               <a class="ghost-link compact" id="teamImageLink" href="#" target="_blank" rel="noreferrer" hidden>导出图片</a>
             </div>
           </div>
@@ -406,11 +410,11 @@
       <div class="modal-panel team-created-panel" role="dialog" aria-modal="true" aria-labelledby="teamCreatedTitle">
         <span class="modal-badge marker-logo" aria-hidden="true"><img src="/jojo-icon.svg" alt=""></span>
         <span class="modal-kicker">团队链接已创建</span>
-        <h2 id="teamCreatedTitle">复制链接给团队</h2>
-        <p id="teamCreatedBody">复制链接给团队</p>
+        <h2 id="teamCreatedTitle">团队链接已创建</h2>
+        <p id="teamCreatedBody">发给团队成员</p>
         <input id="teamInviteUrlInput" readonly value="" aria-label="团队邀请链接">
         <div class="team-modal-actions">
-          <button class="primary-action compact" id="teamCopyInviteButton" type="button">复制链接给团队</button>
+          <button class="primary-action compact" id="teamCopyInviteButton" type="button">复制邀请链接</button>
           <button class="ghost-action compact" id="teamStartTestButton" type="button">开始测试</button>
           <a class="ghost-link compact" id="teamCreatedSummaryLink" href="#" target="_blank" rel="noreferrer">查看团队总图</a>
         </div>
@@ -497,6 +501,6 @@
       </div>
     </div>
 
-    <script src="/app.js?v=20260529-v13-experience-polish"></script>
+    <script src="/app.js?v=20260531-v15-copy-polish"></script>
   </body>
 </html>

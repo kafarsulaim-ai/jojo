@@ -3666,17 +3666,16 @@ function teamSubtypeSummary(team) {
 }
 
 function teamSampleNote(count) {
-  if (count <= 2) return `已有 ${count}/3 人，满3人后生成团队总图。`;
-  if (count <= 4) return "样本量较小，适合作为初步观察。";
-  if (count <= 7) return "可以观察团队倾向，但仍建议结合岗位结构复核。";
-  return "样本量可用于生成相对稳定的团队总图。";
+  if (count <= 2) return `还差 ${Math.max(0, 3 - count)} 人亮起团队总图。`;
+  if (count <= 4) return "样本刚起步，先看方向。";
+  if (count <= 7) return "可以看趋势，建议结合团队场景。";
+  return "样本稳定，可以看团队总图。";
 }
 
 function teamSubtypeSampleNote(count) {
-  if (count <= 2) return "样本量不足，不建议生成团队副型结论。";
-  if (count <= 4) return "样本量较小，只能观察团队注意力入口的初步方向。";
-  if (count <= 7) return "可以观察团队副型倾向，但仍建议结合岗位结构复核。";
-  return "样本量可用于生成相对稳定的团队注意力入口分析。";
+  if (count <= 4) return `还差 ${Math.max(0, 5 - count)} 人亮起入口排序。`;
+  if (count <= 7) return "可以看趋势，建议结合团队场景。";
+  return "样本稳定，可以看入口排序。";
 }
 
 function checkAdmin(req, reqUrl, roles = null) {
@@ -3996,7 +3995,7 @@ function teamMainInsightText(summary) {
     9: "稳定氛围"
   };
   const elements = (summary.dominant_elements || []).slice(0, 3).map((item) => Number(item.element)).filter(Boolean);
-  if (!elements.length) return "先把邀请链接发给成员，满3人后自动生成团队总图。";
+  if (!elements.length) return "还差成员样本，团队总图待亮起。";
   return `复盘提示：这个团队更关注${elements.map((element) => labels[element]).join("、")}，先确认共识、卡点和支持。`;
 }
 
@@ -4006,8 +4005,9 @@ function teamReportSvg(summary) {
   const height = 1420;
   const rows = [1,2,3,4,5,6,7,8,9];
   const hasConclusion = Number(summary.member_count || 0) >= 3;
-  const titleLines = xmlTextLines(summary.team.name, 17, 2);
-  const headerShift = titleLines.length > 1 ? 58 : 0;
+  const titleLines = xmlTextLines(hasConclusion ? "团队主型总图" : "团队主型收集中", 17, 2);
+  const teamNameLines = xmlTextLines(summary.team.name, 31, 1);
+  const headerShift = 0;
   const cardY = 285 + headerShift;
   const sectionY = 420 + headerShift;
   const rowBaseY = 445 + headerShift;
@@ -4042,8 +4042,8 @@ function teamReportSvg(summary) {
     <g>
       <rect x="78" y="${sectionY + 28}" width="924" height="220" rx="28" class="card"/>
       <text x="118" y="${sectionY + 102}" class="empty-title">已有 ${summary.member_count} / 3 人</text>
-      <text x="118" y="${sectionY + 154}" class="note">先把邀请链接发给成员，满3人后自动生成团队总图。</text>
-      <text x="118" y="${sectionY + 206}" class="metric-sub">当前不展示证据条，避免把空数据误读成团队结论。</text>
+      <text x="118" y="${sectionY + 154}" class="note">再来 ${Math.max(0, 3 - Number(summary.member_count || 0))} 人，团队总图就亮。</text>
+      <text x="118" y="${sectionY + 206}" class="metric-sub">当前先收集样本。</text>
     </g>
   `;
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -4082,7 +4082,8 @@ function teamReportSvg(summary) {
     <circle cx="886" cy="230" r="138" fill="none" stroke="url(#accent)" stroke-width="5" opacity=".46"/>
     <text x="78" y="102" class="eyebrow">jojo测九型 · 团队报告</text>
     ${svgTextBlock(titleLines, 78, 172, "title", 66)}
-    <text x="78" y="${titleLines.length > 1 ? 282 : 230}" class="note">${escapeXml(summary.sample_note)}</text>
+    <text x="78" y="238" class="note">${escapeXml(hasConclusion ? teamMainInsightText(summary).replace(/^复盘提示：/, "") : summary.sample_note)}</text>
+    ${teamNameLines.map((line, index) => `<text x="78" y="${262 + index * 34}" class="metric-sub">${escapeXml(line)}</text>`).join("")}
     <g>
       <rect x="78" y="${cardY}" width="286" height="102" rx="20" class="card"/>
       <text x="108" y="${cardY + 41}" class="pill-title">成员样本</text>
@@ -4099,7 +4100,7 @@ function teamReportSvg(summary) {
     <g>
       <rect x="78" y="${footerY}" width="924" height="92" rx="20" class="card"/>
       <text x="108" y="${footerY + 39}" class="pill-title">${hasConclusion ? "低位元素" : "下一步"}</text>
-      <text x="108" y="${footerY + 79}" class="pill-text">${escapeXml(hasConclusion ? low : "复制链接给团队")}</text>
+      <text x="108" y="${footerY + 79}" class="pill-text">${escapeXml(hasConclusion ? low : `还差 ${Math.max(0, 3 - Number(summary.member_count || 0))} 人`)}</text>
       <text x="670" y="${footerY + 79}" class="metric-sub">生成时间 ${escapeXml(new Date().toISOString().slice(0, 10))}</text>
     </g>
     ${hasConclusion ? `<text x="78" y="${footerY - 38}" class="metric-sub">${escapeXml(teamMainInsightText(summary))}</text>` : ""}
@@ -4109,12 +4110,15 @@ function teamReportSvg(summary) {
 function teamSubtypeReportSvg(summary) {
   const width = 1080;
   const height = 1120;
+  const hasConclusion = Number(summary.member_count || 0) >= 5;
   const rows = Object.values(summary.subtype_stats || {});
-  const dominant = summary.dominant_subtypes.map((item) => item.label).join(" / ") || "暂无";
+  const dominant = hasConclusion ? summary.dominant_subtypes.map((item) => item.label).join(" / ") || "暂无" : "等待样本";
   const split = summary.split_subtypes.length
     ? summary.split_subtypes.map((item) => item.label).join(" / ")
     : "暂无明显高分化";
-  const rowSvg = rows.map((item, index) => {
+  const titleText = hasConclusion ? "团队副型总图" : "团队副型收集中";
+  const teamNameLines = xmlTextLines(summary.team.name, 31, 1);
+  const rowSvg = hasConclusion ? rows.map((item, index) => {
     const y = 438 + index * 120;
     const barX = 245;
     const barW = 590;
@@ -4129,7 +4133,14 @@ function teamSubtypeReportSvg(summary) {
         <text x="870" y="${y + 29}" class="metric">均${Math.round(item.mean || 0)}</text>
       </g>
     `;
-  }).join("");
+  }).join("") : `
+    <g>
+      <rect x="78" y="438" width="924" height="270" rx="28" class="card"/>
+      <text x="118" y="530" class="empty-title">已有 ${summary.member_count} / 5 人匿名提交</text>
+      <text x="118" y="588" class="note">再来 ${Math.max(0, 5 - Number(summary.member_count || 0))} 人，入口排序就亮。</text>
+      <text x="118" y="640" class="metric-sub">当前先收集匿名样本。</text>
+    </g>
+  `;
   return `<?xml version="1.0" encoding="UTF-8"?>
   <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
     <defs>
@@ -4154,6 +4165,7 @@ function teamSubtypeReportSvg(summary) {
         .row-label { font-size: 26px; font-weight: 880; }
         .metric { font-size: 22px; font-weight: 880; }
         .metric-sub { fill: #6f7c80; font-size: 18px; font-weight: 760; }
+        .empty-title { font-size: 42px; font-weight: 900; }
         .track { fill: rgba(20,33,38,.08); }
         .midline { stroke: rgba(20,33,38,.38); stroke-width: 3; stroke-linecap: round; }
         .card { fill: rgba(255,255,255,.72); stroke: rgba(20,33,38,.1); }
@@ -4164,8 +4176,9 @@ function teamSubtypeReportSvg(summary) {
     <path d="M0 860 L420 800 L560 1120 L0 1120 Z" fill="#f16a78" opacity=".10"/>
     <circle cx="886" cy="220" r="132" fill="none" stroke="url(#accent)" stroke-width="5" opacity=".46"/>
     <text x="78" y="102" class="eyebrow">jojo测九型 · 团队副型报告（匿名）</text>
-    <text x="78" y="178" class="title">${escapeXml(summary.team.name)}</text>
+    <text x="78" y="178" class="title">${escapeXml(titleText)}</text>
     <text x="78" y="230" class="note">${escapeXml(summary.sample_note)}</text>
+    ${teamNameLines.map((line, index) => `<text x="78" y="${264 + index * 34}" class="metric-sub">${escapeXml(line)}</text>`).join("")}
     <g>
       <rect x="78" y="285" width="286" height="102" rx="20" class="card"/>
       <text x="108" y="326" class="pill-title">匿名样本</text>
@@ -4175,14 +4188,14 @@ function teamSubtypeReportSvg(summary) {
       <text x="427" y="365" class="pill-text">${escapeXml(dominant)}</text>
       <rect x="716" y="285" width="286" height="102" rx="20" class="card"/>
       <text x="746" y="326" class="pill-title">分化入口</text>
-      <text x="746" y="365" class="pill-text">${escapeXml(split)}</text>
+      <text x="746" y="365" class="pill-text">${escapeXml(hasConclusion ? split : "暂不判断")}</text>
     </g>
-    <text x="78" y="420" class="section">团队副型入口：均值条越长，说明该注意力入口在团队中越常被触发</text>
+    <text x="78" y="420" class="section">${hasConclusion ? "团队副型入口均值 / 分化" : "团队副型收集中"}</text>
     ${rowSvg}
     <g>
       <rect x="78" y="860" width="924" height="120" rx="20" class="card"/>
-      <text x="108" y="902" class="pill-title">匿名说明</text>
-      <text x="108" y="944" class="pill-text">仅展示群体统计，不展示个人成员明细</text>
+      <text x="108" y="902" class="pill-title">匿名提交</text>
+      <text x="108" y="944" class="pill-text">只看整体</text>
       <text x="670" y="944" class="metric-sub">生成时间 ${escapeXml(new Date().toISOString().slice(0, 10))}</text>
     </g>
   </svg>`;

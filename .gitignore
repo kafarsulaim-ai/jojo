@@ -18,3 +18,4 @@ output/
 .env
 .env.*
 *.local
+data/session_secret.txt

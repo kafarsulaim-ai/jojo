@@ -53,11 +53,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (savedTeacherName) $("registerNameInput").value = savedTeacherName;
   $("loginForm").addEventListener("submit", handleLogin);
   $("registerForm").addEventListener("submit", handleRegister);
-  $("teacherWechatLoginButton").addEventListener("click", startTeacherWechatAuth);
-  $("showPasswordLoginButton").addEventListener("click", togglePasswordLogin);
+  $("resetForm").addEventListener("submit", handleResetPassword);
+  $("showResetButton").addEventListener("click", toggleResetForm);
   $("teacherDiagnosisForm").addEventListener("submit", submitTeacherDiagnosis);
   $("teacherProfileForm").addEventListener("submit", saveTeacherProfile);
-  $("bindTeacherWechatButton").addEventListener("click", bindTeacherWechat);
   $("teacherAvatarFileInput").addEventListener("change", onTeacherAvatarFileChange);
   $("logoutButton").addEventListener("click", handleLogout);
   $("adminEntryButton").addEventListener("click", () => switchTab("teachers"));
@@ -105,33 +104,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function bootAdmin() {
   try {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("wechat") === "ok" && params.get("bind") === "1") {
-      const data = await finishWechatBindWithState(params);
-      if (data?.account) {
-        window.history.replaceState(null, "", "/admin.html");
-        setAccount(data);
-        showDashboard();
-        await loadDashboardData();
-        return;
-      }
-    }
-    if (params.get("wechat") === "ok") {
-      const data = await tryWechatAdminLogin();
-      if (data?.account) {
-        window.history.replaceState(null, "", "/admin.html");
-        setAccount(data);
-        showDashboard();
-        await completePendingWechatBind(params);
-        await loadDashboardData();
-        return;
-      }
-    }
+    window.history.replaceState(null, "", window.location.pathname === "/admin.html" ? "/admin.html" : window.location.pathname);
     const data = await adminFetch("/api/admin/auth/me", { allowUnauthorized: true });
     if (!data?.account) throw new Error("unauthorized");
     setAccount(data);
     showDashboard();
-    await completePendingWechatBind(params);
     await loadDashboardData();
   } catch {
     showAuth();
@@ -186,9 +163,9 @@ function showAuth() {
   state.permissions = {};
   $("authShell").hidden = false;
   $("dashboardShell").hidden = true;
-  $("loginForm").hidden = true;
+  $("loginForm").hidden = false;
   if ($("inviteCodeInput").value.trim()) $("registerNameInput").focus();
-  else $("teacherWechatLoginButton").focus();
+  else $("loginAccountInput").focus();
 }
 
 function showDashboard() {
@@ -208,49 +185,13 @@ async function loadDashboardData() {
   ]);
 }
 
-function togglePasswordLogin() {
-  const form = $("loginForm");
+function toggleResetForm() {
+  const form = $("resetForm");
   form.hidden = !form.hidden;
-  if (!form.hidden) $("loginAccountInput").focus();
-}
-
-async function tryWechatAdminLogin() {
-  try {
-    return await adminFetch("/api/admin/auth/wechat", {
-      method: "POST",
-      allowUnauthorized: true,
-      body: {
-        invite_code: $("inviteCodeInput").value.trim(),
-        name: $("registerNameInput").value.trim()
-      }
-    });
-  } catch {
-    return null;
+  if (!form.hidden) {
+    $("resetAccountInput").value = $("resetAccountInput").value || $("loginAccountInput").value.trim();
+    $("resetAccountInput").focus();
   }
-}
-
-async function startTeacherWechatAuth() {
-  const invite = $("inviteCodeInput").value.trim();
-  const name = $("registerNameInput").value.trim();
-  sessionStorage.setItem("jojoTeacherInviteCode", invite);
-  sessionStorage.setItem("jojoTeacherName", name);
-  const params = new URLSearchParams({
-    redirect: "/admin.html?wechat=ok",
-    device: ensureAdminDeviceToken()
-  });
-  if (invite) params.set("admin_invite", invite);
-  window.location.href = `/auth/wechat/start?${params.toString()}`;
-}
-
-function ensureAdminDeviceToken() {
-  const key = "jojoAdminDeviceToken";
-  const existing = localStorage.getItem(key);
-  if (existing) return existing;
-  const token = window.crypto?.randomUUID
-    ? window.crypto.randomUUID().replace(/-/g, "")
-    : `AD${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
-  localStorage.setItem(key, token);
-  return token;
 }
 
 async function handleLogin(event) {
@@ -276,18 +217,14 @@ async function handleLogin(event) {
 async function handleRegister(event) {
   event.preventDefault();
   setMessage("registerMessage", "正在开通...");
-  const generatedLogin = `teacher-${Date.now().toString(36)}@jojo.local`;
-  const generatedPassword = window.crypto?.randomUUID
-    ? window.crypto.randomUUID().replace(/-/g, "").slice(0, 14)
-    : `jojo${Date.now().toString(36)}`;
   try {
-    const data = await adminFetch("/api/admin/auth/wechat", {
+    const data = await adminFetch("/api/admin/auth/register", {
       method: "POST",
       body: {
         invite_code: $("inviteCodeInput").value.trim(),
         name: $("registerNameInput").value.trim(),
-        login_id: $("registerLoginInput").value.trim() || generatedLogin,
-        password: $("registerPasswordInput").value || generatedPassword
+        login_id: $("registerLoginInput").value.trim(),
+        password: $("registerPasswordInput").value
       }
     });
     setAccount(data);
@@ -295,13 +232,40 @@ async function handleRegister(event) {
     setMessage("registerMessage", "");
     await loadDashboardData();
   } catch (err) {
-    if (err.status === 401 || err.message === "wechat_not_authorized") {
-      sessionStorage.setItem("jojoTeacherInviteCode", $("inviteCodeInput").value.trim());
-      sessionStorage.setItem("jojoTeacherName", $("registerNameInput").value.trim());
-      startTeacherWechatAuth();
+    setMessage("registerMessage", err.message || "开通失败");
+  }
+}
+
+async function handleResetPassword(event) {
+  event.preventDefault();
+  const account = $("resetAccountInput").value.trim();
+  const code = $("resetCodeInput").value.trim();
+  const password = $("resetPasswordInput").value;
+  setMessage("resetMessage", code ? "正在重设..." : "正在发送重置码...");
+  try {
+    if (!code) {
+      await adminFetch("/api/admin/auth/reset/request", {
+        method: "POST",
+        body: { login_id: account }
+      });
+      setMessage("resetMessage", "重置码已发到邮箱。");
+      $("resetCodeInput").focus();
       return;
     }
-    setMessage("registerMessage", err.message || "开通失败");
+    const data = await adminFetch("/api/admin/auth/reset/confirm", {
+      method: "POST",
+      body: {
+        login_id: account,
+        reset_code: code,
+        password
+      }
+    });
+    setAccount(data);
+    showDashboard();
+    setMessage("resetMessage", "");
+    await loadDashboardData();
+  } catch (err) {
+    setMessage("resetMessage", err.message || "找回失败");
   }
 }
 
@@ -369,7 +333,6 @@ function renderTeacherProfile() {
   $("teacherProfileName").textContent = state.account.name || "老师";
   $("teacherNameInput").value = state.account.name || "";
   $("teacherBioInput").value = state.account.bio || "";
-  $("bindTeacherWechatButton").textContent = state.account.wechat_bound ? "微信已绑定" : "绑定当前微信";
 }
 
 function onTeacherAvatarFileChange(event) {
@@ -413,62 +376,6 @@ async function saveTeacherProfile(event) {
   } catch (err) {
     setMessage("teacherProfileMessage", err.message || "保存失败");
   }
-}
-
-async function bindTeacherWechat() {
-  if (!state.account) return;
-  if (state.account.wechat_bound) {
-    setMessage("teacherProfileMessage", "当前账号已绑定微信");
-    return;
-  }
-  setMessage("teacherProfileMessage", "正在绑定微信...");
-  try {
-    const data = await adminFetch("/api/admin/auth/bind-wechat", { method: "POST", body: {} });
-    state.account = data.account || state.account;
-    renderTeacherProfile();
-    setMessage("teacherProfileMessage", "已绑定，以后微信登录会直接进入");
-  } catch (err) {
-    if (err.message === "wechat_not_authorized" || err.status === 401) {
-      sessionStorage.setItem("jojoTeacherInviteCode", $("inviteCodeInput").value.trim());
-      sessionStorage.setItem("jojoTeacherName", $("teacherNameInput").value.trim() || state.account.name || "");
-      sessionStorage.setItem("jojoBindAdminWechat", "1");
-      if (err.bind_state) sessionStorage.setItem("jojoBindAdminWechatState", err.bind_state);
-      const params = new URLSearchParams({
-        redirect: `/admin.html?wechat=ok&bind=1${err.bind_state ? `&bind_state=${encodeURIComponent(err.bind_state)}` : ""}`,
-        device: ensureAdminDeviceToken()
-      });
-      window.location.href = `/auth/wechat/start?${params.toString()}`;
-      return;
-    }
-    setMessage("teacherProfileMessage", err.message || "绑定失败");
-  }
-}
-
-async function completePendingWechatBind(params = new URLSearchParams()) {
-  const shouldBind = params.get("bind") === "1" || sessionStorage.getItem("jojoBindAdminWechat") === "1";
-  if (!shouldBind || !state.account || state.account.wechat_bound) return;
-  try {
-    const data = await finishWechatBindWithState(params)
-      || await adminFetch("/api/admin/auth/bind-wechat", { method: "POST", body: {} });
-    state.account = data.account || state.account;
-    sessionStorage.removeItem("jojoBindAdminWechat");
-    sessionStorage.removeItem("jojoBindAdminWechatState");
-    window.history.replaceState(null, "", "/admin.html");
-    renderTeacherProfile();
-    setMessage("teacherProfileMessage", "微信已绑定，以后可直接进入");
-  } catch (err) {
-    setMessage("teacherProfileMessage", err.message || "微信绑定未完成");
-  }
-}
-
-async function finishWechatBindWithState(params = new URLSearchParams()) {
-  const bindState = params.get("bind_state") || sessionStorage.getItem("jojoBindAdminWechatState") || "";
-  if (!bindState) return null;
-  return adminFetch("/api/admin/auth/finish-bind-wechat", {
-    method: "POST",
-    allowUnauthorized: true,
-    body: { bind_state: bindState }
-  });
 }
 
 async function submitTeacherDiagnosis(event) {

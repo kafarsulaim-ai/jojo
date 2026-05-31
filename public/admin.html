@@ -13,7 +13,7 @@
     <link rel="icon" href="/jojo-icon.svg" type="image/svg+xml">
     <link rel="icon" href="/jojo-icon.png" type="image/png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <link rel="stylesheet" href="/styles.css?v=20260531-v15-copy-polish">
+    <link rel="stylesheet" href="/styles.css?v=20260531-v16-email-login">
   </head>
   <body class="admin-page">
     <header class="admin-topbar">
@@ -34,9 +34,18 @@
             <h1>老师数据台</h1>
           </div>
           <div class="admin-auth-stack">
-            <div class="admin-auth-actions">
-              <button class="primary-action compact" id="teacherWechatLoginButton" type="button">微信授权登录</button>
-            </div>
+            <form class="admin-auth-panel admin-password-panel" id="loginForm" autocomplete="on">
+              <label>
+                <span>邮箱账号</span>
+                <input id="loginAccountInput" type="email" autocomplete="username" placeholder="name@example.com">
+              </label>
+              <label>
+                <span>密码</span>
+                <input id="loginPasswordInput" type="password" autocomplete="current-password" placeholder="输入密码">
+              </label>
+              <button class="primary-action compact" type="submit">登录</button>
+              <p class="muted" id="loginMessage"></p>
+            </form>
             <form class="admin-auth-panel admin-invite-panel" id="registerForm" autocomplete="on">
               <label>
                 <span>邀请码</span>
@@ -46,30 +55,34 @@
                 <span>老师姓名</span>
                 <input id="registerNameInput" autocomplete="name" placeholder="例如 阎老师">
               </label>
-              <label hidden>
-                <span>登录账号</span>
-                <input id="registerLoginInput" autocomplete="username" placeholder="自动生成">
+              <label>
+                <span>邮箱账号</span>
+                <input id="registerLoginInput" type="email" autocomplete="username" placeholder="name@example.com">
               </label>
-              <label hidden>
+              <label>
                 <span>设置密码</span>
-                <input id="registerPasswordInput" type="password" autocomplete="new-password" placeholder="自动生成">
+                <input id="registerPasswordInput" type="password" autocomplete="new-password" placeholder="至少6位">
               </label>
               <button class="ghost-action compact" type="submit">开通老师入口</button>
               <p class="muted" id="registerMessage"></p>
             </form>
-            <form class="admin-auth-panel admin-password-panel" id="loginForm" autocomplete="on" hidden>
+            <form class="admin-auth-panel admin-reset-panel" id="resetForm" autocomplete="on" hidden>
               <label>
-                <span>登录账号</span>
-                <input id="loginAccountInput" autocomplete="username" placeholder="邮箱 / 手机号 / 账号">
+                <span>邮箱账号</span>
+                <input id="resetAccountInput" type="email" autocomplete="username" placeholder="name@example.com">
               </label>
               <label>
-                <span>密码</span>
-                <input id="loginPasswordInput" type="password" autocomplete="current-password" placeholder="输入密码">
+                <span>重置码</span>
+                <input id="resetCodeInput" maxlength="12" inputmode="numeric" autocomplete="one-time-code" placeholder="邮箱里的6位码">
               </label>
-              <button class="primary-action compact" type="submit">密码登录</button>
-              <p class="muted" id="loginMessage"></p>
+              <label>
+                <span>新密码</span>
+                <input id="resetPasswordInput" type="password" autocomplete="new-password" placeholder="至少6位">
+              </label>
+              <button class="primary-action compact" type="submit">重设密码</button>
+              <p class="muted" id="resetMessage"></p>
             </form>
-            <button class="admin-text-button" id="showPasswordLoginButton" type="button">账号密码登录</button>
+            <button class="admin-text-button" id="showResetButton" type="button">忘记密码</button>
           </div>
         </section>
       </section>
@@ -146,7 +159,6 @@
                     <input id="teacherBioInput" maxlength="160" placeholder="一句话介绍">
                   </label>
                   <button class="ghost-action compact" type="submit">保存</button>
-                  <button class="ghost-action compact admin-bind-wechat" id="bindTeacherWechatButton" type="button">绑定当前微信</button>
                   <p class="muted" id="teacherProfileMessage"></p>
                 </form>
               </section>
@@ -323,6 +335,6 @@
       </section>
     </main>
 
-    <script src="/admin.js?v=20260531-v15-copy-polish"></script>
+    <script src="/admin.js?v=20260531-v16-email-login"></script>
   </body>
 </html>

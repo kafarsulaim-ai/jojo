@@ -293,7 +293,6 @@ const SOUND_KEY = "jojoSoundEnabled";
 const DRAFT_KEY = "jojoDraftSession";
 const ANALYTICS_SESSION_KEY = "jojoAnalyticsSession";
 const DRAFT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-const WECHAT_READY_KEY = "jojoWechatReadyAt";
 const REWARD_SOUND_COUNT = 18;
 const ANSWER_OPTIONS = [
   { value: 1, label: "否" },
@@ -391,8 +390,7 @@ const state = {
   account: null,
   adminAccount: null,
   adminPermissions: {},
-  wechat: null,
-  wechatEnabled: false,
+  emailAuthMode: "login",
   pendingMainCode: "",
   soundEnabled: localStorage.getItem(SOUND_KEY) !== "off",
   audioContext: null,
@@ -419,6 +417,11 @@ const $ = (id) => document.getElementById(id);
 const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 const byId = (id) => document.getElementById(id);
 
+function setMessage(id, text) {
+  const element = $(id);
+  if (element) element.textContent = text || "";
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   installMobileGuards();
   installAudioUnlock();
@@ -428,10 +431,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const savedAccount = localStorage.getItem("enneagramAccount");
   if (savedAccount) {
     try { state.account = JSON.parse(savedAccount); } catch { state.account = null; }
-  }
-  const savedWechat = localStorage.getItem("jojoWechatAccount");
-  if (savedWechat) {
-    try { state.wechat = JSON.parse(savedWechat); } catch { state.wechat = null; }
   }
   $("profileForm").addEventListener("submit", startTest);
   $("modeGrid").addEventListener("click", onModeClick);
@@ -443,16 +442,12 @@ document.addEventListener("DOMContentLoaded", () => {
   $("combinedForm").addEventListener("submit", submitCombinedForm);
   $("combinedBackButton").addEventListener("click", openHistory);
   $("combinedPrintButton").addEventListener("click", () => saveVisibleShareCards("combined"));
-  $("passkeyRegisterButton").addEventListener("click", registerPasskey);
-  $("passkeyLoginButton").addEventListener("click", loginPasskey);
-  $("wechatLoginButton").addEventListener("click", () => {
-    ensureGlobalIdentity(2).then((loggedIn) => {
-      if (loggedIn || hasAnyLoggedInIdentity()) openHistory();
-      else startWechatAuth("history");
-    });
+  $("emailLoginToggleButton").addEventListener("click", toggleEmailPanel);
+  $("emailLogoutButton").addEventListener("click", logoutEmailAccount);
+  $("emailAuthForm").addEventListener("submit", submitEmailAuth);
+  document.querySelectorAll("[data-email-mode]").forEach((button) => {
+    button.addEventListener("click", () => setEmailAuthMode(button.dataset.emailMode || "login"));
   });
-  $("wechatLogoutButton").addEventListener("click", logoutWechat);
-  $("markerWechatButton").addEventListener("click", () => startWechatAuth("marker"));
   $("lookupForm").addEventListener("submit", lookupResult);
   $("historyList").addEventListener("click", onHistoryClick);
   $("answerGrid").addEventListener("click", onAnswerClick);
@@ -492,9 +487,9 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   window.addEventListener("beforeunload", trackPotentialAbandon);
   window.addEventListener("beforeunload", () => trackResultDwell({ beacon: true }));
-  updatePasskeyStatus();
   state.analyticsSession = ensureAnalyticsSession();
-  loadWechatStatus();
+  updateEmailStatus();
+  loadAuthStatus();
   loadAdminStatus();
   loadSiteSettings();
   loadSiteStats();
@@ -542,7 +537,6 @@ async function bootFromRoute() {
   const parts = window.location.pathname.split("/").filter(Boolean);
   const routeParams = new URLSearchParams(window.location.search);
   if (!parts.length && routeParams.get("start") === "1") {
-    await ensureWechatReady(routeParams.get("wechat") === "ok" ? 4 : 2);
     const requestedMode = routeParams.get("mode") || "main90";
     const requestedTeam = routeParams.get("team") || "";
     if (MODE_COPY[requestedMode]) setMode(requestedMode);
@@ -551,14 +545,11 @@ async function bootFromRoute() {
       $("joinTeamInput").checked = true;
     }
     window.history.replaceState(null, "", "/");
-    if (state.wechat) {
-      state.recoveryMarkerConfirmed = true;
-      await beginTest();
-      return;
-    }
+    state.recoveryMarkerConfirmed = true;
+    await beginTest();
+    return;
   }
   if (!parts.length && routeParams.get("view") === "history") {
-    await ensureWechatReady(routeParams.get("wechat") === "ok" ? 4 : 2);
     await openHistory();
     window.history.replaceState(null, "", "/");
     return;
@@ -783,11 +774,6 @@ function trackPotentialAbandon() {
 function rememberResult(result) {
   if (!result?.verification_code) return;
   if (result.account && state.accountToken && !state.account) saveAccount(result.account, state.accountToken);
-  if (result.wechat) {
-    state.wechat = result.wechat;
-    localStorage.setItem("jojoWechatAccount", JSON.stringify(result.wechat));
-    updateWechatStatus();
-  }
   if (isSubtypeResult(result)) {
     localStorage.setItem(LATEST_SUBTYPE_KEY, result.verification_code);
   } else {
@@ -825,11 +811,11 @@ function isMainResult(result) {
 }
 
 function hasGlobalIdentity() {
-  return Boolean(state.wechat || state.accountToken || state.account || state.adminAccount);
+  return Boolean(state.deviceToken || state.accountToken || state.account || state.adminAccount);
 }
 
 function hasUserIdentity() {
-  return Boolean(state.wechat || state.accountToken || state.account);
+  return Boolean(state.deviceToken || state.accountToken || state.account);
 }
 
 function hasStaffIdentity() {
@@ -841,22 +827,15 @@ function hasAnyLoggedInIdentity() {
 }
 
 function hasHistoryIdentity() {
-  return Boolean(hasUserIdentity());
+  return Boolean(state.deviceToken || state.accountToken || state.account);
 }
 
 async function openHistory() {
   showScreen("history");
   $("resumeCard").hidden = true;
   state.historyHasResults = false;
-  $("wechatPanel").hidden = true;
   $("historyList").innerHTML = `<div class="history-item muted"><span>加载中</span></div>`;
-  await ensureGlobalIdentity(2);
-  if (!hasHistoryIdentity()) {
-    renderHistory([]);
-    renderResumeCard();
-    updateWechatStatus();
-    return;
-  }
+  await ensureGlobalIdentity(1);
   renderResumeCard();
   $("historyList").innerHTML = `<div class="history-item muted"><span>加载中</span></div>`;
   try {
@@ -865,11 +844,7 @@ async function openHistory() {
     const response = await fetch(`/api/me/results?${params.toString()}`);
     const data = response.ok ? await response.json() : { results: [] };
     if (data.account) saveAccount(data.account, state.accountToken);
-    if (data.wechat) {
-      state.wechat = data.wechat;
-      if (state.wechat.nickname && !$("nicknameInput").value.trim()) $("nicknameInput").value = state.wechat.nickname;
-      updateWechatStatus();
-    }
+    updateEmailStatus();
     const merged = data.results || [];
     const unique = [];
     const seen = new Set();
@@ -880,20 +855,12 @@ async function openHistory() {
     }
     state.historyHasResults = unique.length > 0;
     renderHistory(unique);
-    if (state.historyHasResults || hasHistoryIdentity()) {
-      $("wechatPanel").hidden = true;
-      return;
-    }
-    updateWechatStatus();
+    updateEmailStatus();
   } catch {
     state.historyHasResults = false;
     renderHistory([]);
     renderResumeCard();
-    if (hasHistoryIdentity()) {
-      $("wechatPanel").hidden = true;
-      return;
-    }
-    updateWechatStatus();
+    updateEmailStatus();
   }
 }
 
@@ -977,12 +944,14 @@ function saveAccount(account, token) {
   if (account) {
     state.account = account;
     localStorage.setItem("enneagramAccount", JSON.stringify(account));
+    if (!$("nicknameInput").value.trim() && account.name) $("nicknameInput").value = account.name;
+    if (!$("contactInput").value.trim() && account.email) $("contactInput").value = account.email;
   }
   if (token) {
     state.accountToken = token;
     localStorage.setItem("enneagramAccountToken", token);
   }
-  updatePasskeyStatus();
+  updateEmailStatus();
 }
 
 function clearSavedAccount() {
@@ -990,7 +959,7 @@ function clearSavedAccount() {
   state.accountToken = "";
   localStorage.removeItem("enneagramAccount");
   localStorage.removeItem("enneagramAccountToken");
-  updatePasskeyStatus();
+  updateEmailStatus();
 }
 
 async function loadAuthStatus() {
@@ -999,48 +968,18 @@ async function loadAuthStatus() {
     if (state.accountToken) params.set("account_token", state.accountToken);
     const response = await fetch(`/api/auth/me${params.toString() ? `?${params.toString()}` : ""}`, { credentials: "same-origin" });
     const data = response.ok ? await response.json() : {};
-    state.wechat = data.user?.wechat || null;
     if (data.user?.account) state.account = data.user.account;
     else if (state.accountToken || state.account) clearSavedAccount();
     state.adminAccount = data.staff?.account || null;
     state.adminPermissions = data.staff?.permissions || {};
-    if (state.wechat?.nickname && !$("nicknameInput").value.trim()) $("nicknameInput").value = state.wechat.nickname;
-    if (state.wechat) {
-      try {
-        localStorage.setItem("jojoWechatAccount", JSON.stringify(state.wechat));
-        sessionStorage.setItem(WECHAT_READY_KEY, new Date().toISOString());
-      } catch {}
-    } else {
-      localStorage.removeItem("jojoWechatAccount");
-    }
-    updateWechatStatus();
+    if (state.account?.name && !$("nicknameInput").value.trim()) $("nicknameInput").value = state.account.name;
+    if (state.account?.email && !$("contactInput").value.trim()) $("contactInput").value = state.account.email;
+    localStorage.removeItem("jojoWechatAccount");
+    updateEmailStatus();
     return Boolean(data.logged_in || hasAnyLoggedInIdentity());
   } catch {
-    updateWechatStatus();
+    updateEmailStatus();
     return hasAnyLoggedInIdentity();
-  }
-}
-
-async function loadWechatStatus() {
-  try {
-    const response = await fetch("/api/auth/wechat/config", { credentials: "same-origin" });
-    const data = response.ok ? await response.json() : { enabled: false };
-    state.wechatEnabled = Boolean(data.enabled);
-    state.wechat = data.account || data.wechat || null;
-    if (state.wechat?.nickname && !$("nicknameInput").value.trim()) $("nicknameInput").value = state.wechat.nickname;
-    updateWechatStatus();
-    if (state.wechat) {
-      try {
-        localStorage.setItem("jojoWechatAccount", JSON.stringify(state.wechat));
-        sessionStorage.setItem(WECHAT_READY_KEY, new Date().toISOString());
-      } catch {}
-    } else {
-      localStorage.removeItem("jojoWechatAccount");
-    }
-  } catch {
-    state.wechatEnabled = false;
-    state.wechat = null;
-    updateWechatStatus();
   }
 }
 
@@ -1054,180 +993,130 @@ async function loadAdminStatus() {
     state.adminAccount = null;
     state.adminPermissions = {};
   }
-  updateWechatStatus();
+  updateEmailStatus();
 }
 
 async function ensureGlobalIdentity(retries = 2) {
-  if (!state.wechatEnabled) await loadWechatStatus();
   await loadAuthStatus();
   if (hasAnyLoggedInIdentity()) return true;
   const attempts = Math.max(1, Number(retries || 1));
   for (let index = 0; index < attempts; index += 1) {
-    await Promise.allSettled([loadWechatStatus(), loadAuthStatus()]);
+    await loadAuthStatus();
     if (hasAnyLoggedInIdentity()) return true;
     if (index < attempts - 1) await wait(160 + index * 120);
   }
   return hasAnyLoggedInIdentity();
 }
 
-async function ensureWechatReady(retries = 2) {
-  if (!state.wechatEnabled) await loadWechatStatus();
-  if (state.wechat) return true;
-  const attempts = Math.max(1, Number(retries || 1));
-  for (let index = 0; index < attempts; index += 1) {
-    await loadWechatStatus();
-    if (state.wechat) return true;
-    if (index < attempts - 1) await wait(180 + index * 160);
-  }
-  return Boolean(state.wechat);
-}
-
-function updateWechatStatus() {
-  const panel = $("wechatPanel");
-  const markerButton = $("markerWechatButton");
-  if (!panel || !markerButton) return;
-  const historyActive = screens.history?.classList.contains("active");
-  panel.hidden = !historyActive || state.historyHasResults || hasHistoryIdentity();
-  markerButton.hidden = !state.wechatEnabled || Boolean(state.wechat);
-  if (!state.wechatEnabled && !state.wechat) return;
-  const avatar = state.wechat?.avatar_url || "/jojo-icon.svg";
-  $("wechatAvatar").innerHTML = `<img src="${escapeHtml(avatar)}" alt="">`;
-  $("wechatStatusTitle").textContent = state.wechat?.nickname ? state.wechat.nickname : "登录查看记录";
-  $("wechatStatusText").textContent = state.wechat
-    ? "已登录"
-    : (hasAnyLoggedInIdentity() ? "已登录" : "");
-  $("wechatLoginButton").textContent = state.wechat ? "刷新" : "微信授权登录";
-  markerButton.textContent = "微信授权登录";
-  $("wechatLogoutButton").hidden = !state.wechat;
-}
-
-function startWechatAuth(source = "history") {
-  if (source === "history" && hasHistoryIdentity()) {
-    openHistory();
+function updateEmailStatus() {
+  const title = $("emailStatusTitle");
+  const text = $("emailStatusText");
+  if (!title || !text) return;
+  if (state.account) {
+    title.textContent = state.account.name || state.account.email || "邮箱账号";
+    text.textContent = state.account.email ? `${state.account.email} 已登录` : "已登录";
+    $("emailLogoutButton").hidden = false;
+    $("emailLoginToggleButton").textContent = "账号设置";
     return;
   }
-  if (!state.wechatEnabled) {
-    if (source === "marker") {
-      skipRecoveryMarker();
+  title.textContent = "本机已自动记住";
+  text.textContent = "换设备时可用邮箱找回。";
+  $("emailLogoutButton").hidden = true;
+  $("emailLoginToggleButton").textContent = "邮箱登录";
+}
+
+function setEmailAuthMode(mode = "login") {
+  state.emailAuthMode = ["login", "register", "reset"].includes(mode) ? mode : "login";
+  document.querySelectorAll("[data-email-mode]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.emailMode === state.emailAuthMode);
+  });
+  $("emailNameField").hidden = state.emailAuthMode !== "register";
+  $("emailStarCodeField").hidden = state.emailAuthMode !== "reset";
+  $("emailResetCodeField").hidden = state.emailAuthMode !== "reset";
+  $("emailPasswordInput").autocomplete = state.emailAuthMode === "register" ? "new-password" : "current-password";
+  $("emailPasswordInput").placeholder = state.emailAuthMode === "reset" ? "新密码，至少6位" : "至少6位";
+  $("emailSubmitButton").textContent = {
+    login: "邮箱登录",
+    register: "注册并绑定",
+    reset: "找回密码"
+  }[state.emailAuthMode];
+  setMessage("emailAuthMessage", "");
+}
+
+function toggleEmailPanel() {
+  const form = $("emailAuthForm");
+  form.hidden = !form.hidden;
+  if (!form.hidden) {
+    setEmailAuthMode(state.emailAuthMode || "login");
+    $("emailInput").value = $("emailInput").value || state.account?.email || $("contactInput").value.trim();
+    $("emailNameInput").value = $("emailNameInput").value || $("nicknameInput").value.trim() || state.account?.name || "";
+    $("emailInput").focus();
+  }
+}
+
+async function submitEmailAuth(event) {
+  event.preventDefault();
+  const button = $("emailSubmitButton");
+  button.disabled = true;
+  try {
+    const email = $("emailInput").value.trim();
+    const password = $("emailPasswordInput").value;
+    const base = { email, password, device_token: state.deviceToken };
+    let endpoint = "/api/auth/email/login";
+    let body = base;
+    if (state.emailAuthMode === "register") {
+      endpoint = "/api/auth/email/register";
+      body = {
+        ...base,
+        name: $("emailNameInput").value.trim() || $("nicknameInput").value.trim(),
+        star_code: $("lookupCodeInput").value.trim()
+      };
+    } else if (state.emailAuthMode === "reset") {
+      if (!$("emailResetCodeInput").value.trim()) {
+        endpoint = "/api/auth/email/reset/request";
+        body = {
+          email,
+          star_code: $("emailStarCodeInput").value.trim()
+        };
+      } else {
+        endpoint = "/api/auth/email/reset/confirm";
+        body = {
+          ...base,
+          reset_code: $("emailResetCodeInput").value.trim()
+        };
+      }
+    }
+    const response = await fetch(endpoint, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "操作失败");
+    if (state.emailAuthMode === "reset" && !data.account_token) {
+      setMessage("emailAuthMessage", "重置码已发到邮箱，填入后再点一次。");
+      $("emailResetCodeField").hidden = false;
+      $("emailResetCodeInput").focus();
       return;
     }
-    alert("微信授权还没有配置好，请稍后再试。");
-    return;
-  }
-  const currentPath = window.location.pathname === "/" ? "/" : `${window.location.pathname}${window.location.search || ""}`;
-  let redirect = currentPath;
-  if (source === "history") {
-    redirect = "/?view=history";
-  } else if (source === "marker") {
-    const startParams = new URLSearchParams({ start: "1", mode: $("modeInput").value || state.mode || "main90" });
-    const teamCode = $("joinTeamInput").checked ? $("teamCodeInput").value.trim() : "";
-    if (teamCode) startParams.set("team", teamCode);
-    redirect = `/?${startParams.toString()}`;
-  }
-  const params = new URLSearchParams({ redirect, device: state.deviceToken });
-  window.location.href = `/auth/wechat/start?${params.toString()}`;
-}
-
-async function logoutWechat() {
-  try {
-    await fetch("/api/auth/wechat/logout", { method: "POST", credentials: "same-origin" });
-  } catch {}
-  state.wechat = null;
-  localStorage.removeItem("jojoWechatAccount");
-  updateWechatStatus();
-  openHistory();
-}
-
-function updatePasskeyStatus() {
-  const supported = Boolean(window.PublicKeyCredential && navigator.credentials);
-  $("passkeyRegisterButton").disabled = !supported;
-  $("passkeyLoginButton").disabled = !supported;
-  if (!supported) {
-    $("passkeyStatus").textContent = "当前浏览器暂不支持Passkey，可继续使用本机记录和星图编号。";
-    return;
-  }
-  if (state.accountToken && state.account?.name) {
-    $("passkeyStatus").textContent = `已启用：${state.account.name}。换手机时可用Passkey找回记录。`;
-    $("passkeyRegisterButton").querySelector("span").textContent = "重新创建Passkey";
-    return;
-  }
-  $("passkeyStatus").textContent = "可选开启，之后换设备也能免密码找回测试记录。";
-}
-
-async function registerPasskey() {
-  if (!window.PublicKeyCredential || !navigator.credentials) {
-    alert("当前浏览器暂不支持Passkey。");
-    return;
-  }
-  const button = $("passkeyRegisterButton");
-  button.disabled = true;
-  button.querySelector("span").textContent = "正在启用";
-  try {
-    const name = $("nicknameInput").value.trim() || state.account?.name || "jojo用户";
-    const optionsRes = await fetch("/api/passkey/register/options", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, device_token: state.deviceToken })
-    });
-    const options = await optionsRes.json();
-    if (!optionsRes.ok) throw new Error(options.error || "Passkey准备失败");
-    const credential = await navigator.credentials.create({
-      publicKey: transformCreationOptions(options.publicKey)
-    });
-    const verifyRes = await fetch("/api/passkey/register/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        credential: serializeCredential(credential),
-        device_token: state.deviceToken
-      })
-    });
-    const data = await verifyRes.json();
-    if (!verifyRes.ok) throw new Error(data.error || "Passkey启用失败");
     saveAccount(data.account, data.account_token);
-    renderHistory([...(data.results || []), ...JSON.parse(localStorage.getItem("enneagramLocalResults") || "[]")]);
-  } catch (err) {
-    alert(err.message || "Passkey启用失败，可以继续用本机记录和星图编号。");
-  } finally {
-    button.disabled = false;
-    updatePasskeyStatus();
-  }
-}
-
-async function loginPasskey() {
-  if (!window.PublicKeyCredential || !navigator.credentials) {
-    alert("当前浏览器暂不支持Passkey。");
-    return;
-  }
-  const button = $("passkeyLoginButton");
-  button.disabled = true;
-  button.textContent = "正在找回";
-  try {
-    const optionsRes = await fetch("/api/passkey/login/options", { method: "POST" });
-    const options = await optionsRes.json();
-    if (!optionsRes.ok) throw new Error(options.error || "Passkey准备失败");
-    const assertion = await navigator.credentials.get({
-      publicKey: transformRequestOptions(options.publicKey)
-    });
-    const verifyRes = await fetch("/api/passkey/login/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        credential: serializeAssertion(assertion),
-        device_token: state.deviceToken
-      })
-    });
-    const data = await verifyRes.json();
-    if (!verifyRes.ok) throw new Error(data.error || "Passkey找回失败");
-    saveAccount(data.account, data.account_token);
+    $("emailAuthForm").hidden = true;
+    setMessage("emailAuthMessage", "");
     renderHistory(data.results || []);
+    await openHistory();
   } catch (err) {
-    alert(err.message || "Passkey找回失败，请确认是否在这个域名创建过Passkey。");
+    setMessage("emailAuthMessage", err.message || "操作失败");
   } finally {
     button.disabled = false;
-    button.textContent = "用Passkey找回";
-    updatePasskeyStatus();
+    updateEmailStatus();
   }
+}
+
+function logoutEmailAccount() {
+  clearSavedAccount();
+  $("emailAuthForm").hidden = true;
+  openHistory();
 }
 
 function transformCreationOptions(publicKey) {
@@ -1665,7 +1554,7 @@ async function confirmReuseTeamMain() {
         device_token: state.deviceToken,
         account_token: state.accountToken,
         user: {
-          nickname: $("nicknameInput").value.trim() || state.wechat?.nickname || "",
+          nickname: $("nicknameInput").value.trim() || state.account?.name || "",
           contact: $("contactInput").value.trim()
         }
       })
@@ -1743,7 +1632,6 @@ function showDraftResumeMarker() {
   $("recoveryTitle").textContent = "继续上次";
   $("recoveryBody").hidden = false;
   $("recoveryBody").textContent = `${answered}/${total} 已保存`;
-  $("markerWechatButton").hidden = true;
   $("markerSkipButton").hidden = true;
   $("markerResumeButton").hidden = false;
   $("markerRestartButton").hidden = false;
@@ -1757,8 +1645,7 @@ function shouldPromptRecoveryMarker() {
   if (hasAnyLoggedInIdentity()) return false;
   if (state.mode === "team_subtype" || state.team?.test_kind === "subtype") return false;
   if (state.team?.code && state.team?.active) return false;
-  if (sessionStorage.getItem(WECHAT_READY_KEY)) return false;
-  return true;
+  return false;
 }
 
 function showRecoveryMarker() {
@@ -1771,10 +1658,9 @@ function showRecoveryMarker() {
   $("markerSkipButton").hidden = false;
   $("markerResumeButton").hidden = true;
   $("markerRestartButton").hidden = true;
-  updateWechatStatus();
   $("recoveryModal").hidden = false;
   trackEvent("recovery_marker_prompt", { mode: state.mode });
-  if (!isCoarsePointer() && !$("markerWechatButton").hidden) window.setTimeout(() => $("markerWechatButton").focus(), 40);
+  if (!isCoarsePointer()) window.setTimeout(() => $("markerSkipButton").focus(), 40);
 }
 
 async function skipRecoveryMarker() {
@@ -1823,7 +1709,7 @@ async function beginTest() {
     state.shownMilestones = new Set();
     state.startedAt = new Date().toISOString();
     state.user = {
-      nickname: $("nicknameInput").value.trim() || state.wechat?.nickname || "",
+      nickname: $("nicknameInput").value.trim() || state.account?.name || "",
       contact: $("contactInput").value.trim(),
       source: $("sourceInput").value.trim()
     };

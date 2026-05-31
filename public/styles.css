@@ -1442,61 +1442,50 @@ select:focus {
   gap: 7px;
 }
 
-.passkey-panel,
-.wechat-panel {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.email-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
   margin: 0 0 10px;
   padding: 11px 12px;
-  background: rgba(255, 255, 255, 0.74);
+  background:
+    radial-gradient(circle at 8% 10%, rgba(22, 207, 192, 0.12), transparent 34%),
+    rgba(255, 255, 255, 0.76);
   border: 1px solid rgba(34, 185, 174, 0.22);
   border-radius: var(--radius);
   box-shadow: 0 10px 26px rgba(26, 39, 45, 0.05);
 }
 
-.wechat-panel {
-  border-color: rgba(22, 207, 192, 0.26);
-  background:
-    radial-gradient(circle at 8% 10%, rgba(22, 207, 192, 0.12), transparent 34%),
-    rgba(255, 255, 255, 0.76);
-}
-
-.passkey-panel strong,
-.passkey-panel span,
-.wechat-panel strong,
-.wechat-panel span {
+.email-panel strong,
+.email-panel span {
   display: block;
 }
 
-.passkey-panel strong,
-.wechat-panel strong {
+.email-panel strong {
   color: var(--ink);
   font-size: 15px;
   font-weight: 880;
 }
 
-.passkey-panel span,
-.wechat-panel span {
+.email-panel span {
   margin-top: 4px;
   color: var(--muted);
   font-size: 12px;
   line-height: 1.5;
 }
 
-.wechat-panel span:empty {
+.email-panel span:empty {
   display: none;
 }
 
-.wechat-profile {
+.email-profile {
   display: flex;
   min-width: 0;
   align-items: center;
   gap: 10px;
 }
 
-.wechat-avatar {
+.email-avatar {
   display: grid;
   flex: 0 0 auto;
   width: 36px;
@@ -1508,20 +1497,78 @@ select:focus {
   border-radius: 50%;
 }
 
-.wechat-avatar img {
+.email-avatar img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.passkey-actions,
-.wechat-actions {
+.email-actions {
   display: flex;
   flex: 0 0 auto;
   gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.email-auth-form {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  padding-top: 3px;
+}
+
+.email-auth-form[hidden] {
+  display: none;
+}
+
+.email-auth-form label {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.email-auth-form input {
+  min-height: 38px;
+  font-size: 13px;
+}
+
+.email-mode-row {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: 6px;
+  padding: 3px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(22, 49, 55, 0.08);
+  border-radius: 10px;
+}
+
+.email-mode-row button {
+  flex: 1 1 0;
+  min-height: 32px;
+  padding: 0 8px;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 860;
+}
+
+.email-mode-row button.active {
+  color: var(--ink);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(238, 255, 253, 0.88));
+  box-shadow: 0 6px 14px rgba(34, 185, 174, 0.12);
+}
+
+.email-auth-form .primary-action,
+.email-auth-form .muted {
+  grid-column: 1 / -1;
 }
 
 .history-item {
@@ -5577,12 +5624,6 @@ select:focus {
   gap: 8px;
 }
 
-.teacher-profile-form .admin-bind-wechat {
-  color: var(--mint-deep);
-  background: rgba(232, 255, 249, 0.72);
-  border-color: rgba(34, 185, 174, 0.18);
-}
-
 .admin-controls {
   display: grid;
   grid-template-columns: repeat(4, minmax(120px, 1fr)) 76px 58px;
@@ -6764,26 +6805,21 @@ select:focus {
   .report-insights,
   .report-sections,
   .team-summary-grid,
-  .passkey-panel,
-  .wechat-panel,
+  .email-panel,
   .next-step-panel {
     grid-template-columns: 1fr;
   }
 
-  .passkey-panel,
-  .wechat-panel,
+  .email-panel,
   .next-step-panel {
     display: grid;
   }
 
-  .passkey-actions,
-  .wechat-actions {
+  .email-actions {
     justify-content: stretch;
   }
 
-  .passkey-actions .ghost-action,
-  .wechat-actions .primary-action,
-  .wechat-actions .ghost-action {
+  .email-actions .ghost-action {
     flex: 1 1 130px;
   }
 

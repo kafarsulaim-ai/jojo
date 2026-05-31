@@ -8,7 +8,7 @@
     <link rel="icon" href="/jojo-icon.svg" type="image/svg+xml">
     <link rel="icon" href="/jojo-icon.png" type="image/png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <link rel="stylesheet" href="/styles.css?v=20260531-v15-copy-polish">
+    <link rel="stylesheet" href="/styles.css?v=20260531-v16-email-login">
   </head>
   <body>
     <div class="app-shell">
@@ -318,28 +318,47 @@
               </div>
               <button class="primary-action compact" type="submit">生成综合报告</button>
             </form>
-            <div class="wechat-panel" id="wechatPanel" hidden>
-              <div class="wechat-profile" id="wechatProfile">
-                <span class="wechat-avatar" id="wechatAvatar" aria-hidden="true"><img src="/jojo-icon.svg" alt=""></span>
+            <div class="email-panel" id="emailPanel">
+              <div class="email-profile">
+                <span class="email-avatar" aria-hidden="true"><img src="/jojo-icon.svg" alt=""></span>
                 <div>
-                  <strong id="wechatStatusTitle">登录查看记录</strong>
-                  <span id="wechatStatusText"></span>
+                  <strong id="emailStatusTitle">本机已自动记住</strong>
+                  <span id="emailStatusText">换设备时可用邮箱找回。</span>
                 </div>
               </div>
-              <div class="wechat-actions">
-                <button class="primary-action compact" id="wechatLoginButton" type="button">微信授权登录</button>
-                <button class="ghost-action compact" id="wechatLogoutButton" type="button" hidden>退出微信</button>
+              <div class="email-actions">
+                <button class="ghost-action compact" id="emailLoginToggleButton" type="button">邮箱登录</button>
+                <button class="ghost-action compact" id="emailLogoutButton" type="button" hidden>退出账号</button>
               </div>
-            </div>
-            <div class="passkey-panel" id="passkeyPanel" hidden>
-              <div>
-                <strong>免密找回</strong>
-                <span id="passkeyStatus">正在检查Passkey状态</span>
-              </div>
-              <div class="passkey-actions">
-                <button class="ghost-action compact" id="passkeyRegisterButton" type="button"><span>启用Passkey</span></button>
-                <button class="ghost-action compact" id="passkeyLoginButton" type="button">用Passkey找回</button>
-              </div>
+              <form class="email-auth-form" id="emailAuthForm" hidden autocomplete="on">
+                <label>
+                  <span>邮箱</span>
+                  <input id="emailInput" type="email" autocomplete="email" placeholder="you@example.com">
+                </label>
+                <label id="emailNameField">
+                  <span>名字</span>
+                  <input id="emailNameInput" autocomplete="name" placeholder="你的昵称">
+                </label>
+                <label>
+                  <span>密码</span>
+                  <input id="emailPasswordInput" type="password" autocomplete="current-password" placeholder="至少6位">
+                </label>
+                <label id="emailStarCodeField" hidden>
+                  <span>星图编号</span>
+                  <input id="emailStarCodeInput" maxlength="12" autocomplete="one-time-code" placeholder="例如 M7KQ2AB">
+                </label>
+                <label id="emailResetCodeField" hidden>
+                  <span>重置码</span>
+                  <input id="emailResetCodeInput" maxlength="12" inputmode="numeric" autocomplete="one-time-code" placeholder="邮箱里的6位码">
+                </label>
+                <div class="email-mode-row" role="tablist" aria-label="邮箱账号">
+                  <button class="active" type="button" data-email-mode="login">登录</button>
+                  <button type="button" data-email-mode="register">注册</button>
+                  <button type="button" data-email-mode="reset">找回</button>
+                </div>
+                <button class="primary-action compact" id="emailSubmitButton" type="submit">邮箱登录</button>
+                <p class="muted" id="emailAuthMessage"></p>
+              </form>
             </div>
             <div class="history-list" id="historyList"></div>
             <div class="result-actions">
@@ -475,7 +494,6 @@
         <h2 class="sr-only" id="recoveryTitle">选择进入方式</h2>
         <p id="recoveryBody" hidden></p>
         <div class="marker-actions">
-          <button class="primary-action compact" id="markerWechatButton" type="button" hidden>微信授权登录</button>
           <button class="ghost-action compact" id="markerSkipButton" type="button">跳过，直接测</button>
           <button class="primary-action compact" id="markerResumeButton" type="button" hidden>继续上次</button>
           <button class="ghost-action compact" id="markerRestartButton" type="button" hidden>重新开始</button>
@@ -501,6 +519,6 @@
       </div>
     </div>
 
-    <script src="/app.js?v=20260531-v15-copy-polish"></script>
+    <script src="/app.js?v=20260531-v16-email-login"></script>
   </body>
 </html>

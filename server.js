@@ -2,6 +2,8 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const tls = require("tls");
+const net = require("net");
 
 const PORT = Number(process.env.PORT || 4173);
 const ADMIN_KEY = process.env.ADMIN_KEY || "";
@@ -9,6 +11,15 @@ const ALLOW_LEGACY_ADMIN_KEY = process.env.ALLOW_LEGACY_ADMIN_KEY === "1";
 const ADMIN_COOKIE = "jojo_admin_session";
 const ADMIN_LOGOUT_COOKIE = "jojo_admin_logged_out";
 const ADMIN_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const PASSWORD_RESET_TTL_MS = 15 * 60 * 1000;
+const SMTP_HOST = process.env.SMTP_HOST || "";
+const SMTP_PORT = Number(process.env.SMTP_PORT || 465);
+const SMTP_SECURE = process.env.SMTP_SECURE !== "false";
+const SMTP_USER = process.env.SMTP_USER || "";
+const SMTP_PASS = process.env.SMTP_PASS || "";
+const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER;
+const SMTP_FROM_NAME = process.env.SMTP_FROM_NAME || "jojo测九型";
+const SMTP_DRY_RUN = process.env.SMTP_DRY_RUN === "1";
 const ADMIN_BOOTSTRAP_NAME = process.env.ADMIN_BOOTSTRAP_NAME || "管理员";
 const ADMIN_BOOTSTRAP_LOGIN = process.env.ADMIN_BOOTSTRAP_LOGIN || "admin@jojo.cn";
 const ADMIN_BOOTSTRAP_PASSWORD = process.env.ADMIN_BOOTSTRAP_PASSWORD || crypto.randomBytes(12).toString("base64url");
@@ -849,6 +860,16 @@ function cleanText(value, max) {
   return value.trim().slice(0, max);
 }
 
+function normalizeEmail(value) {
+  const email = cleanText(value || "", 160).toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "";
+  return email;
+}
+
+function cleanStarCode(value) {
+  return cleanText(value || "", 16).toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
 function cleanDeviceToken(value) {
   if (typeof value !== "string") return "";
   return value.trim().replace(/[^A-Za-z0-9_-]/g, "").slice(0, 80);
@@ -1186,9 +1207,9 @@ function teamForSubmission(payload, mode) {
 
 function authenticatedUserResults(req, reqUrl, options = {}) {
   const account = findAccountByToken(reqUrl.searchParams.get("account_token"));
-  const wechat = findWechatAccountByRequest(req);
+  const wechat = null;
   const accountItems = account ? accountResults(account) : [];
-  const wechatItems = wechat ? wechatAccountResults(wechat) : [];
+  const wechatItems = [];
   const deviceResults = options.includeDevice
     ? readOwnedDeviceResults(req, reqUrl, account, wechat)
     : [];
@@ -1204,17 +1225,14 @@ function readOwnedDeviceResults(req, reqUrl, account = null, wechat = null) {
   const hash = hashDeviceToken(reqUrl.searchParams.get("device"));
   if (!hash) return [];
   const candidates = readResults().filter((result) => result.device_hash === hash);
-  return candidates.filter((result) =>
-    (account && result.account?.id === account.id) ||
-    (wechat && result.wechat?.id === wechat.id)
-  );
+  if (!account && !wechat) return candidates;
+  return candidates;
 }
 
 function recentReusableMainResult(req, reqUrl, teamCode) {
   const team = findTeamByCode(teamCode);
   if (!team || normalizeTeamKind(team.test_kind) !== "main" || !isTeamActive(team)) return null;
-  const auth = authenticatedUserResults(req, reqUrl);
-  if (!auth.account && !auth.wechat) return null;
+  const auth = authenticatedUserResults(req, reqUrl, { includeDevice: true });
   const cutoff = Date.now() - TEAM_MAIN_REUSE_WINDOW_MS;
   return auth.results
     .filter((result) => {
@@ -1245,7 +1263,7 @@ function cloneMainResultForTeam(source, team, req, reqUrl, payload = {}) {
     err.status = 400;
     throw err;
   }
-  const auth = authenticatedUserResults(req, reqUrl);
+  const auth = authenticatedUserResults(req, reqUrl, { includeDevice: true });
   const allowed = auth.results.some((item) => item.verification_code === source.verification_code);
   if (!allowed) {
     const err = new Error("result_not_owned");
@@ -1278,7 +1296,7 @@ function cloneMainResultForTeam(source, team, req, reqUrl, payload = {}) {
     },
     device_hash: hashDeviceToken(reqUrl.searchParams.get("device") || payload.device_token) || source.device_hash || "",
     account: auth.account ? accountForSubmission({ account_token: reqUrl.searchParams.get("account_token") || payload.account_token }) : source.account || null,
-    wechat: auth.wechat ? publicWechatAccount(auth.wechat) : source.wechat || null,
+    wechat: null,
     team: teamForSubmission({ team_code: team.code }, source.test_mode || "main90"),
     reused_from: {
       verification_code: source.verification_code,
@@ -1431,6 +1449,12 @@ function readPasskeyAccounts() {
 function writePasskeyAccounts(accounts) {
   ensureDataFiles();
   fs.writeFileSync(PASSKEY_FILE, JSON.stringify(accounts, null, 2), "utf8");
+}
+
+function findUserAccountByEmail(email) {
+  const normalized = normalizeEmail(email);
+  if (!normalized) return null;
+  return readPasskeyAccounts().find((account) => normalizeEmail(account.email || account.login_id || "") === normalized) || null;
 }
 
 function readWechatAccounts() {
@@ -1694,8 +1718,8 @@ function publicAdminAccount(account) {
     note: account.note || "",
     avatar_url: account.avatar_url || account.wechat_avatar_url || "",
     bio: account.bio || "",
-    wechat_bound: Boolean(account.wechat_id),
-    wechat_nickname: account.wechat_nickname || "",
+    wechat_bound: false,
+    wechat_nickname: "",
     created_at: account.created_at,
     updated_at: account.updated_at,
     last_login_at: account.last_login_at,
@@ -2180,13 +2204,6 @@ function registerAdminFromInvite(payload, req) {
     err.status = 409;
     throw err;
   }
-  const wechat = req ? findWechatAccountByRequest(req) : null;
-  if (!wechat) {
-    const err = new Error("wechat_not_authorized");
-    err.status = 401;
-    throw err;
-  }
-  const wechatId = wechat?.id || "";
   const account = createAdminAccountRecord({
     login_id: loginId,
     name,
@@ -2195,10 +2212,6 @@ function registerAdminFromInvite(payload, req) {
     created_by: invite.created_by,
     invite_code: invite.code,
     status: "active",
-    wechat_id: wechatId,
-    wechat_nickname: wechat?.nickname || "",
-    wechat_avatar_url: wechat?.avatar_url || "",
-    avatar_url: wechat?.avatar_url || "",
     bio: cleanAdminText(payload.bio || "", 160)
   });
   const accounts = readAdminAccounts();
@@ -2286,6 +2299,64 @@ function loginAdminAccount(payload) {
   account.last_login_at = new Date().toISOString();
   account.updated_at = new Date().toISOString();
   const accounts = readAdminAccounts().map((item) => (item.id === account.id ? account : item));
+  writeAdminAccounts(accounts);
+  return account;
+}
+
+async function requestAdminPasswordReset(payload = {}) {
+  const loginId = normalizeLoginId(payload.login_id || payload.email);
+  if (!loginId) {
+    const err = new Error("请填写邮箱账号");
+    err.status = 400;
+    throw err;
+  }
+  const accounts = readAdminAccounts();
+  const account = accounts.find((item) => normalizeLoginId(item.login_id) === loginId);
+  if (!account || account.status === "disabled") {
+    const err = new Error("没有找到这个老师账号");
+    err.status = 404;
+    throw err;
+  }
+  const email = normalizeEmail(account.login_id);
+  if (!email) {
+    const err = new Error("这个账号不是邮箱，暂时不能邮件找回");
+    err.status = 400;
+    throw err;
+  }
+  const resetCode = String(crypto.randomInt(100000, 1000000));
+  account.reset_code_hash = hashAccountToken(resetCode);
+  account.reset_expires_at = new Date(Date.now() + PASSWORD_RESET_TTL_MS).toISOString();
+  account.updated_at = new Date().toISOString();
+  writeAdminAccounts(accounts);
+  await sendPasswordResetEmail(email, resetCode, "admin");
+  return { ok: true, message: "重置码已发送" };
+}
+
+function resetAdminPassword(payload = {}) {
+  const loginId = normalizeLoginId(payload.login_id || payload.email);
+  const code = cleanText(payload.code || payload.reset_code || "", 12).replace(/\s+/g, "");
+  const password = String(payload.password || "");
+  if (!loginId || !code || password.length < 6) {
+    const err = new Error("请填写账号、重置码和新密码");
+    err.status = 400;
+    throw err;
+  }
+  const accounts = readAdminAccounts();
+  const account = accounts.find((item) => normalizeLoginId(item.login_id) === loginId);
+  const valid = account?.reset_code_hash &&
+    Date.parse(account.reset_expires_at || 0) > Date.now() &&
+    account.reset_code_hash === hashAccountToken(code);
+  if (!account || account.status === "disabled" || !valid) {
+    const err = new Error("重置码不正确或已过期");
+    err.status = 400;
+    throw err;
+  }
+  const { salt, hash } = passwordRecord(password);
+  account.password_salt = salt;
+  account.password_hash = hash;
+  account.reset_code_hash = "";
+  account.reset_expires_at = "";
+  account.updated_at = new Date().toISOString();
   writeAdminAccounts(accounts);
   return account;
 }
@@ -2554,6 +2625,368 @@ function findAccountByToken(token) {
   return readPasskeyAccounts().find((account) => (account.token_hashes || []).includes(tokenHash)) || null;
 }
 
+function publicEmailAccount(account) {
+  if (!account) return null;
+  return {
+    id: account.id,
+    name: account.name || account.email || "jojo用户",
+    email: account.email || "",
+    created_at: account.created_at,
+    credential_count: account.credentials?.length || 0
+  };
+}
+
+function accountDisplayName(account) {
+  return account?.name || account?.email || "jojo用户";
+}
+
+function accountForSubmission(payload) {
+  const account = findAccountByToken(payload.account_token);
+  if (!account) return null;
+  return { id: account.id, name: accountDisplayName(account), email: account.email || "" };
+}
+
+function makeUserAccountId(email) {
+  const normalized = normalizeEmail(email);
+  const seed = normalized || randomB64(12);
+  return `U${crypto.createHash("sha256").update(seed).digest("hex").slice(0, 20)}`;
+}
+
+function normalizeRecoveryCodes(payload = {}) {
+  return [
+    cleanStarCode(payload.star_code),
+    cleanStarCode(payload.recovery_code),
+    cleanStarCode(payload.verification_code),
+    cleanStarCode(payload.result_code)
+  ].filter(Boolean);
+}
+
+function findResultByRecoveryCodes(codes = []) {
+  const set = new Set(codes.map(cleanStarCode).filter(Boolean));
+  if (!set.size) return null;
+  return readResults().find((result) => set.has(cleanStarCode(result.verification_code))) || null;
+}
+
+function attachAccountToResult(account, code) {
+  const targetCode = cleanStarCode(code);
+  if (!account || !targetCode) return false;
+  ensureDataFiles();
+  const lines = fs.readFileSync(RESULTS_FILE, "utf8").split("\n");
+  let changed = false;
+  const next = lines.map((line) => {
+    if (!line.trim()) return line;
+    try {
+      const item = JSON.parse(line);
+      if (cleanStarCode(item.verification_code) !== targetCode) return line;
+      item.account = { id: account.id, name: accountDisplayName(account), email: account.email || "" };
+      if (!item.user) item.user = {};
+      item.user.nickname = item.user.nickname || account.name || "";
+      item.user.contact = item.user.contact || account.email || "";
+      changed = true;
+      return JSON.stringify(item);
+    } catch {
+      return line;
+    }
+  });
+  if (changed) fs.writeFileSync(RESULTS_FILE, next.join("\n"), "utf8");
+  return changed;
+}
+
+function rotateUserAccountToken(account) {
+  const token = randomB64(32);
+  account.token_hashes = [hashAccountToken(token), ...(account.token_hashes || [])].slice(0, 8);
+  account.session_expires_at = new Date(Date.now() + USER_SESSION_TTL_MS).toISOString();
+  account.updated_at = new Date().toISOString();
+  return token;
+}
+
+function createOrUpdateEmailAccount(payload = {}) {
+  const email = normalizeEmail(payload.email || payload.login_id);
+  const password = String(payload.password || "");
+  const name = cleanAdminText(payload.name || "", 60) || email.split("@")[0] || "jojo用户";
+  if (!email) {
+    const err = new Error("请输入有效邮箱");
+    err.status = 400;
+    throw err;
+  }
+  if (password.length < 6) {
+    const err = new Error("密码至少需要6位");
+    err.status = 400;
+    throw err;
+  }
+  const accounts = readPasskeyAccounts();
+  if (accounts.some((account) => normalizeEmail(account.email || account.login_id || "") === email)) {
+    const err = new Error("这个邮箱已经注册过");
+    err.status = 409;
+    throw err;
+  }
+  const now = new Date().toISOString();
+  const { salt, hash } = passwordRecord(password);
+  const deviceHash = hashDeviceToken(payload.device_token || "");
+  const result = findResultByRecoveryCodes(normalizeRecoveryCodes(payload));
+  const account = {
+    id: makeUserAccountId(email),
+    email,
+    login_id: email,
+    name,
+    created_at: now,
+    updated_at: now,
+    device_hashes: deviceHash ? [deviceHash] : [],
+    token_hashes: [],
+    credentials: [],
+    password_salt: salt,
+    password_hash: hash,
+    recovery_codes: result?.verification_code ? [result.verification_code] : []
+  };
+  const accountToken = rotateUserAccountToken(account);
+  accounts.push(account);
+  writePasskeyAccounts(accounts);
+  if (result?.verification_code) attachAccountToResult(account, result.verification_code);
+  return {
+    ok: true,
+    account: publicEmailAccount(account),
+    account_token: accountToken,
+    results: accountResults(account).slice(0, 50).map(publicHistoryItem)
+  };
+}
+
+function loginEmailAccount(payload = {}) {
+  const email = normalizeEmail(payload.email || payload.login_id);
+  const password = String(payload.password || "");
+  if (!email || !password) {
+    const err = new Error("请输入邮箱和密码");
+    err.status = 400;
+    throw err;
+  }
+  const accounts = readPasskeyAccounts();
+  const account = accounts.find((item) => normalizeEmail(item.email || item.login_id || "") === email);
+  if (!account || !passwordMatches(password, account)) {
+    const err = new Error("邮箱或密码不正确");
+    err.status = 401;
+    throw err;
+  }
+  const deviceHash = hashDeviceToken(payload.device_token || "");
+  if (!Array.isArray(account.device_hashes)) account.device_hashes = [];
+  if (deviceHash && !account.device_hashes.includes(deviceHash)) account.device_hashes.push(deviceHash);
+  const accountToken = rotateUserAccountToken(account);
+  writePasskeyAccounts(accounts);
+  return {
+    ok: true,
+    account: publicEmailAccount(account),
+    account_token: accountToken,
+    results: accountResults(account).slice(0, 50).map(publicHistoryItem)
+  };
+}
+
+async function requestEmailPasswordReset(payload = {}) {
+  const email = normalizeEmail(payload.email || payload.login_id);
+  const code = cleanStarCode(payload.star_code || payload.recovery_code || payload.verification_code);
+  if (!email || !code) {
+    const err = new Error("请填写邮箱和星图编号");
+    err.status = 400;
+    throw err;
+  }
+  const accounts = readPasskeyAccounts();
+  const account = accounts.find((item) => normalizeEmail(item.email || item.login_id || "") === email);
+  const result = findResultByRecoveryCodes([code]);
+  const deviceHashes = new Set((account?.device_hashes || []).filter(Boolean));
+  const ownsCode = Boolean(account && result && (
+    result.account?.id === account.id ||
+    normalizeEmail(result.user?.contact || "") === email ||
+    (result.device_hash && deviceHashes.has(result.device_hash)) ||
+    (account.recovery_codes || []).map(cleanStarCode).includes(code)
+  ));
+  if (!account || !result || !ownsCode) {
+    const err = new Error("邮箱和星图编号没有匹配上");
+    err.status = 404;
+    throw err;
+  }
+  const resetCode = String(crypto.randomInt(100000, 1000000));
+  account.reset_code_hash = hashAccountToken(resetCode);
+  account.reset_expires_at = new Date(Date.now() + PASSWORD_RESET_TTL_MS).toISOString();
+  account.updated_at = new Date().toISOString();
+  writePasskeyAccounts(accounts);
+  await sendPasswordResetEmail(email, resetCode, "user");
+  return { ok: true, message: "重置码已发送" };
+}
+
+function resetEmailPassword(payload = {}) {
+  const email = normalizeEmail(payload.email || payload.login_id);
+  const code = cleanText(payload.code || payload.reset_code || "", 12).replace(/\s+/g, "");
+  const password = String(payload.password || "");
+  if (!email || !code || password.length < 6) {
+    const err = new Error("请填写邮箱、重置码和新密码");
+    err.status = 400;
+    throw err;
+  }
+  const accounts = readPasskeyAccounts();
+  const account = accounts.find((item) => normalizeEmail(item.email || item.login_id || "") === email);
+  const valid = account?.reset_code_hash &&
+    Date.parse(account.reset_expires_at || 0) > Date.now() &&
+    account.reset_code_hash === hashAccountToken(code);
+  if (!valid) {
+    const err = new Error("重置码不正确或已过期");
+    err.status = 400;
+    throw err;
+  }
+  const { salt, hash } = passwordRecord(password);
+  account.password_salt = salt;
+  account.password_hash = hash;
+  account.reset_code_hash = "";
+  account.reset_expires_at = "";
+  account.updated_at = new Date().toISOString();
+  const accountToken = rotateUserAccountToken(account);
+  writePasskeyAccounts(accounts);
+  return {
+    ok: true,
+    account: publicEmailAccount(account),
+    account_token: accountToken,
+    results: accountResults(account).slice(0, 50).map(publicHistoryItem)
+  };
+}
+
+function smtpConfigured() {
+  return Boolean(SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASS && SMTP_FROM);
+}
+
+function smtpEncodeHeader(value) {
+  const text = String(value || "");
+  return /^[\x00-\x7F]*$/.test(text)
+    ? text
+    : `=?UTF-8?B?${Buffer.from(text, "utf8").toString("base64")}?=`;
+}
+
+function smtpAddress(address, name = "") {
+  const email = normalizeEmail(address);
+  return name ? `${smtpEncodeHeader(name)} <${email}>` : email;
+}
+
+function smtpEscapeMessage(message) {
+  return String(message || "").replace(/\r?\n/g, "\r\n").replace(/^\./gm, "..");
+}
+
+function smtpRead(socket, expected) {
+  return new Promise((resolve, reject) => {
+    let buffer = "";
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error("smtp_timeout"));
+    }, 15000);
+    function cleanup() {
+      clearTimeout(timer);
+      socket.off("data", onData);
+      socket.off("error", onError);
+    }
+    function onError(err) {
+      cleanup();
+      reject(err);
+    }
+    function onData(chunk) {
+      buffer += chunk.toString("utf8");
+      const lines = buffer.split(/\r?\n/).filter(Boolean);
+      const last = lines[lines.length - 1] || "";
+      if (!/^\d{3} /.test(last)) return;
+      const code = Number(last.slice(0, 3));
+      const ok = Array.isArray(expected) ? expected.includes(code) : code === expected;
+      cleanup();
+      if (!ok) {
+        const err = new Error(`smtp_${code}`);
+        err.smtp = buffer;
+        reject(err);
+        return;
+      }
+      resolve(buffer);
+    }
+    socket.on("data", onData);
+    socket.on("error", onError);
+  });
+}
+
+async function smtpCommand(socket, command, expected) {
+  socket.write(`${command}\r\n`);
+  return smtpRead(socket, expected);
+}
+
+function smtpConnect() {
+  return new Promise((resolve, reject) => {
+    const options = { host: SMTP_HOST, port: SMTP_PORT, servername: SMTP_HOST };
+    const socket = SMTP_SECURE ? tls.connect(options) : net.connect(options);
+    const timer = setTimeout(() => {
+      socket.destroy();
+      reject(new Error("smtp_connect_timeout"));
+    }, 15000);
+    socket.once(SMTP_SECURE ? "secureConnect" : "connect", () => {
+      clearTimeout(timer);
+      resolve(socket);
+    });
+    socket.once("error", (err) => {
+      clearTimeout(timer);
+      reject(err);
+    });
+  });
+}
+
+async function sendMail({ to, subject, text }) {
+  const recipient = normalizeEmail(to);
+  if (!recipient) {
+    const err = new Error("invalid_email");
+    err.status = 400;
+    throw err;
+  }
+  if (SMTP_DRY_RUN) {
+    console.log(`[smtp dry-run] ${recipient} ${subject}: ${text}`);
+    return { ok: true, dry_run: true };
+  }
+  if (!smtpConfigured()) {
+    const err = new Error("邮件服务还没配置");
+    err.status = 503;
+    throw err;
+  }
+  const socket = await smtpConnect();
+  try {
+    await smtpRead(socket, 220);
+    await smtpCommand(socket, `EHLO ${SMTP_HOST}`, 250);
+    await smtpCommand(socket, "AUTH LOGIN", 334);
+    await smtpCommand(socket, Buffer.from(SMTP_USER).toString("base64"), 334);
+    await smtpCommand(socket, Buffer.from(SMTP_PASS).toString("base64"), 235);
+    await smtpCommand(socket, `MAIL FROM:<${normalizeEmail(SMTP_FROM)}>`, 250);
+    await smtpCommand(socket, `RCPT TO:<${recipient}>`, [250, 251]);
+    await smtpCommand(socket, "DATA", 354);
+    const body = [
+      `From: ${smtpAddress(SMTP_FROM, SMTP_FROM_NAME)}`,
+      `To: ${recipient}`,
+      `Subject: ${smtpEncodeHeader(subject)}`,
+      "MIME-Version: 1.0",
+      "Content-Type: text/plain; charset=UTF-8",
+      "Content-Transfer-Encoding: 8bit",
+      "",
+      smtpEscapeMessage(text),
+      "."
+    ].join("\r\n");
+    socket.write(`${body}\r\n`);
+    await smtpRead(socket, 250);
+    await smtpCommand(socket, "QUIT", 221).catch(() => {});
+    return { ok: true };
+  } finally {
+    socket.end();
+  }
+}
+
+async function sendPasswordResetEmail(email, code, scope = "user") {
+  const label = scope === "admin" ? "老师端" : "jojo测九型";
+  return sendMail({
+    to: email,
+    subject: `${label}密码找回`,
+    text: [
+      `你的 ${label} 密码重置码：`,
+      "",
+      code,
+      "",
+      "15分钟内有效。不是你本人操作的话，可以忽略这封邮件。"
+    ].join("\n")
+  });
+}
+
 function findWechatAccountByRequest(req) {
   const token = parseCookies(req)[USER_COOKIE] || "";
   const tokenHash = hashAccountToken(token);
@@ -2565,23 +2998,16 @@ function findWechatAccountByRequest(req) {
   return account;
 }
 
-function accountForSubmission(payload) {
-  const account = findAccountByToken(payload.account_token);
-  if (!account) return null;
-  return { id: account.id, name: account.name || "Passkey用户" };
-}
-
 function wechatForSubmission(req) {
-  const account = findWechatAccountByRequest(req);
-  if (!account) return null;
-  return publicWechatAccount(account);
+  return null;
 }
 
 function publicAccount(account) {
   if (!account) return null;
   return {
     id: account.id,
-    name: account.name || "Passkey用户",
+    name: accountDisplayName(account),
+    email: account.email || "",
     created_at: account.created_at,
     credential_count: account.credentials?.length || 0
   };
@@ -2601,7 +3027,7 @@ function publicWechatAccount(account) {
 }
 
 function wechatAuthEnabled() {
-  return wechatAuthMode() === "cloudrun" ? Boolean(WECHAT_CLOUDRUN_LOGIN_URL) : Boolean(WECHAT_APPID && WECHAT_SECRET);
+  return false;
 }
 
 function wechatAuthMode() {
@@ -2875,7 +3301,7 @@ function wechatAuthConfig(req) {
 
 function globalAuthStatus(req, reqUrl) {
   const user = {
-    wechat: publicWechatAccount(findWechatAccountByRequest(req)),
+    wechat: null,
     account: publicAccount(findAccountByToken(reqUrl.searchParams.get("account_token") || ""))
   };
   const staffAccount = readAdminAccess(req, reqUrl);
@@ -2884,9 +3310,9 @@ function globalAuthStatus(req, reqUrl) {
     permissions: publicAdminPermissions(staffAccount)
   } : null;
   return {
-    logged_in: Boolean(user.wechat || user.account || staff),
+    logged_in: Boolean(user.account || staff),
     roles: {
-      user: Boolean(user.wechat || user.account),
+      user: Boolean(user.account),
       teacher: staff?.account?.role === "teacher",
       admin: staff?.account?.role === "super_admin"
     },
@@ -3354,6 +3780,12 @@ function rotateAccountToken(account) {
 function accountResults(account) {
   const deviceHashes = new Set(account.device_hashes || []);
   return readResults().filter((result) => result.account?.id === account.id || (result.device_hash && deviceHashes.has(result.device_hash)));
+}
+
+function deviceResultsByToken(deviceToken) {
+  const deviceHash = hashDeviceToken(deviceToken);
+  if (!deviceHash) return [];
+  return readResults().filter((result) => result.device_hash === deviceHash);
 }
 
 function parseAttestationObject(buffer) {
@@ -4219,41 +4651,41 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, { stats: publicSiteStats() });
     }
     if (req.method === "GET" && reqUrl.pathname === "/api/auth/wechat/config") {
-      return sendJson(res, 200, wechatAuthConfig(req));
+      return sendJson(res, 200, { enabled: false, type: "off", login_url: "", account: null });
     }
     if (req.method === "GET" && reqUrl.pathname === "/api/auth/me") {
       return sendJson(res, 200, globalAuthStatus(req, reqUrl));
+    }
+    if (req.method === "POST" && reqUrl.pathname === "/api/auth/email/register") {
+      const payload = await readBody(req);
+      return sendJson(res, 200, createOrUpdateEmailAccount(payload));
+    }
+    if (req.method === "POST" && reqUrl.pathname === "/api/auth/email/login") {
+      const payload = await readBody(req);
+      return sendJson(res, 200, loginEmailAccount(payload));
+    }
+    if (req.method === "POST" && reqUrl.pathname === "/api/auth/email/reset/request") {
+      const payload = await readBody(req);
+      return sendJson(res, 200, await requestEmailPasswordReset(payload));
+    }
+    if (req.method === "POST" && reqUrl.pathname === "/api/auth/email/reset/confirm") {
+      const payload = await readBody(req);
+      return sendJson(res, 200, resetEmailPassword(payload));
     }
     if (req.method === "POST" && reqUrl.pathname === "/api/auth/wechat/logout") {
       return sendJson(res, 200, { ok: true }, { "Set-Cookie": userCookieHeader("", req, 0) });
     }
     if (req.method === "GET" && reqUrl.pathname === "/auth/wechat/start") {
-      const adminInvite = cleanText(reqUrl.searchParams.get("admin_invite") || "", 40).toUpperCase();
-      if (adminInvite) {
-        const redirect = safeRedirectTarget(req, reqUrl.searchParams.get("redirect") || "/admin.html");
-        const next = new URL(redirect, "https://jojo.local");
-        next.searchParams.set("invite", adminInvite);
-        reqUrl.searchParams.set("redirect", `${next.pathname}${next.search}${next.hash}`);
-      }
-      return startWechatAuth(req, res, reqUrl);
+      return sendJson(res, 410, { error: "wechat_auth_disabled" });
     }
     if (req.method === "GET" && reqUrl.pathname === "/auth/wechat/callback") {
-      return handleWechatCallback(req, res, reqUrl);
+      return sendJson(res, 410, { error: "wechat_auth_disabled" });
     }
     if (reqUrl.pathname === "/auth/wechat/cloudrun/callback" && (req.method === "GET" || req.method === "POST")) {
-      return handleWechatCloudrunCallback(req, res, reqUrl);
+      return sendJson(res, 410, { error: "wechat_auth_disabled" });
     }
     if (req.method === "GET" && reqUrl.pathname === "/wechat-login") {
-      const html = renderWechatLoginPage(req, {
-        title: "微信授权登录",
-        subtitle: "授权后自动回到测试。"
-      });
-      res.writeHead(200, {
-        "Content-Type": "text/html; charset=utf-8",
-        "Cache-Control": "no-store"
-      });
-      res.end(html);
-      return;
+      return sendJson(res, 410, { error: "wechat_auth_disabled" });
     }
     if (req.method === "POST" && reqUrl.pathname === "/api/event") {
       const payload = await readBody(req);
@@ -4331,35 +4763,14 @@ const server = http.createServer(async (req, res) => {
       ));
     }
     if (req.method === "GET" && reqUrl.pathname === "/api/me/results") {
-      const auth = authenticatedUserResults(req, reqUrl);
-      if (!auth.account && !auth.wechat) return sendJson(res, 401, { error: "missing_identity" });
+      const auth = authenticatedUserResults(req, reqUrl, { includeDevice: true });
       const results = auth.results
         .slice(0, 50)
         .map(publicHistoryItem);
-      return sendJson(res, 200, { account: publicAccount(auth.account), wechat: publicWechatAccount(auth.wechat), results });
+      return sendJson(res, 200, { account: publicAccount(auth.account), wechat: null, results });
     }
     if (req.method === "GET" && reqUrl.pathname === "/api/admin/auth/me") {
-      let account = readAdminAccess(req, reqUrl);
-      const adminLoggedOut = parseCookies(req)[ADMIN_LOGOUT_COOKIE] === "1";
-      if (!account && !adminLoggedOut) {
-        const wechat = findWechatAccountByRequest(req);
-        if (wechat) {
-          const linked = findAdminAccountByWechatId(wechat.id);
-          if (linked && linked.status !== "disabled") {
-            linked.last_login_at = new Date().toISOString();
-            linked.updated_at = new Date().toISOString();
-            const accounts = readAdminAccounts().map((item) => (item.id === linked.id ? linked : item));
-            writeAdminAccounts(accounts);
-            account = linked;
-            const session = createAdminSession(linked, req);
-            return sendJson(res, 200, {
-              account: publicAdminSelfAccount(linked),
-              permissions: publicAdminPermissions(linked)
-            }, { "Set-Cookie": session.cookie });
-          }
-        }
-        return sendJson(res, 401, { error: "unauthorized" });
-      }
+      const account = readAdminAccess(req, reqUrl);
       if (!account) return sendJson(res, 401, { error: "unauthorized" });
       return sendJson(res, 200, {
         account: publicAdminSelfAccount(account),
@@ -4384,38 +4795,27 @@ const server = http.createServer(async (req, res) => {
         permissions: publicAdminPermissions(account)
       }, { "Set-Cookie": session.cookie });
     }
-    if (req.method === "POST" && reqUrl.pathname === "/api/admin/auth/wechat") {
+    if (req.method === "POST" && reqUrl.pathname === "/api/admin/auth/reset/request") {
       const payload = await readBody(req);
-      const account = loginAdminByWechat(req, payload);
+      return sendJson(res, 200, await requestAdminPasswordReset(payload));
+    }
+    if (req.method === "POST" && reqUrl.pathname === "/api/admin/auth/reset/confirm") {
+      const payload = await readBody(req);
+      const account = resetAdminPassword(payload);
       const session = createAdminSession(account, req);
       return sendJson(res, 200, {
         account: publicAdminSelfAccount(account),
         permissions: publicAdminPermissions(account)
       }, { "Set-Cookie": session.cookie });
     }
+    if (req.method === "POST" && reqUrl.pathname === "/api/admin/auth/wechat") {
+      return sendJson(res, 410, { error: "wechat_auth_disabled" });
+    }
     if (req.method === "POST" && reqUrl.pathname === "/api/admin/auth/bind-wechat") {
-      const account = requireAdmin(req, reqUrl);
-      if (!findWechatAccountByRequest(req)) {
-        const bindState = createAdminWechatBindState(account);
-        return sendJson(res, 401, {
-          error: "wechat_not_authorized",
-          bind_state: bindState
-        });
-      }
-      const updated = bindAdminAccountWechat(account, req);
-      return sendJson(res, 200, {
-        account: publicAdminSelfAccount(updated),
-        permissions: publicAdminPermissions(updated)
-      });
+      return sendJson(res, 410, { error: "wechat_auth_disabled" });
     }
     if (req.method === "POST" && reqUrl.pathname === "/api/admin/auth/finish-bind-wechat") {
-      const payload = await readBody(req);
-      const updated = finishAdminWechatBindFromState(req, payload.bind_state);
-      const session = createAdminSession(updated, req);
-      return sendJson(res, 200, {
-        account: publicAdminSelfAccount(updated),
-        permissions: publicAdminPermissions(updated)
-      }, { "Set-Cookie": session.cookie });
+      return sendJson(res, 410, { error: "wechat_auth_disabled" });
     }
     if (req.method === "POST" && reqUrl.pathname === "/api/admin/auth/logout") {
       revokeAdminSession(req);

@@ -490,7 +490,6 @@ document.addEventListener("DOMContentLoaded", () => {
   state.analyticsSession = ensureAnalyticsSession();
   updateEmailStatus();
   loadAuthStatus();
-  loadAdminStatus();
   loadSiteSettings();
   loadSiteStats();
   bootFromRoute().then(() => {
@@ -1101,6 +1100,7 @@ async function submitEmailAuth(event) {
       return;
     }
     saveAccount(data.account, data.account_token);
+    setEmailAuthMode("login");
     $("emailAuthForm").hidden = true;
     setMessage("emailAuthMessage", "");
     renderHistory(data.results || []);
@@ -1115,6 +1115,7 @@ async function submitEmailAuth(event) {
 
 function logoutEmailAccount() {
   clearSavedAccount();
+  setEmailAuthMode("login");
   $("emailAuthForm").hidden = true;
   openHistory();
 }

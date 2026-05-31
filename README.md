@@ -51,41 +51,35 @@ server {
 ADMIN_KEY="换成一串只有团队知道的密钥" PORT=4173 npm start
 ```
 
-## 微信授权
+## 邮箱登录
 
-微信授权是可选能力。未配置时，页面会自动隐藏微信入口，用户仍可用本机记录、星图编号、Passkey、账号/永久暗号完成找回。
+当前登录方案是：
+
+- 普通用户可免登录使用，本机设备会自动记住历史结果。
+- 换设备时可用邮箱注册/登录恢复账号。
+- 用户忘记密码时，需要邮箱账号 + 星图编号，重置码会发到邮箱。
+- 老师端使用邮箱账号登录；新老师通过邀请码注册。
+- 老师忘记密码时，重置码会发到邮箱。
+- 微信登录和 Passkey 登录均已关闭。
+
+生产发信使用 SMTP：
 
 ```bash
-WECHAT_APPID="公众号或网站应用AppID" \
-WECHAT_SECRET="对应AppSecret" \
-WECHAT_AUTH_TYPE="official" \
-WECHAT_AUTH_BASE_URL="https://auth.xjrwith.cn" \
-WECHAT_COOKIE_DOMAIN=".xjrwith.cn" \
-WECHAT_ALLOWED_REDIRECT_HOSTS="jojo.xjrwith.cn,auth.xjrwith.cn" \
+SMTP_HOST="smtp.exmail.qq.com" \
+SMTP_PORT=465 \
+SMTP_SECURE=true \
+SMTP_USER="yuan@xjrwith.cn" \
+SMTP_PASS="客户端专用密码" \
+SMTP_FROM="yuan@xjrwith.cn" \
+SMTP_FROM_NAME="jojo测九型" \
 PORT=4173 npm start
 ```
 
-- `WECHAT_AUTH_TYPE=official`：公众号网页授权，适合微信内打开。
-- `WECHAT_AUTH_TYPE=website`：开放平台网站应用扫码登录，适合浏览器打开。
-- `WECHAT_AUTH_BASE_URL`：统一授权中心域名；如果暂时只给 JOJO 使用，可不填，默认使用当前域名。
-- `WECHAT_COOKIE_DOMAIN=.xjrwith.cn`：让 `jojo.xjrwith.cn` 和后续其他站点共享同一登录 Cookie。
-- 微信后台需要把授权回调域名配置为 `WECHAT_AUTH_BASE_URL` 的域名。
-
-如果希望走云托管中转授权，可改用：
+本地联调不想真实发邮件时可加：
 
 ```bash
-WECHAT_AUTH_MODE="cloudrun" \
-WECHAT_CLOUDRUN_LOGIN_URL="https://你的云托管域名/wechat-login" \
-WECHAT_CLOUDRUN_CALLBACK_URL="https://jojo.xjrwith.cn/auth/wechat/cloudrun/callback" \
-WECHAT_CLOUDRUN_APPID="公众号AppID" \
-WECHAT_CLOUDRUN_ENVID="云托管环境ID" \
-WECHAT_CLOUDRUN_SERVICE="云托管服务名" \
-WECHAT_RELAY_SECRET="主站和云托管共用的签名密钥" \
-WECHAT_COOKIE_DOMAIN=".xjrwith.cn" \
-PORT=4173 npm start
+SMTP_DRY_RUN=1 PORT=4173 npm start
 ```
-
-实际给用户看的登录入口，建议放在 `jojo.xjrwith.cn/wechat-login` 这类自己的域名下，不要直接拿云托管测试域名当第一入口。
 
 ## 数据文件
 
@@ -95,10 +89,10 @@ PORT=4173 npm start
 apps/enneagram-map-h5/data/results.jsonl
 ```
 
-微信授权用户保存在：
+邮箱用户账号保存在：
 
 ```text
-apps/enneagram-map-h5/data/wechat_accounts.json
+apps/enneagram-map-h5/data/passkeys.json
 ```
 
 分享卡右下角会显示一个很小的“星图编号”，例如：

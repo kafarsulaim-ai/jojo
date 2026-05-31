@@ -105,9 +105,9 @@ document.addEventListener("DOMContentLoaded", () => {
 async function bootAdmin() {
   try {
     window.history.replaceState(null, "", window.location.pathname === "/admin.html" ? "/admin.html" : window.location.pathname);
-    const data = await adminFetch("/api/admin/auth/me", { allowUnauthorized: true });
-    if (!data?.account) throw new Error("unauthorized");
-    setAccount(data);
+    const data = await adminFetch("/api/auth/me");
+    if (!data?.staff?.account) throw new Error("unauthorized");
+    setAccount(data.staff);
     showDashboard();
     await loadDashboardData();
   } catch {

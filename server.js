@@ -4692,19 +4692,16 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, appendEvent(payload));
     }
     if (req.method === "POST" && reqUrl.pathname === "/api/passkey/register/options") {
-      const payload = await readBody(req);
-      return sendJson(res, 200, passkeyRegisterOptions(req, payload));
+      return sendJson(res, 410, { error: "passkey_auth_disabled" });
     }
     if (req.method === "POST" && reqUrl.pathname === "/api/passkey/register/verify") {
-      const payload = await readBody(req);
-      return sendJson(res, 200, verifyPasskeyRegistration(req, payload));
+      return sendJson(res, 410, { error: "passkey_auth_disabled" });
     }
     if (req.method === "POST" && reqUrl.pathname === "/api/passkey/login/options") {
-      return sendJson(res, 200, passkeyLoginOptions(req));
+      return sendJson(res, 410, { error: "passkey_auth_disabled" });
     }
     if (req.method === "POST" && reqUrl.pathname === "/api/passkey/login/verify") {
-      const payload = await readBody(req);
-      return sendJson(res, 200, verifyPasskeyLogin(req, payload));
+      return sendJson(res, 410, { error: "passkey_auth_disabled" });
     }
     if (req.method === "POST" && reqUrl.pathname === "/api/team") {
       const payload = await readBody(req);

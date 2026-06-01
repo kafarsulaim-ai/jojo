@@ -150,7 +150,7 @@ const MODE_COPY = {
   main90: {
     eyebrow: "选择测试入口",
     line: "先选地图。",
-    button: "开始主型90题",
+    button: "开始测试",
     testBadge: "主型快测",
     testTitle: "按第一反应选",
     testHint: "按最近真实反应选"
@@ -158,7 +158,7 @@ const MODE_COPY = {
   main180: {
     eyebrow: "专业深测入口",
     line: "深一点。",
-    button: "开始深测180题",
+    button: "开始测试",
     testBadge: "主型深测",
     testTitle: "慢一点也没关系",
     testHint: "慢一点也没关系"
@@ -166,7 +166,7 @@ const MODE_COPY = {
   main270: {
     eyebrow: "专业深测入口",
     line: "深一点。",
-    button: "开始深测180题",
+    button: "开始测试",
     testBadge: "主型深测",
     testTitle: "慢一点也没关系",
     testHint: "慢一点也没关系"
@@ -174,7 +174,7 @@ const MODE_COPY = {
   subtype_adult: {
     eyebrow: "副型补充入口",
     line: "补一张入口图。",
-    button: "开始个人副型",
+    button: "开始测试",
     testBadge: "个人副型",
     testTitle: "看注意力入口",
     testHint: "看第一、第二副型排序"
@@ -182,7 +182,7 @@ const MODE_COPY = {
   subtype_child: {
     eyebrow: "亲子观察入口",
     line: "给孩子看入口。",
-    button: "开始少儿副型",
+    button: "开始测试",
     testBadge: "少儿副型",
     testTitle: "按近三个月状态选",
     testHint: "按近三个月状态选"
@@ -190,7 +190,7 @@ const MODE_COPY = {
   team_subtype: {
     eyebrow: "匿名团队副型测试",
     line: "匿名汇总。",
-    button: "开始团队副型",
+    button: "开始测试",
     testBadge: "团队副型",
     testTitle: "匿名提交",
     testHint: "只看团队整体，不看个人明细"
@@ -391,6 +391,7 @@ const state = {
   adminAccount: null,
   adminPermissions: {},
   emailAuthMode: "login",
+  startAuthMode: "login",
   pendingMainCode: "",
   soundEnabled: localStorage.getItem(SOUND_KEY) !== "off",
   audioContext: null,
@@ -439,8 +440,6 @@ document.addEventListener("DOMContentLoaded", () => {
   $("groupChatButton").addEventListener("click", openGroupChatModal);
   $("groupChatCloseButton").addEventListener("click", closeGroupChatModal);
   $("historyBackButton").addEventListener("click", () => showScreen("start"));
-  $("historyQuickStartButton").addEventListener("click", startQuickMainFromHistory);
-  $("historyQuickEmailButton").addEventListener("click", openEmailAuthFromHistory);
   $("combinedForm").addEventListener("submit", submitCombinedForm);
   $("combinedBackButton").addEventListener("click", openHistory);
   $("combinedPrintButton").addEventListener("click", () => saveVisibleShareCards("combined"));
@@ -449,6 +448,14 @@ document.addEventListener("DOMContentLoaded", () => {
   $("emailAuthForm").addEventListener("submit", submitEmailAuth);
   document.querySelectorAll("[data-email-mode]").forEach((button) => {
     button.addEventListener("click", () => setEmailAuthMode(button.dataset.emailMode || "login"));
+  });
+  $("startAuthOpenEmailButton").addEventListener("click", openStartAuthEmailForm);
+  $("startAuthDirectButton").addEventListener("click", continueStartWithoutAccount);
+  $("startAuthDirectInlineButton").addEventListener("click", continueStartWithoutAccount);
+  $("startAuthCloseButton").addEventListener("click", closeStartAuthModal);
+  $("startAuthForm").addEventListener("submit", submitStartAuth);
+  document.querySelectorAll("[data-start-auth-mode]").forEach((button) => {
+    button.addEventListener("click", () => setStartAuthMode(button.dataset.startAuthMode || "login"));
   });
   $("lookupForm").addEventListener("submit", lookupResult);
   $("historyList").addEventListener("click", onHistoryClick);
@@ -694,12 +701,12 @@ function renderResumeCard() {
   if (!card) return;
   const draft = getSavedDraft();
   const historyActive = screens.history?.classList.contains("active");
-  if (!historyActive || !draft) {
+  const answered = Object.keys(draft?.answers || {}).length;
+  if (!historyActive || !draft || answered < 1) {
     card.hidden = true;
     return;
   }
   const total = draft.session.questions.length;
-  const answered = Object.keys(draft.answers || {}).length;
   const mode = draft.mode || draft.session.mode || "";
   const label = modeShortLabel(mode, draft.session.mode_label || "测试");
   $("resumeTitle").textContent = `${label} · ${answered}/${total}`;
@@ -821,6 +828,10 @@ function hasUserIdentity() {
 
 function hasStaffIdentity() {
   return Boolean(state.adminAccount);
+}
+
+function hasEmailIdentity() {
+  return Boolean(state.accountToken && state.account);
 }
 
 function hasAnyLoggedInIdentity() {
@@ -1020,8 +1031,8 @@ function updateEmailStatus() {
     $("emailLoginToggleButton").textContent = "账号设置";
     return;
   }
-  title.textContent = "本机已自动记住";
-  text.textContent = "不用登录也能看本机结果。换手机时，用邮箱同步。";
+  title.textContent = "本机历史";
+  text.textContent = "当前显示这台设备保存的记录。邮箱登录可同步账号记录。";
   $("emailLogoutButton").hidden = true;
   $("emailLoginToggleButton").textContent = "邮箱登录/注册";
 }
@@ -1055,30 +1066,114 @@ function toggleEmailPanel() {
   }
 }
 
-function openEmailAuthFromHistory() {
-  const form = $("emailAuthForm");
-  if (form.hidden) toggleEmailPanel();
-  else setEmailAuthMode(state.emailAuthMode || "login");
-  $("emailPanel").scrollIntoView({ block: "center", behavior: "smooth" });
-  window.setTimeout(() => $("emailInput").focus(), 180);
-  trackEvent("history_email_entry", { has_results: state.historyHasResults });
+function setStartAuthMode(mode = "login") {
+  state.startAuthMode = ["login", "register", "reset"].includes(mode) ? mode : "login";
+  document.querySelectorAll("[data-start-auth-mode]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.startAuthMode === state.startAuthMode);
+  });
+  $("startAuthNameField").hidden = state.startAuthMode !== "register";
+  $("startAuthStarCodeField").hidden = state.startAuthMode !== "reset";
+  $("startAuthResetCodeField").hidden = state.startAuthMode !== "reset";
+  $("startAuthPasswordInput").autocomplete = state.startAuthMode === "register" ? "new-password" : "current-password";
+  $("startAuthPasswordInput").placeholder = state.startAuthMode === "reset" ? "新密码，至少6位" : "至少6位";
+  $("startAuthSubmitButton").textContent = {
+    login: "邮箱登录",
+    register: "注册并进入",
+    reset: "找回密码"
+  }[state.startAuthMode];
+  setMessage("startAuthMessage", "");
 }
 
-async function startQuickMainFromHistory() {
-  state.team = null;
-  state.reusableTeamMain = null;
-  $("teamCodeInput").value = "";
-  $("joinTeamInput").checked = false;
-  $("joinTeamInput").disabled = false;
-  $("teamInvite").hidden = true;
-  $("modeGrid").hidden = false;
-  document.querySelectorAll(".mode-card").forEach((item) => {
-    item.classList.toggle("active", item.dataset.mode === "main90");
-  });
-  setMode("main90");
-  trackEvent("history_quick_start", { has_results: state.historyHasResults });
-  showScreen("start");
+function showStartAuthModal() {
+  $("startAuthChoice").hidden = false;
+  $("startAuthForm").hidden = true;
+  $("startAuthModal").hidden = false;
+  setStartAuthMode("login");
+  trackEvent("start_auth_prompt", { mode: state.mode });
+  if (!isCoarsePointer()) window.setTimeout(() => $("startAuthOpenEmailButton").focus(), 40);
+}
+
+function closeStartAuthModal() {
+  $("startAuthModal").hidden = true;
+  setMessage("startAuthMessage", "");
+  trackEvent("start_auth_cancel", { mode: state.mode });
+}
+
+function openStartAuthEmailForm() {
+  $("startAuthChoice").hidden = true;
+  $("startAuthForm").hidden = false;
+  setStartAuthMode(state.startAuthMode || "login");
+  $("startAuthEmailInput").value = $("startAuthEmailInput").value || state.account?.email || $("contactInput").value.trim();
+  $("startAuthNameInput").value = $("startAuthNameInput").value || $("nicknameInput").value.trim() || state.account?.name || "";
+  window.setTimeout(() => $("startAuthEmailInput").focus(), 40);
+  trackEvent("start_auth_email_open", { mode: state.mode });
+}
+
+async function continueStartWithoutAccount() {
+  $("startAuthModal").hidden = true;
+  setMessage("startAuthMessage", "");
+  trackEvent("start_auth_direct", { mode: state.mode });
   await beginTest();
+}
+
+async function submitStartAuth(event) {
+  event.preventDefault();
+  const button = $("startAuthSubmitButton");
+  button.disabled = true;
+  try {
+    const email = $("startAuthEmailInput").value.trim();
+    const password = $("startAuthPasswordInput").value;
+    const base = { email, password, device_token: state.deviceToken };
+    let endpoint = "/api/auth/email/login";
+    let body = base;
+    if (state.startAuthMode === "register") {
+      endpoint = "/api/auth/email/register";
+      body = {
+        ...base,
+        name: $("startAuthNameInput").value.trim() || $("nicknameInput").value.trim()
+      };
+    } else if (state.startAuthMode === "reset") {
+      if (!$("startAuthResetCodeInput").value.trim()) {
+        endpoint = "/api/auth/email/reset/request";
+        body = {
+          email,
+          star_code: $("startAuthStarCodeInput").value.trim()
+        };
+      } else {
+        endpoint = "/api/auth/email/reset/confirm";
+        body = {
+          ...base,
+          reset_code: $("startAuthResetCodeInput").value.trim()
+        };
+      }
+    }
+    const response = await fetch(endpoint, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "操作失败");
+    if (state.startAuthMode === "reset" && !data.account_token) {
+      setMessage("startAuthMessage", "重置码已发到邮箱，填入后再点一次。");
+      $("startAuthResetCodeField").hidden = false;
+      $("startAuthResetCodeInput").focus();
+      return;
+    }
+    const completedMode = state.startAuthMode;
+    saveAccount(data.account, data.account_token);
+    $("startAuthModal").hidden = true;
+    setStartAuthMode("login");
+    setMessage("startAuthMessage", "");
+    trackEvent("start_auth_email_success", { mode: state.mode, auth_mode: completedMode });
+    await beginTest();
+  } catch (err) {
+    setMessage("startAuthMessage", err.message || "操作失败");
+  } finally {
+    button.disabled = false;
+    updateEmailStatus();
+  }
 }
 
 async function submitEmailAuth(event) {
@@ -1224,8 +1319,8 @@ function renderHistory(items) {
     }
     const hasEmailAccount = Boolean(state.accountToken || state.account);
     $("historyList").innerHTML = hasEmailAccount
-      ? `<div class="history-item muted empty-history"><strong>还没有记录</strong><span>先完成一次测试，结果会自动留在这里。</span></div>`
-      : `<div class="history-item muted empty-history"><strong>这里会自动出现你的结果</strong><span>还没有记录。可以先直接测，也可以登录邮箱同步旧记录。</span></div>`;
+      ? `<div class="history-item muted empty-history"><strong>这个邮箱还没有记录</strong><span>完成测试后，账号记录会出现在这里。</span></div>`
+      : `<div class="history-item muted empty-history"><strong>这台设备还没有记录</strong><span>未登录时，只显示本机保存的历史测试。</span></div>`;
     return;
   }
   $("historyList").innerHTML = items.map((item) => `
@@ -1536,7 +1631,7 @@ async function loadTeamInvite(code) {
     $("startLine").textContent = data.team.active
       ? "完成后进入团队总图。"
       : "可继续个人测试。";
-    $("startButton").querySelector("span").textContent = data.team.active ? "开始团队主型90题" : "开始个人主型90题";
+    $("startButton").querySelector("span").textContent = data.team.active ? "开始团队测试" : "开始个人测试";
     if (data.team.active) checkRecentMainForTeam(data.team);
   } catch {
     $("startScreen").classList.remove("team-invite-active");
@@ -1636,8 +1731,9 @@ async function startTest(event) {
     showDraftResumeMarker();
     return;
   }
-  if (shouldPromptRecoveryMarker()) {
-    showRecoveryMarker();
+  await loadAuthStatus();
+  if (shouldPromptStartAuth()) {
+    showStartAuthModal();
     return;
   }
   await beginTest();
@@ -1650,7 +1746,8 @@ function shouldPromptDraftResume() {
   const currentMode = $("modeInput").value || state.mode;
   const draftTeamCode = draft.team?.code || draft.session?.team?.code || "";
   const currentTeamCode = $("joinTeamInput").checked ? $("teamCodeInput").value.trim() : "";
-  return Boolean(draftMode === currentMode && draftTeamCode === currentTeamCode);
+  const answered = Object.keys(draft.answers || {}).length;
+  return Boolean(answered > 0 && draftMode === currentMode && draftTeamCode === currentTeamCode);
 }
 
 function showDraftResumeMarker() {
@@ -1676,6 +1773,13 @@ function shouldPromptRecoveryMarker() {
   if (state.mode === "team_subtype" || state.team?.test_kind === "subtype") return false;
   if (state.team?.code && state.team?.active) return false;
   return false;
+}
+
+function shouldPromptStartAuth() {
+  if (hasEmailIdentity()) return false;
+  if (state.mode === "team_subtype" || state.team?.test_kind === "subtype") return false;
+  if (state.team?.code && state.team?.active) return false;
+  return true;
 }
 
 function showRecoveryMarker() {
@@ -1713,8 +1817,9 @@ async function restartFromRecoveryMarker() {
     mode: draft?.mode || state.mode,
     answered: Object.keys(draft?.answers || {}).length
   });
-  if (shouldPromptRecoveryMarker()) {
-    showRecoveryMarker();
+  await loadAuthStatus();
+  if (shouldPromptStartAuth()) {
+    showStartAuthModal();
     return;
   }
   await beginTest();

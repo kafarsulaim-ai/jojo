@@ -1442,64 +1442,6 @@ select:focus {
   gap: 7px;
 }
 
-.history-quick-panel {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: center;
-  margin: 0 0 12px;
-  padding: 13px;
-  color: var(--ink);
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(231, 255, 252, 0.78)),
-    radial-gradient(circle at 8% 0%, rgba(255, 113, 102, 0.12), transparent 36%);
-  border: 1px solid rgba(24, 198, 183, 0.22);
-  border-radius: var(--radius);
-  box-shadow: var(--joy-shadow);
-}
-
-.history-quick-copy,
-.history-quick-copy span,
-.history-quick-copy strong,
-.history-quick-copy small {
-  display: block;
-}
-
-.history-quick-copy span {
-  color: var(--peach);
-  font-size: 11px;
-  font-weight: 900;
-}
-
-.history-quick-copy strong {
-  margin-top: 3px;
-  color: var(--ink);
-  font-size: 17px;
-  font-weight: 920;
-  line-height: 1.25;
-}
-
-.history-quick-copy small {
-  margin-top: 4px;
-  color: var(--soft-ink);
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.history-quick-actions {
-  display: grid;
-  min-width: 128px;
-  gap: 7px;
-}
-
-.history-quick-actions .primary-action,
-.history-quick-actions .ghost-action {
-  justify-content: center;
-  min-height: 38px;
-  padding: 0 12px;
-  white-space: nowrap;
-}
-
 .email-panel {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -4898,6 +4840,12 @@ select:focus {
   text-align: center;
 }
 
+.start-auth-panel {
+  width: min(380px, 100%);
+  padding: 18px;
+  text-align: left;
+}
+
 .team-created-panel {
   width: min(360px, 100%);
   padding: 18px;
@@ -4958,6 +4906,73 @@ select:focus {
 .marker-panel .marker-actions {
   position: relative;
   z-index: 1;
+}
+
+.start-auth-panel .modal-badge,
+.start-auth-panel .modal-kicker,
+.start-auth-panel h2,
+.start-auth-panel p,
+.start-auth-panel .start-auth-actions,
+.start-auth-panel .start-auth-form,
+.start-auth-panel .modal-text-button {
+  position: relative;
+  z-index: 1;
+}
+
+.start-auth-panel .modal-badge {
+  width: 42px;
+  height: 42px;
+  margin: 0 0 10px;
+}
+
+.start-auth-panel h2 {
+  margin: 3px 0 8px;
+  color: var(--ink);
+  font-size: 23px;
+  line-height: 1.18;
+}
+
+.start-auth-panel p {
+  margin: 0 0 12px;
+  color: var(--soft-ink);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.start-auth-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.start-auth-actions .primary-action,
+.start-auth-actions .ghost-action {
+  justify-content: center;
+  min-height: 44px;
+}
+
+.start-auth-form {
+  margin-top: 4px;
+}
+
+.start-auth-form .ghost-action {
+  grid-column: 1 / -1;
+}
+
+.modal-text-button {
+  display: block;
+  width: 100%;
+  min-height: 36px;
+  margin-top: 8px;
+  color: rgba(51, 91, 95, 0.72);
+  background: transparent;
+  border: 0;
+  font-size: 12px;
+  font-weight: 840;
+}
+
+.modal-text-button:hover {
+  color: var(--mint-deep);
 }
 
 .marker-panel .modal-badge {
@@ -6428,29 +6443,6 @@ select:focus {
   .history-head img {
     width: 72px;
     height: 28px;
-  }
-
-  .history-quick-panel {
-    grid-template-columns: 1fr;
-    gap: 10px;
-    padding: 12px;
-  }
-
-  .history-quick-copy strong {
-    font-size: 16px;
-  }
-
-  .history-quick-actions {
-    grid-template-columns: 1fr 1fr;
-    min-width: 0;
-    width: 100%;
-  }
-
-  .history-quick-actions .primary-action,
-  .history-quick-actions .ghost-action {
-    min-height: 40px;
-    padding: 0 8px;
-    font-size: 12px;
   }
 
   .history-item {

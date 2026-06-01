@@ -8,7 +8,7 @@
     <link rel="icon" href="/jojo-icon.svg" type="image/svg+xml">
     <link rel="icon" href="/jojo-icon.png" type="image/png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <link rel="stylesheet" href="/styles.css?v=20260601-v18-history-entry">
+    <link rel="stylesheet" href="/styles.css?v=20260601-v19-entry-gate">
   </head>
   <body>
     <div class="app-shell">
@@ -137,7 +137,7 @@
               <input id="modeInput" name="mode" type="hidden" value="main90">
               <input id="teamCodeInput" name="team_code" type="hidden" value="">
               <button class="primary-action" id="startButton" type="submit">
-                <span>开始主型90题</span>
+                <span>开始测试</span>
                 <span aria-hidden="true">→</span>
               </button>
             </form>
@@ -283,17 +283,6 @@
                 <h1>历史测试</h1>
               </div>
             </div>
-            <section class="history-quick-panel" aria-label="首次使用入口">
-              <div class="history-quick-copy">
-                <span>第一次来？</span>
-                <strong>不用登录，先直接测。</strong>
-                <small>本机会自动记住结果；换手机时，再用邮箱同步。</small>
-              </div>
-              <div class="history-quick-actions">
-                <button class="primary-action compact" id="historyQuickStartButton" type="button">直接测主型</button>
-                <button class="ghost-action compact" id="historyQuickEmailButton" type="button">邮箱登录/注册</button>
-              </div>
-            </section>
             <div class="resume-card history-resume-card" id="resumeCard" hidden>
               <div class="resume-copy">
                 <span>上次答题</span>
@@ -333,8 +322,8 @@
               <div class="email-profile">
                 <span class="email-avatar" aria-hidden="true"><img src="/jojo-icon.svg" alt=""></span>
                 <div>
-                  <strong id="emailStatusTitle">本机已自动记住</strong>
-                  <span id="emailStatusText">不用登录也能看本机结果。换手机时，用邮箱同步。</span>
+                  <strong id="emailStatusTitle">本机历史</strong>
+                  <span id="emailStatusText">当前显示这台设备保存的记录。</span>
                 </div>
               </div>
               <div class="email-actions">
@@ -474,6 +463,50 @@
       </div>
     </div>
 
+    <div class="modal-backdrop" id="startAuthModal" hidden>
+      <div class="modal-panel start-auth-panel" role="dialog" aria-modal="true" aria-labelledby="startAuthTitle">
+        <span class="modal-badge marker-logo" aria-hidden="true"><img src="/jojo-icon.svg" alt=""></span>
+        <span class="modal-kicker">进入测试</span>
+        <h2 id="startAuthTitle">登录同步，或先直接测</h2>
+        <p id="startAuthBody">不登录也可以测，结果会留在本机。</p>
+        <div class="start-auth-actions" id="startAuthChoice">
+          <button class="primary-action compact" id="startAuthOpenEmailButton" type="button">邮箱登录/注册</button>
+          <button class="ghost-action compact" id="startAuthDirectButton" type="button">直接测</button>
+        </div>
+        <form class="email-auth-form start-auth-form" id="startAuthForm" hidden autocomplete="on">
+          <label>
+            <span>邮箱</span>
+            <input id="startAuthEmailInput" type="email" autocomplete="email" placeholder="you@example.com">
+          </label>
+          <label id="startAuthNameField">
+            <span>名字</span>
+            <input id="startAuthNameInput" autocomplete="name" placeholder="你的昵称">
+          </label>
+          <label>
+            <span>密码</span>
+            <input id="startAuthPasswordInput" type="password" autocomplete="current-password" placeholder="至少6位">
+          </label>
+          <label id="startAuthStarCodeField" hidden>
+            <span>星图编号</span>
+            <input id="startAuthStarCodeInput" maxlength="12" autocomplete="one-time-code" placeholder="例如 M7KQ2AB">
+          </label>
+          <label id="startAuthResetCodeField" hidden>
+            <span>重置码</span>
+            <input id="startAuthResetCodeInput" maxlength="12" inputmode="numeric" autocomplete="one-time-code" placeholder="邮箱里的6位码">
+          </label>
+          <div class="email-mode-row" role="tablist" aria-label="测试前邮箱账号">
+            <button class="active" type="button" data-start-auth-mode="login">登录</button>
+            <button type="button" data-start-auth-mode="register">注册</button>
+            <button type="button" data-start-auth-mode="reset">找回</button>
+          </div>
+          <button class="primary-action compact" id="startAuthSubmitButton" type="submit">邮箱登录</button>
+          <button class="ghost-action compact" id="startAuthDirectInlineButton" type="button">先直接测</button>
+          <p class="muted" id="startAuthMessage"></p>
+        </form>
+        <button class="modal-text-button" id="startAuthCloseButton" type="button">先不测</button>
+      </div>
+    </div>
+
     <div class="modal-backdrop encouragement-backdrop" id="encouragementModal" hidden>
       <div class="modal-panel encouragement-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <div class="modal-ticket-head">
@@ -530,6 +563,6 @@
       </div>
     </div>
 
-    <script src="/app.js?v=20260601-v18-history-entry"></script>
+    <script src="/app.js?v=20260601-v19-entry-gate"></script>
   </body>
 </html>

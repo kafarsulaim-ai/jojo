@@ -152,7 +152,7 @@ const MODE_COPY = {
     line: "先选地图。",
     button: "开始主型90题",
     testBadge: "主型快测",
-    testTitle: "90题 · 每10题一组",
+    testTitle: "按第一反应选",
     testHint: "按最近真实反应选"
   },
   main180: {
@@ -160,7 +160,7 @@ const MODE_COPY = {
     line: "深一点。",
     button: "开始深测180题",
     testBadge: "主型深测",
-    testTitle: "180题 · 深一点",
+    testTitle: "慢一点也没关系",
     testHint: "慢一点也没关系"
   },
   main270: {
@@ -168,7 +168,7 @@ const MODE_COPY = {
     line: "深一点。",
     button: "开始深测180题",
     testBadge: "主型深测",
-    testTitle: "180题 · 深一点",
+    testTitle: "慢一点也没关系",
     testHint: "慢一点也没关系"
   },
   subtype_adult: {
@@ -176,7 +176,7 @@ const MODE_COPY = {
     line: "补一张入口图。",
     button: "开始个人副型",
     testBadge: "个人副型",
-    testTitle: "30题 · 看注意力入口",
+    testTitle: "看注意力入口",
     testHint: "看第一、第二副型排序"
   },
   subtype_child: {
@@ -184,7 +184,7 @@ const MODE_COPY = {
     line: "给孩子看入口。",
     button: "开始少儿副型",
     testBadge: "少儿副型",
-    testTitle: "30题 · 亲子观察版",
+    testTitle: "按近三个月状态选",
     testHint: "按近三个月状态选"
   },
   team_subtype: {
@@ -192,7 +192,7 @@ const MODE_COPY = {
     line: "匿名汇总。",
     button: "开始团队副型",
     testBadge: "团队副型",
-    testTitle: "60题 · 匿名汇总",
+    testTitle: "匿名提交",
     testHint: "只看团队整体，不看个人明细"
   }
 };
@@ -439,6 +439,8 @@ document.addEventListener("DOMContentLoaded", () => {
   $("groupChatButton").addEventListener("click", openGroupChatModal);
   $("groupChatCloseButton").addEventListener("click", closeGroupChatModal);
   $("historyBackButton").addEventListener("click", () => showScreen("start"));
+  $("historyQuickStartButton").addEventListener("click", startQuickMainFromHistory);
+  $("historyQuickEmailButton").addEventListener("click", openEmailAuthFromHistory);
   $("combinedForm").addEventListener("submit", submitCombinedForm);
   $("combinedBackButton").addEventListener("click", openHistory);
   $("combinedPrintButton").addEventListener("click", () => saveVisibleShareCards("combined"));
@@ -1019,9 +1021,9 @@ function updateEmailStatus() {
     return;
   }
   title.textContent = "本机已自动记住";
-  text.textContent = "换设备时可用邮箱找回。";
+  text.textContent = "不用登录也能看本机结果。换手机时，用邮箱同步。";
   $("emailLogoutButton").hidden = true;
-  $("emailLoginToggleButton").textContent = "邮箱登录";
+  $("emailLoginToggleButton").textContent = "邮箱登录/注册";
 }
 
 function setEmailAuthMode(mode = "login") {
@@ -1051,6 +1053,32 @@ function toggleEmailPanel() {
     $("emailNameInput").value = $("emailNameInput").value || $("nicknameInput").value.trim() || state.account?.name || "";
     $("emailInput").focus();
   }
+}
+
+function openEmailAuthFromHistory() {
+  const form = $("emailAuthForm");
+  if (form.hidden) toggleEmailPanel();
+  else setEmailAuthMode(state.emailAuthMode || "login");
+  $("emailPanel").scrollIntoView({ block: "center", behavior: "smooth" });
+  window.setTimeout(() => $("emailInput").focus(), 180);
+  trackEvent("history_email_entry", { has_results: state.historyHasResults });
+}
+
+async function startQuickMainFromHistory() {
+  state.team = null;
+  state.reusableTeamMain = null;
+  $("teamCodeInput").value = "";
+  $("joinTeamInput").checked = false;
+  $("joinTeamInput").disabled = false;
+  $("teamInvite").hidden = true;
+  $("modeGrid").hidden = false;
+  document.querySelectorAll(".mode-card").forEach((item) => {
+    item.classList.toggle("active", item.dataset.mode === "main90");
+  });
+  setMode("main90");
+  trackEvent("history_quick_start", { has_results: state.historyHasResults });
+  showScreen("start");
+  await beginTest();
 }
 
 async function submitEmailAuth(event) {
@@ -1190,13 +1218,14 @@ function bufferToBase64Url(buffer) {
 function renderHistory(items) {
   if (!items.length) {
     const draft = getSavedDraft();
-    if (!hasAnyLoggedInIdentity()) {
-      $("historyList").innerHTML = draft
-        ? ""
-        : `<div class="history-item muted"><strong>还没有记录</strong><span>先完成一次测试。</span></div>`;
+    if (draft) {
+      $("historyList").innerHTML = "";
       return;
     }
-    $("historyList").innerHTML = `<div class="history-item muted"><strong>还没有记录</strong><span>先完成一次测试。</span></div>`;
+    const hasEmailAccount = Boolean(state.accountToken || state.account);
+    $("historyList").innerHTML = hasEmailAccount
+      ? `<div class="history-item muted empty-history"><strong>还没有记录</strong><span>先完成一次测试，结果会自动留在这里。</span></div>`
+      : `<div class="history-item muted empty-history"><strong>这里会自动出现你的结果</strong><span>还没有记录。可以先直接测，也可以登录邮箱同步旧记录。</span></div>`;
     return;
   }
   $("historyList").innerHTML = items.map((item) => `
@@ -1783,11 +1812,11 @@ function renderQuestion() {
   const modeCopy = MODE_COPY[state.mode] || MODE_COPY.main90;
   const isTeamMain = Boolean(state.team?.code && state.team?.test_kind !== "subtype");
   const modeBadge = isTeamMain ? "团队主型" : modeCopy.testBadge;
-  const modeTitle = isTeamMain ? "90题 · 计入团队总图" : modeCopy.testTitle;
+  const modeTitle = isTeamMain ? "计入团队总图" : modeCopy.testTitle;
   const modeHint = isTeamMain ? "完成后自动汇总" : modeCopy.testHint;
 
   $("testModeBadge").textContent = modeBadge || "jojo测试";
-  $("testModeTitle").textContent = modeTitle || `${total}题 · 每10题一组`;
+  $("testModeTitle").textContent = modeTitle || "按第一反应选";
   $("testModeHint").textContent = modeHint || "按最近真实反应选";
   $("questionCount").textContent = `本组 ${inGroup}/${groupSize}`;
   $("answeredCount").textContent = `已完成 ${percent}%`;

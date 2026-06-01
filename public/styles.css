@@ -1442,6 +1442,64 @@ select:focus {
   gap: 7px;
 }
 
+.history-quick-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  margin: 0 0 12px;
+  padding: 13px;
+  color: var(--ink);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(231, 255, 252, 0.78)),
+    radial-gradient(circle at 8% 0%, rgba(255, 113, 102, 0.12), transparent 36%);
+  border: 1px solid rgba(24, 198, 183, 0.22);
+  border-radius: var(--radius);
+  box-shadow: var(--joy-shadow);
+}
+
+.history-quick-copy,
+.history-quick-copy span,
+.history-quick-copy strong,
+.history-quick-copy small {
+  display: block;
+}
+
+.history-quick-copy span {
+  color: var(--peach);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.history-quick-copy strong {
+  margin-top: 3px;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 920;
+  line-height: 1.25;
+}
+
+.history-quick-copy small {
+  margin-top: 4px;
+  color: var(--soft-ink);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.history-quick-actions {
+  display: grid;
+  min-width: 128px;
+  gap: 7px;
+}
+
+.history-quick-actions .primary-action,
+.history-quick-actions .ghost-action {
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
 .email-panel {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -1591,6 +1649,10 @@ select:focus {
   background: rgba(255, 255, 255, 0.58);
   border-style: dashed;
   box-shadow: none;
+}
+
+.history-item.empty-history {
+  padding: 14px;
 }
 
 .history-item strong {
@@ -6366,6 +6428,29 @@ select:focus {
   .history-head img {
     width: 72px;
     height: 28px;
+  }
+
+  .history-quick-panel {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .history-quick-copy strong {
+    font-size: 16px;
+  }
+
+  .history-quick-actions {
+    grid-template-columns: 1fr 1fr;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .history-quick-actions .primary-action,
+  .history-quick-actions .ghost-action {
+    min-height: 40px;
+    padding: 0 8px;
+    font-size: 12px;
   }
 
   .history-item {

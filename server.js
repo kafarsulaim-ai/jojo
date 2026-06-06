@@ -913,11 +913,31 @@ function makeVerificationCode() {
   return `M${body}`;
 }
 
+const PRIMARY_REVIEW_FLAGS = new Set([
+  "straight_line_risk",
+  "uncertainty_risk",
+  "over_agree_risk",
+  "soft_agree_risk",
+  "over_deny_risk",
+  "low_variance_risk",
+  "close_top_three_risk",
+  "virtue_bias_risk",
+  "competence_persona_risk",
+  "prosocial_persona_risk"
+]);
+
+function shouldReviewPrimary(qualityFlags = []) {
+  const flags = Array.isArray(qualityFlags) ? qualityFlags : [];
+  const consistencyFlags = flags.filter((flag) => String(flag || "").startsWith("reverse_consistency_risk") || String(flag || "").startsWith("scenario_mismatch_risk"));
+  return flags.some((flag) => PRIMARY_REVIEW_FLAGS.has(flag)) || consistencyFlags.length >= 2;
+}
+
 function buildMainReport(top, low, scores, qualityFlags) {
   const primary = top[0]?.element || 9;
   const secondary = top[1]?.element || null;
   const third = top[2]?.element || null;
   const wing = deriveWing(primary, scores);
+  const needsReview = shouldReviewPrimary(qualityFlags);
   const triads = Object.entries(TRIADS).map(([key, triad]) => {
     const strongest = triad.elements
       .map((element) => scores[element])
@@ -941,15 +961,25 @@ function buildMainReport(top, low, scores, qualityFlags) {
   const sceneText = `关系：${RELATION_STYLE[primary]} 职场：${WORK_STYLE[primary]} 压力：${PRESSURE_STYLE[primary]}`;
   return {
     version: "1.3",
-    title: `${primary}号 · ${wingText} · ${topText}`,
-    focus: `主型先看 ${primary}号，侧翼先看 ${wingText}。本次前三元素为 ${topText}，更适合按“主型 + 侧翼 + 证据 + 场景”来读。`,
+    confidence_label: needsReview ? "需复核" : "可参考",
+    title: needsReview ? `前三候选 · ${topText}` : `${primary}号 · ${wingText} · ${topText}`,
+    focus: needsReview
+      ? `本次先看前三候选 ${topText}，不要急着定成单一主型。建议结合真实场景和老师访谈复核。`
+      : `主型先看 ${primary}号，侧翼先看 ${wingText}。本次前三元素为 ${topText}，更适合按“主型 + 侧翼 + 证据 + 场景”来读。`,
     summary_cards: [
-      { label: "主型", value: `${primary}号`, text: ELEMENT_SUMMARY[primary] },
+      needsReview
+        ? { label: "主型候选", value: topText, text: "本次分数或作答质量提示需要复核，先看前三候选更稳。" }
+        : { label: "主型", value: `${primary}号`, text: ELEMENT_SUMMARY[primary] },
       { label: "侧翼", value: wingText, text: wing?.text || "侧翼用于解释主型在日常中的偏好方向。" },
-      { label: "稳定性", value: qualityFlags.length ? "需复核" : "可参考", text: qualityFlags.length ? "存在作答质量提示，建议老师再看访谈。" : "当前结果可先作为探索地图。" }
+      { label: "稳定性", value: needsReview ? "需复核" : "可参考", text: needsReview ? "存在作答质量提示，建议老师再看访谈。" : "当前结果可先作为探索地图。" }
     ],
     sections: [
-      { label: "主型画像", text: `${USER_ANALYSIS[primary]?.strength || ELEMENT_SUMMARY[primary]} 这次更像是 ${primary}号 的主调，不急着定死，先当作观察入口。` },
+      {
+        label: needsReview ? "候选画像" : "主型画像",
+        text: needsReview
+          ? `${topText} 是本次最值得优先复核的范围。第一名暂时是 ${primary}号，但需要放进真实场景里再确认。`
+          : `${USER_ANALYSIS[primary]?.strength || ELEMENT_SUMMARY[primary]} 这次更像是 ${primary}号 的主调，不急着定死，先当作观察入口。`
+      },
       { label: "侧翼特征", text: wing?.text || "侧翼用于描述主型在日常中更常被调用的辅助方向。" },
       { label: "前三证据", text: `${topText} 是本次最值得优先复核的三项，适合和真实场景一起看。` },
       { label: "关系与职场", text: sceneText },
@@ -957,7 +987,12 @@ function buildMainReport(top, low, scores, qualityFlags) {
       { label: "下一步探索", text: `${USER_ANALYSIS[primary]?.next || "建议结合真实场景继续观察。"} 另外，把最近半年最稳定的三类场景记下来，会更好校准。` }
     ],
     user_analysis: [
-      { label: "你最像什么", text: `${primary}号是当前主线，侧翼 ${wingText} 让它有了更具体的生活味道。` },
+      {
+        label: "你最像什么",
+        text: needsReview
+          ? `先看 ${topText} 这组候选。当前第一名是 ${primary}号，但本次更适合复核后再定。`
+          : `${primary}号是当前主线，侧翼 ${wingText} 让它有了更具体的生活味道。`
+      },
       { label: "你最有力的地方", text: USER_ANALYSIS[primary]?.strength || ELEMENT_SUMMARY[primary] },
       { label: "容易卡住", text: USER_ANALYSIS[primary]?.watch || "当状态紧张时，可能会更依赖熟悉的应对方式。" },
       { label: "场景提醒", text: sceneText }
@@ -966,7 +1001,7 @@ function buildMainReport(top, low, scores, qualityFlags) {
     work_style: WORK_STYLE[primary],
     low_focus: lowText ? `低位元素为 ${lowText}，更适合当作老师访谈中的补充线索，不直接等同于能力不足。` : "",
     teacher_prompts: teacherPrompts.slice(0, 3),
-    caution: qualityFlags.length
+    caution: needsReview
       ? "本次存在作答质量提示，适合先看方向，再结合访谈和真实生活复核。"
       : "本次结果是探索地图，不是最终标签。"
   };
@@ -1097,7 +1132,7 @@ function qualityFlags(rawValues, byElement, scores, top) {
   for (const item of Object.values(byElement)) {
     for (const raw of item.raw_values) reverseRaw.push(raw);
   }
-  if (top.length >= 3 && top[0].type_score - top[2].type_score < 0.25) flags.push("close_top_three_risk");
+  if (top.length >= 3 && top[0].type_score - top[2].type_score < 0.35) flags.push("close_top_three_risk");
   return [...new Set(flags)];
 }
 

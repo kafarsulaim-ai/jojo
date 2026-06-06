@@ -3291,6 +3291,28 @@ function getMainPrimary(main) {
   return value >= 1 && value <= 9 ? value : null;
 }
 
+function mainNeedsReview(main) {
+  const flags = Array.isArray(main?.quality_flags) ? main.quality_flags : [];
+  const reviewFlags = new Set([
+    "straight_line_risk",
+    "uncertainty_risk",
+    "over_agree_risk",
+    "soft_agree_risk",
+    "over_deny_risk",
+    "low_variance_risk",
+    "close_top_three_risk",
+    "virtue_bias_risk",
+    "competence_persona_risk",
+    "prosocial_persona_risk"
+  ]);
+  const consistencyCount = flags.filter((flag) => String(flag || "").startsWith("reverse_consistency_risk") || String(flag || "").startsWith("scenario_mismatch_risk")).length;
+  return flags.some((flag) => reviewFlags.has(flag)) || consistencyCount >= 2;
+}
+
+function mainCandidateText(main, separator = "/") {
+  return (main?.top_types || []).slice(0, 3).map((item) => item.element).join(separator) || "-";
+}
+
 function getWingNumber(main) {
   const primary = getMainPrimary(main);
   if (!primary) return null;
@@ -3398,7 +3420,7 @@ function bundleHasRecentMerge(deck, result) {
 }
 
 function topTypesText(main, separator = "/") {
-  return (main?.top_types || []).slice(0, 3).map((item) => item.element).join(separator) || "-";
+  return mainCandidateText(main, separator);
 }
 
 function subtypePairText(subtype, withPercent = false) {
@@ -3413,8 +3435,8 @@ function identityCardKicker(deck) {
   const kind = bundleCurrentKind(deck);
   if (kind === "team_main") return "我的团队主型提交";
   if (kind === "child_subtype") return "亲子观察卡";
-  if (deck.main && deck.subtype) return "我的九型身份卡";
-  if (deck.main) return "我的主型身份卡";
+  if (deck.main && deck.subtype) return mainNeedsReview(deck.main) ? "我的九型候选卡" : "我的九型身份卡";
+  if (deck.main) return mainNeedsReview(deck.main) ? "我的主型候选卡" : "我的主型身份卡";
   return "我的副型身份卡";
 }
 
@@ -3422,10 +3444,11 @@ function identityCardTitle(deck) {
   const main = deck.main;
   const subtype = deck.subtype;
   if (main && subtype) {
+    if (mainNeedsReview(main)) return `先看 ${mainCandidateText(main, "/")} · ${subtypeTopName(subtype, true)}优先`;
     return `我是 ${mainTypeCode(main)} · ${subtypeTopName(subtype, true)}优先的${mainPersonaName(main)}`;
   }
   if (main?.team?.code) return `我以 ${mainTypeCode(main)} 计入团队总图`;
-  if (main) return `我是 ${mainTypeCode(main)} 的${mainPersonaName(main)}`;
+  if (main) return mainNeedsReview(main) ? `先看前三候选 ${mainCandidateText(main, " / ")}` : `我是 ${mainTypeCode(main)} 的${mainPersonaName(main)}`;
   if (isChildSubtypeResult(subtype)) return `${subtypeTopName(subtype)}优先的亲子观察`;
   if (subtype) return `${subtypeTopName(subtype)}优先的${subtypePersonaName(subtype)}`;
   return "结果待确认";
@@ -3439,9 +3462,13 @@ function identityCardLine(deck, result) {
   }
   if (main && subtype) {
     const prefix = bundleHasRecentMerge(deck, result) ? "已结合你近10天内的另一份测试。" : "";
+    if (mainNeedsReview(main)) {
+      return `${prefix}本次主型先看候选范围，不急着定成单一号码。${subtypeIdentitySentence(subtype)}`;
+    }
     return `${prefix}${mainIdentitySentence(main)} ${subtypeIdentitySentence(subtype)}`;
   }
   if (main) {
+    if (mainNeedsReview(main)) return "本次分数或作答质量提示需要复核，先把前三当候选，不急着定型。";
     return `${mainIdentitySentence(main)} 这张卡先呈现你的主型和侧翼。`;
   }
   if (isChildSubtypeResult(subtype)) {
@@ -3455,8 +3482,13 @@ function identityCardChips(deck, result) {
   const subtype = deck.subtype;
   const chips = [];
   if (main) {
-    chips.push(`主型 ${mainTypeCode(main)}`);
-    chips.push(`前三 ${topTypesText(main)}`);
+    if (mainNeedsReview(main)) {
+      chips.push(`候选 ${mainCandidateText(main)}`);
+      chips.push(`第一 ${getMainPrimary(main) || "-"}号`);
+    } else {
+      chips.push(`主型 ${mainTypeCode(main)}`);
+      chips.push(`前三 ${topTypesText(main)}`);
+    }
     if (main.team?.code) {
       chips.push("已入团队");
       if (main?.quality_flags?.length) chips.push("建议复核");
@@ -3478,8 +3510,8 @@ function identityCardChips(deck, result) {
 
 function identityCardFooter(deck, result) {
   if (deck.main?.team?.code) return `团队提交 · 前三 ${topTypesText(deck.main, " / ")}`;
-  if (deck.main && deck.subtype) return `主型 ${topTypesText(deck.main, " / ")} · 副型 ${subtypePairText(deck.subtype, true)}`;
-  if (deck.main) return `主位 ${topTypesText(deck.main, " / ")} · ${resultConfidenceLabel(deck.main)}`;
+  if (deck.main && deck.subtype) return `${mainNeedsReview(deck.main) ? "主型候选" : "主型"} ${topTypesText(deck.main, " / ")} · 副型 ${subtypePairText(deck.subtype, true)}`;
+  if (deck.main) return `${mainNeedsReview(deck.main) ? "候选" : "主位"} ${topTypesText(deck.main, " / ")} · ${resultConfidenceLabel(deck.main)}`;
   return `副型 ${subtypePairText(deck.subtype, true)}`;
 }
 
@@ -3512,6 +3544,7 @@ function resultOverviewTitle(bundle) {
     const typeName = primary ? TYPE_NAMES[primary] || `${primary}号` : "主型";
     const subtypeTop = getSubtypeTop(subtype);
     const subtypeText = subtypeTop ? `${SUBTYPE_SHORT_NAMES[subtypeTop.key] || SUBTYPE_NAMES[subtypeTop.key] || subtypeTop.label}优先` : "";
+    if (mainNeedsReview(main)) return subtypeText ? `候选 ${mainCandidateText(main, "/")} · ${subtypeText}` : `前三候选 ${mainCandidateText(main, " / ")}`;
     return subtypeText ? `${mainTypeCode(main)} · ${subtypeText}` : `${mainTypeCode(main)} · ${typeName}`;
   }
   const top = getSubtypeTop(subtype);
@@ -3532,9 +3565,11 @@ function resultOverviewLine(bundle) {
   if (main && isPersonalSubtypeResult(subtype)) {
     const first = getSubtypeTop(subtype);
     const second = getSubtypeSecond(subtype);
+    if (mainNeedsReview(main)) return `主型先看 ${mainCandidateText(main, " / ")} 这组候选，副型前两项为 ${SUBTYPE_NAMES[first?.key] || first?.label || "待确认"}${second ? ` / ${SUBTYPE_NAMES[second.key] || second.label}` : ""}。`;
     return `主型看长期动机，副型看注意力入口。本次副型前两项为 ${SUBTYPE_NAMES[first?.key] || first?.label || "待确认"}${second ? ` / ${SUBTYPE_NAMES[second.key] || second.label}` : ""}。`;
   }
   if (main) {
+    if (mainNeedsReview(main)) return `本次先看 ${mainCandidateText(main, " / ")} 这组候选，结合真实场景再定主型会更稳。`;
     const line = TYPE_RESULT_LINES[primary] || "本次先呈现主型分布。";
     return `${line} 本次先呈现主型与侧翼。`;
   }
@@ -3552,8 +3587,13 @@ function resultOverviewChips(bundle) {
   const topSubtype = getSubtypeTop(subtype);
   const chips = [];
   if (primary) {
-    chips.push(`主型 ${mainTypeCode(main)}`);
-    chips.push(`前三 ${(main.top_types || []).slice(0, 3).map((item) => item.element).join("/") || "-"}`);
+    if (mainNeedsReview(main)) {
+      chips.push(`候选 ${mainCandidateText(main)}`);
+      chips.push(`第一 ${primary}号`);
+    } else {
+      chips.push(`主型 ${mainTypeCode(main)}`);
+      chips.push(`前三 ${(main.top_types || []).slice(0, 3).map((item) => item.element).join("/") || "-"}`);
+    }
   } else {
     chips.push("主型可补");
   }
@@ -3569,16 +3609,16 @@ function resultOverviewChips(bundle) {
 function briefAnalysisTitle(bundle, result = null) {
   if (bundle.main?.team?.code) return "团队主型样本";
   if (isChildSubtypeResult(bundle.subtype || result)) return `${subtypeTopName(bundle.subtype || result)}亲子观察`;
-  if (bundle.main && bundle.subtype) return `${mainTypeCode(bundle.main)}主副型特征`;
-  if (bundle.main) return `${mainTypeCode(bundle.main)}核心特征`;
+  if (bundle.main && bundle.subtype) return mainNeedsReview(bundle.main) ? `候选 ${mainCandidateText(bundle.main, "/")} 主副型` : `${mainTypeCode(bundle.main)}主副型特征`;
+  if (bundle.main) return mainNeedsReview(bundle.main) ? `前三候选 ${mainCandidateText(bundle.main, "/")}` : `${mainTypeCode(bundle.main)}核心特征`;
   return `${subtypeTopName(bundle.subtype || result)}副型特征`;
 }
 
 function briefAnalysisLine(bundle, result = null) {
   if (bundle.main?.team?.code) return "团队看分布，不给个人打分。";
   if (isChildSubtypeResult(bundle.subtype || result)) return "先看入口，再看家庭里的靠近方式。";
-  if (bundle.main && bundle.subtype) return "主型看动力，副型看这个动力的入口。";
-  if (bundle.main) return "抓核心动力，也看优势、压力和一句话翻译。";
+  if (bundle.main && bundle.subtype) return mainNeedsReview(bundle.main) ? "主型先看候选范围，副型看注意力入口。" : "主型看动力，副型看这个动力的入口。";
+  if (bundle.main) return mainNeedsReview(bundle.main) ? "先看前三候选，再用真实场景校准。" : "抓核心动力，也看优势、压力和一句话翻译。";
   return "看第一、第二入口如何影响日常表现。";
 }
 
@@ -3610,6 +3650,7 @@ function briefAnalysisHtml(bundle, translation, usage, result) {
       return teamMainSubmissionAnalysisHtml(main, result);
     }
     const primary = getMainPrimary(main);
+    const needsReview = mainNeedsReview(main);
     const analysis = TYPE_ANALYSIS[primary] || {
       focus: mainIdentitySentence(main),
       motive: "核心动力待复核",
@@ -3623,20 +3664,20 @@ function briefAnalysisHtml(bundle, translation, usage, result) {
     const fourthText = hasSubtype
       ? `${subtypeTopName(subtype)}优先，会让这个主型更常从「${SUBTYPE_NAMES[getSubtypeTop(subtype)?.key] || subtypeTopName(subtype)}」入口表现出来。`
       : translation.friend;
-    const typeTitle = primary ? `${primary}号 · ${TYPE_NAMES[primary] || "主型"}` : "核心动力";
+    const typeTitle = needsReview ? `前三候选 ${mainCandidateText(main, " / ")}` : (primary ? `${primary}号 · ${TYPE_NAMES[primary] || "主型"}` : "核心动力");
     const usageText = `朋友翻译：${fourthText} 靠近：${usage.near}；避雷：${usage.avoid}；补能：${usage.charge}。`;
     return analysisOneBoxHtml({
-      eyebrow: "核心特征",
+      eyebrow: needsReview ? "候选范围" : "核心特征",
       title: typeTitle,
-      lead: analysis.focus,
-      tags: [analysis.motive, shortFeatureTag(analysis.strength), resultConfidenceLabel(main)],
+      lead: needsReview ? `本次先看 ${mainCandidateText(main, " / ")} 这组候选。第一名暂时是 ${primary || "-"}号，但需要结合真实场景再确认。` : analysis.focus,
+      tags: needsReview ? [`第一 ${primary || "-"}号`, "前三候选", resultConfidenceLabel(main)] : [analysis.motive, shortFeatureTag(analysis.strength), resultConfidenceLabel(main)],
       items: [
-        ["核心想要", `${analysis.motive}。这是你反复会回到的内在驱动力。`],
+        [needsReview ? "先看哪里" : "核心想要", needsReview ? `${mainCandidateText(main, " / ")} 都值得复核；不要只盯第一名。` : `${analysis.motive}。这是你反复会回到的内在驱动力。`],
         ["高频优势", `${analysis.strength}。用在合适场景，会变成很稳定的个人力量。`],
         ["压力姿势", `${analysis.pressure}。压力大时会更明显，先看见它，再调整节奏。`],
         ["相处方式", usageText]
       ],
-      teacher: "想看得更深，把编号和真实场景一起给老师。"
+      teacher: needsReview ? "这次更适合带编号找老师复核，不急着给自己定一个号。" : "想看得更深，把编号和真实场景一起给老师。"
     });
   }
   const subtype = bundle.subtype;
@@ -3835,9 +3876,11 @@ function resultDistributionSummaryHtml(main) {
   const wing = getWingNumber(main);
   const top = (main?.top_types || []).slice(0, 3).map((item) => item.element).join(" / ") || "-";
   const status = main?.quality_flags?.length ? "老师复核" : "可参考";
+  const primaryLabel = mainNeedsReview(main) ? "候选" : "主型";
+  const primaryValue = mainNeedsReview(main) ? top : (primary ? `${primary}号` : "-");
   return `
     <div class="result-distribution-summary">
-      <span><small>主型</small><b>${escapeHtml(primary ? `${primary}号` : "-")}</b></span>
+      <span><small>${escapeHtml(primaryLabel)}</small><b>${escapeHtml(primaryValue)}</b></span>
       <span><small>侧翼</small><b>${escapeHtml(wing ? `w${wing}` : "待看")}</b></span>
       <span><small>前三</small><b>${escapeHtml(top)}</b></span>
       <span><small>状态</small><b>${escapeHtml(status)}</b></span>

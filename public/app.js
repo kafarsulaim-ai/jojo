@@ -299,6 +299,11 @@ const ANSWER_OPTIONS = [
   { value: 3, label: "不确定" },
   { value: 5, label: "是" }
 ];
+const REFINEMENT_ANSWER_OPTIONS = [
+  { value: 1, label: "更像左边" },
+  { value: 3, label: "都像 / 拿不准" },
+  { value: 5, label: "更像右边" }
+];
 
 const GROUP_LINES = [
   "轻轻开始，先别把自己审太严",
@@ -372,6 +377,13 @@ const screens = {
 
 const state = {
   session: null,
+  sourceSession: null,
+  sourceAnswers: null,
+  sourceStartedAt: null,
+  sourceUser: null,
+  refinementPlan: null,
+  refinementPreview: null,
+  isRefinement: false,
   currentIndex: 0,
   answers: {},
   shownMilestones: new Set(),
@@ -472,6 +484,8 @@ document.addEventListener("DOMContentLoaded", () => {
   $("teamStartTestButton").addEventListener("click", startCreatedTeamTest);
   $("teamReuseConfirmButton").addEventListener("click", confirmReuseTeamMain);
   $("teamReuseRetestButton").addEventListener("click", retestTeamMain);
+  $("refinementStartButton").addEventListener("click", startRefinementQuestions);
+  $("refinementSkipButton").addEventListener("click", submitWithoutRefinement);
   $("shareImageCloseButton").addEventListener("click", closeShareImageModal);
   $("soundToggleButton").addEventListener("click", toggleSound);
   byId("copyCodeButton")?.addEventListener("click", copyVerificationCode);
@@ -655,6 +669,13 @@ function currentDraftPayload() {
   return {
     version: 1,
     session: state.session,
+    sourceSession: state.sourceSession,
+    sourceAnswers: state.sourceAnswers,
+    sourceStartedAt: state.sourceStartedAt,
+    sourceUser: state.sourceUser,
+    refinementPlan: state.refinementPlan,
+    refinementPreview: state.refinementPreview,
+    isRefinement: state.isRefinement,
     mode: state.mode,
     team: state.team,
     currentIndex: state.currentIndex,
@@ -708,7 +729,9 @@ function renderResumeCard() {
   }
   const total = draft.session.questions.length;
   const mode = draft.mode || draft.session.mode || "";
-  const label = modeShortLabel(mode, draft.session.mode_label || "测试");
+  const label = draft.isRefinement || draft.session?.kind === "main_refinement"
+    ? "候选补题"
+    : modeShortLabel(mode, draft.session.mode_label || "测试");
   $("resumeTitle").textContent = `${label} · ${answered}/${total}`;
   $("resumeMeta").textContent = `${relativeTime(draft.updatedAt)}保存 · 第 ${Math.min(total, (draft.currentIndex || 0) + 1)} 题`;
   card.hidden = false;
@@ -721,6 +744,13 @@ function resumeDraft() {
     return;
   }
   state.session = draft.session;
+  state.sourceSession = draft.sourceSession || null;
+  state.sourceAnswers = draft.sourceAnswers || null;
+  state.sourceStartedAt = draft.sourceStartedAt || null;
+  state.sourceUser = draft.sourceUser || null;
+  state.refinementPlan = draft.refinementPlan || null;
+  state.refinementPreview = draft.refinementPreview || null;
+  state.isRefinement = Boolean(draft.isRefinement || draft.session?.kind === "main_refinement");
   state.mode = draft.mode || draft.session.mode || "main90";
   state.team = draft.team || draft.session.team || null;
   state.currentIndex = Math.max(0, Math.min(Number(draft.currentIndex || 0), draft.session.questions.length - 1));
@@ -804,6 +834,10 @@ function rememberResult(result) {
 
 function isSubtypeMode(mode) {
   return Boolean(mode?.startsWith("subtype") || mode === "team_subtype");
+}
+
+function isMainMode(mode) {
+  return ["main90", "main180", "main270"].includes(mode || "");
 }
 
 function isSubtypeResult(result) {
@@ -1747,7 +1781,8 @@ function shouldPromptDraftResume() {
   const draftTeamCode = draft.team?.code || draft.session?.team?.code || "";
   const currentTeamCode = $("joinTeamInput").checked ? $("teamCodeInput").value.trim() : "";
   const answered = Object.keys(draft.answers || {}).length;
-  return Boolean(answered > 0 && draftMode === currentMode && draftTeamCode === currentTeamCode);
+  const isRefinementDraft = Boolean(draft.isRefinement || draft.session?.kind === "main_refinement");
+  return Boolean(answered > 0 && (draftMode === currentMode || isRefinementDraft) && draftTeamCode === currentTeamCode);
 }
 
 function showDraftResumeMarker() {
@@ -1755,7 +1790,7 @@ function showDraftResumeMarker() {
   const total = draft?.session?.questions?.length || 0;
   const answered = Object.keys(draft?.answers || {}).length;
   $("recoveryKicker").hidden = false;
-  $("recoveryKicker").textContent = "上次答题";
+  $("recoveryKicker").textContent = draft?.isRefinement || draft?.session?.kind === "main_refinement" ? "上次补题" : "上次答题";
   $("recoveryTitle").textContent = "继续上次";
   $("recoveryBody").hidden = false;
   $("recoveryBody").textContent = `${answered}/${total} 已保存`;
@@ -1839,6 +1874,13 @@ async function beginTest() {
     state.session = await response.json();
     state.mode = state.session.mode || $("modeInput").value || "main90";
     state.team = state.session.team || null;
+    state.sourceSession = null;
+    state.sourceAnswers = null;
+    state.sourceStartedAt = null;
+    state.sourceUser = null;
+    state.refinementPlan = null;
+    state.refinementPreview = null;
+    state.isRefinement = false;
     state.currentIndex = 0;
     state.answers = {};
     state.shownMilestones = new Set();
@@ -1908,31 +1950,41 @@ function renderQuestion() {
   const question = state.session.questions[state.currentIndex];
   const answered = Object.keys(state.answers).length;
   const percent = Math.round((answered / total) * 100);
-  const group = Math.floor(state.currentIndex / 10) + 1;
-  const groupTotal = Math.ceil(total / 10);
-  const groupStart = (group - 1) * 10;
+  const groupSpan = state.isRefinement ? Math.max(1, Math.ceil(total / 2)) : 10;
+  const group = Math.floor(state.currentIndex / groupSpan) + 1;
+  const groupTotal = Math.ceil(total / groupSpan);
+  const groupStart = (group - 1) * groupSpan;
   const inGroup = state.currentIndex - groupStart + 1;
-  const groupSize = Math.min(10, total - groupStart);
+  const groupSize = Math.min(groupSpan, total - groupStart);
   const groupPercent = Math.round((inGroup / groupSize) * 100);
   const modeCopy = MODE_COPY[state.mode] || MODE_COPY.main90;
   const isTeamMain = Boolean(state.team?.code && state.team?.test_kind !== "subtype");
-  const modeBadge = isTeamMain ? "团队主型" : modeCopy.testBadge;
-  const modeTitle = isTeamMain ? "计入团队总图" : modeCopy.testTitle;
-  const modeHint = isTeamMain ? "完成后自动汇总" : modeCopy.testHint;
+  const modeBadge = state.isRefinement ? "候选补题" : (isTeamMain ? "团队主型" : modeCopy.testBadge);
+  const modeTitle = state.isRefinement ? "把前三拉清楚一点" : (isTeamMain ? "计入团队总图" : modeCopy.testTitle);
+  const modeHint = state.isRefinement ? `${total}题小校准` : (isTeamMain ? "完成后自动汇总" : modeCopy.testHint);
 
   $("testModeBadge").textContent = modeBadge || "jojo测试";
   $("testModeTitle").textContent = modeTitle || "按第一反应选";
   $("testModeHint").textContent = modeHint || "按最近真实反应选";
-  $("questionCount").textContent = `本组 ${inGroup}/${groupSize}`;
+  $("questionCount").textContent = state.isRefinement ? `补题 ${state.currentIndex + 1}/${total}` : `本组 ${inGroup}/${groupSize}`;
   $("answeredCount").textContent = `已完成 ${percent}%`;
   $("topProgressText").textContent = "";
   const overallPercent = Math.round((answered / total) * 100);
   $("mainProgressBar").style.width = `${groupPercent}%`;
   $("topProgressBar").style.width = `${overallPercent}%`;
-  $("questionText").textContent = question.text;
-  $("questionKicker").textContent = state.currentIndex === total - 1 ? "最后一题" : "选更像最近真实反应的一项";
-  $("questionGroupLine").textContent = GROUP_LINES[(group - 1) % GROUP_LINES.length];
+  $("questionText").textContent = state.isRefinement
+    ? refinementQuestionTitle(question)
+    : question.text;
+  $("questionKicker").textContent = state.isRefinement
+    ? "不用想应该是谁，只选更像你的一边"
+    : (state.currentIndex === total - 1 ? "最后一题" : "选更像最近真实反应的一项");
+  $("questionGroupLine").textContent = state.isRefinement
+    ? refinementGroupLine(question)
+    : GROUP_LINES[(group - 1) % GROUP_LINES.length];
   $("questionStage").dataset.group = String((group - 1) % 6);
+  $("questionPanel").classList.toggle("refinement-question-panel", state.isRefinement);
+  $("groupProgressTop").classList.toggle("refinement-progress-dots", state.isRefinement);
+  $("groupProgressBottom").classList.toggle("refinement-progress-dots", state.isRefinement);
   renderGroupProgress(groupTotal, group, inGroup, groupSize);
   clearSaveNotice();
   animateQuestionPanel();
@@ -1964,17 +2016,42 @@ function clearAnswerButtons(disabled = false) {
 
 function renderAnswerButtons(selected, disabled = false) {
   const selectedValue = Number(selected);
+  const question = state.session?.questions?.[state.currentIndex] || null;
+  const options = state.isRefinement ? refinementAnswerOptions(question) : ANSWER_OPTIONS;
   $("answerGrid").classList.remove("is-clearing");
-  $("answerGrid").innerHTML = ANSWER_OPTIONS.map((option) => {
+  $("answerGrid").classList.toggle("refinement-answer-grid", state.isRefinement);
+  $("answerGrid").innerHTML = options.map((option) => {
     const isSelected = Number(option.value) === selectedValue;
+    const label = state.isRefinement && option.detail
+      ? `<strong>${escapeHtml(option.label)}</strong><small>${escapeHtml(option.detail)}</small>`
+      : escapeHtml(option.label);
     return [
       `<button type="button" data-value="${option.value}"`,
       isSelected ? ` class="selected"` : "",
       ` aria-pressed="${isSelected ? "true" : "false"}"`,
       disabled ? " disabled" : "",
-      `>${option.label}</button>`
+      `>${label}</button>`
     ].join("");
   }).join("");
+}
+
+function refinementQuestionTitle(question) {
+  const left = question?.left_label || "左边";
+  const right = question?.right_label || "右边";
+  return `${left} 和 ${right}，这一题更靠近哪边？`;
+}
+
+function refinementGroupLine(question) {
+  return question?.dimension_label || "候选拆分题";
+}
+
+function refinementAnswerOptions(question) {
+  if (!question) return REFINEMENT_ANSWER_OPTIONS;
+  return [
+    { value: 1, label: question.left_label || "左边", detail: question.left_text || "更像这一边" },
+    { value: 3, label: "都像 / 拿不准", detail: "这一题先保留，不硬选" },
+    { value: 5, label: question.right_label || "右边", detail: question.right_text || "更像这一边" }
+  ];
 }
 
 function renderGroupProgress(groupTotal, currentGroup, inGroup, groupSize) {
@@ -2576,13 +2653,17 @@ function exposeLocalSoundTester() {
   window.jojoTestRewardSound = (group = 1) => playCardRewardSound(group);
 }
 
-function showGeneratingState() {
+function showGeneratingState(stage = "submit") {
   const overlay = $("generatingOverlay");
-  const title = isSubtypeMode(state.mode) ? "jojo正在整理你的注意力入口" : "jojo正在把答案整理成一张地图";
+  const title = stage === "preview"
+    ? "jojo正在看结果稳不稳"
+    : state.isRefinement
+      ? "jojo正在合上正式题和补题"
+      : isSubtypeMode(state.mode) ? "jojo正在整理你的注意力入口" : "jojo正在把答案整理成一张地图";
   $("generatingTitle").textContent = title;
-  $("generatingStepOne").textContent = isSubtypeMode(state.mode) ? "收好选择" : "收好答案";
-  $("generatingStepTwo").textContent = isSubtypeMode(state.mode) ? "整理入口" : "整理线索";
-  $("generatingStepThree").textContent = isSubtypeMode(state.mode) ? "生成排序" : "生成主调";
+  $("generatingStepOne").textContent = stage === "preview" ? "收好答案" : (isSubtypeMode(state.mode) ? "收好选择" : "收好答案");
+  $("generatingStepTwo").textContent = stage === "preview" ? "看前三距离" : (state.isRefinement ? "合并补题" : isSubtypeMode(state.mode) ? "整理入口" : "整理线索");
+  $("generatingStepThree").textContent = stage === "preview" ? "判断是否补题" : (isSubtypeMode(state.mode) ? "生成排序" : "生成主调");
   ["generatingStepOne", "generatingStepTwo", "generatingStepThree"].forEach((id) => $(id).classList.remove("active"));
   overlay.hidden = false;
   state.generatingTimers.forEach((timer) => window.clearTimeout(timer));
@@ -2619,26 +2700,25 @@ async function submitResult() {
   trackEvent("submit_start", {
     mode: state.session.mode || state.mode,
     answer_count: answers.length,
-    has_team: Boolean(state.team)
+    has_team: Boolean(state.team),
+    is_refinement: Boolean(state.isRefinement)
   });
+  if (!state.isRefinement && isMainMode(state.session.mode || state.mode)) {
+    await previewBeforeSubmit(answers);
+    return;
+  }
+
   const minimumWait = showGeneratingState();
 
   try {
-    const response = await fetch("/api/submit", {
+    const endpoint = state.isRefinement ? "/api/submit/refined" : "/api/submit";
+    const body = state.isRefinement
+      ? refinedSubmissionPayload(answers)
+      : baseSubmissionPayload(answers);
+    const response = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        session_id: state.session.session_id,
-        session_token: state.session.session_token,
-        mode: state.session.mode || state.mode,
-        team_code: state.team?.code || "",
-        device_token: state.deviceToken,
-        account_token: state.accountToken,
-        started_at: state.startedAt,
-        finished_at: new Date().toISOString(),
-        user: state.user,
-        answers
-      })
+      body: JSON.stringify(body)
     });
     if (!response.ok) throw new Error("submit_failed");
     const result = await response.json();
@@ -2647,10 +2727,12 @@ async function submitResult() {
     state.result = result;
     rememberResult(state.result);
     clearDraft();
+    resetRefinementState();
     trackEvent("submit_success", {
       mode: state.result.test_mode,
       result_kind: isSubtypeResult(state.result) ? "subtype" : "main",
-      has_team: Boolean(state.result.team)
+      has_team: Boolean(state.result.team),
+      refinement_count: state.result.refinement?.answered_count || 0
     });
     if (isSubtypeResult(state.result)) {
       state.pendingMainCode = "";
@@ -2669,6 +2751,188 @@ async function submitResult() {
     state.moving = false;
     renderQuestion();
   }
+}
+
+function baseSubmissionPayload(answers) {
+  return {
+    session_id: state.session.session_id,
+    session_token: state.session.session_token,
+    mode: state.session.mode || state.mode,
+    team_code: state.team?.code || "",
+    device_token: state.deviceToken,
+    account_token: state.accountToken,
+    started_at: state.startedAt,
+    finished_at: new Date().toISOString(),
+    user: state.user,
+    answers
+  };
+}
+
+function refinedSubmissionPayload(refinementAnswers) {
+  return {
+    session_id: state.session.session_id,
+    session_token: state.session.session_token,
+    mode: state.session.mode || state.mode,
+    team_code: state.team?.code || "",
+    device_token: state.deviceToken,
+    account_token: state.accountToken,
+    started_at: state.sourceStartedAt || state.startedAt,
+    finished_at: new Date().toISOString(),
+    user: state.sourceUser || state.user,
+    answers: refinementAnswers,
+    source: {
+      session_id: state.sourceSession?.session_id || "",
+      mode: state.sourceSession?.mode || state.mode,
+      started_at: state.sourceStartedAt || state.startedAt,
+      user: state.sourceUser || state.user,
+      answers: state.sourceAnswers || []
+    }
+  };
+}
+
+async function previewBeforeSubmit(answers) {
+  const minimumWait = showGeneratingState("preview");
+  try {
+    const response = await fetch("/api/submit/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(baseSubmissionPayload(answers))
+    });
+    const preview = await response.json();
+    if (!response.ok) throw new Error(preview.error || "preview_failed");
+    await minimumWait;
+    hideGeneratingState();
+    if (preview.needs_refinement && preview.refinement_session?.questions?.length) {
+      state.refinementPreview = preview;
+      state.refinementPlan = preview.plan || null;
+      state.sourceSession = state.session;
+      state.sourceAnswers = answers;
+      state.sourceStartedAt = state.startedAt;
+      state.sourceUser = state.user;
+      state.moving = false;
+      saveDraft();
+      showRefinementPrompt(preview);
+      return;
+    }
+    await submitWithoutRefinement({ fromPreview: true, answers });
+  } catch (err) {
+    await minimumWait;
+    hideGeneratingState();
+    trackEvent("submit_preview_error", {
+      mode: state.session.mode || state.mode,
+      message: err.message || "preview_failed"
+    });
+    alert("结果生成失败，请稍后再试。");
+    state.moving = false;
+    renderQuestion();
+  }
+}
+
+function showRefinementPrompt(preview) {
+  const candidates = (preview.plan?.candidate_types || preview.top_types || []).map((item) => Number(item.element || item)).filter(Boolean);
+  const candidateText = candidates.slice(0, 4).join(" / ") || mainCandidateText({ top_types: preview.top_types || [] }, " / ");
+  const count = Number(preview.plan?.question_count || preview.refinement_session?.questions?.length || 12);
+  $("refinementTitle").textContent = "前三有点挤";
+  $("refinementBody").textContent = `再补 ${count} 道小题，帮你把 ${candidateText} 拉清楚一点。`;
+  $("refinementMeta").textContent = "也可以先看候选报告，不会卡住你。";
+  $("refinementStartButton").textContent = "补几题，更准一点";
+  $("refinementSkipButton").textContent = "先看候选报告";
+  $("refinementModal").hidden = false;
+  trackEvent("refinement_prompt", {
+    mode: state.mode,
+    question_count: count,
+    candidates: candidateText,
+    has_team: Boolean(state.team)
+  });
+  if (!isCoarsePointer()) window.setTimeout(() => $("refinementStartButton").focus(), 40);
+}
+
+function startRefinementQuestions() {
+  const nextSession = state.refinementPreview?.refinement_session;
+  if (!nextSession?.questions?.length) {
+    $("refinementModal").hidden = true;
+    submitWithoutRefinement();
+    return;
+  }
+  $("refinementModal").hidden = true;
+  state.session = nextSession;
+  state.mode = nextSession.mode || state.mode;
+  state.team = nextSession.team || state.team;
+  state.currentIndex = 0;
+  state.answers = {};
+  state.shownMilestones = new Set();
+  state.startedAt = new Date().toISOString();
+  state.user = state.sourceUser || state.user;
+  state.isRefinement = true;
+  state.moving = false;
+  state.navDirection = 1;
+  showScreen("test");
+  renderQuestion();
+  saveDraft();
+  trackEvent("refinement_start", {
+    mode: state.mode,
+    question_count: nextSession.questions.length,
+    has_team: Boolean(state.team)
+  });
+}
+
+async function submitWithoutRefinement(options = {}) {
+  $("refinementModal").hidden = true;
+  const answers = options.answers || state.sourceAnswers || state.session?.questions?.map((question) => ({
+    question_id: question.id,
+    answer: state.answers[question.id]
+  })) || [];
+  const minimumWait = options.fromPreview ? Promise.resolve() : showGeneratingState();
+  try {
+    const payload = state.sourceSession
+      ? {
+        ...baseSubmissionPayload(answers),
+        session_id: state.sourceSession.session_id,
+        session_token: state.sourceSession.session_token,
+        mode: state.sourceSession.mode || state.mode,
+        started_at: state.sourceStartedAt || state.startedAt,
+        user: state.sourceUser || state.user
+      }
+      : baseSubmissionPayload(answers);
+    const response = await fetch("/api/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "submit_failed");
+    await minimumWait;
+    if (!options.fromPreview) hideGeneratingState();
+    state.result = result;
+    rememberResult(state.result);
+    clearDraft();
+    const skippedPrompt = Boolean(state.refinementPreview?.needs_refinement);
+    resetRefinementState();
+    trackEvent("refinement_skip_submit", {
+      mode: state.result.test_mode,
+      has_team: Boolean(state.result.team),
+      from_preview: Boolean(options.fromPreview),
+      skipped_prompt: skippedPrompt
+    });
+    renderResult(state.result);
+    showScreen("result");
+  } catch (err) {
+    await minimumWait;
+    if (!options.fromPreview) hideGeneratingState();
+    alert("结果生成失败，请稍后再试。");
+    state.moving = false;
+    renderQuestion();
+  }
+}
+
+function resetRefinementState() {
+  state.sourceSession = null;
+  state.sourceAnswers = null;
+  state.sourceStartedAt = null;
+  state.sourceUser = null;
+  state.refinementPlan = null;
+  state.refinementPreview = null;
+  state.isRefinement = false;
 }
 
 function renderResult(result) {

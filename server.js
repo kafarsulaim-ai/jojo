@@ -225,6 +225,75 @@ const MODE_LABELS = {
   team_subtype: "团队副型测试60题（匿名）"
 };
 
+const REFINEMENT_MODE_LABEL = "主型补题校准";
+const REFINEMENT_ANSWER_SCALE = [
+  { value: 1, label: "更像左边" },
+  { value: 3, label: "都像 / 拿不准" },
+  { value: 5, label: "更像右边" }
+];
+const REFINEMENT_DIMENSIONS = [
+  { key: "motive", label: "真正想守住的东西" },
+  { key: "pressure", label: "压力上来时" },
+  { key: "relation", label: "关系里最在意的点" },
+  { key: "action", label: "做选择的习惯" }
+];
+const REFINEMENT_PROMPTS = {
+  1: {
+    motive: "我更想把事情做对、做可靠。",
+    pressure: "压力下，我会先盯住不合理和错误。",
+    relation: "关系里，我会在意承诺、标准和分寸。",
+    action: "行动前，我常先想怎样更正确、更稳妥。"
+  },
+  2: {
+    motive: "我更想确认彼此在乎、关系是连着的。",
+    pressure: "压力下，我会更想照顾或证明自己有用。",
+    relation: "关系里，我很在意回应、需要和被珍惜。",
+    action: "行动前，我常先看谁需要我、谁会受影响。"
+  },
+  3: {
+    motive: "我更想把结果做出来、让投入被看见。",
+    pressure: "压力下，我会先提速、推进、证明成效。",
+    relation: "关系里，我在意努力有没有被认可。",
+    action: "行动前，我常先看目标、效率和反馈。"
+  },
+  4: {
+    motive: "我更想活得真实、独特、被准确理解。",
+    pressure: "压力下，我会更容易被缺失感和情绪牵动。",
+    relation: "关系里，我在意对方是不是真的懂我。",
+    action: "行动前，我常先确认这件事有没有真实意义。"
+  },
+  5: {
+    motive: "我更想先弄明白，并保留自己的空间。",
+    pressure: "压力下，我会先退回观察位、减少消耗。",
+    relation: "关系里，我在意边界、空间和不过度打扰。",
+    action: "行动前，我常先收集信息、想清结构。"
+  },
+  6: {
+    motive: "我更想确认安全、可信、不会出大问题。",
+    pressure: "压力下，我会反复验证、预演风险。",
+    relation: "关系里，我在意可靠、解释和确定感。",
+    action: "行动前，我常先看风险、依据和备选方案。"
+  },
+  7: {
+    motive: "我更想保留可能性，不被困在一种答案里。",
+    pressure: "压力下，我会先找出口、新计划和轻松感。",
+    relation: "关系里，我在意选择感、活力和不被锁死。",
+    action: "行动前，我常先看有没有更有趣的新路径。"
+  },
+  8: {
+    motive: "我更想守住边界、主动权和重要的人。",
+    pressure: "压力下，我会先变强硬、进入掌控模式。",
+    relation: "关系里，我在意直接、坦诚和别被暗控。",
+    action: "行动前，我常先判断边界和主导权在哪。"
+  },
+  9: {
+    motive: "我更想让关系和局面先稳下来。",
+    pressure: "压力下，我会先缓和、顺一下现场节奏。",
+    relation: "关系里，我在意舒服、和平和别被逼太紧。",
+    action: "行动前，我常先看怎样少冲突、少打扰。"
+  }
+};
+
 const SUBTYPE_LABELS = {
   social: { name: "社群型", full: "社群型", line: "注意力更容易放在群体位置、社群归属、关系网络、贡献和被认可上。" },
   one_to_one: { name: "一对一型", full: "一对一 / 亲密型", line: "注意力更容易被强连接、吸引力、深度对象和强烈体验牵动。" },
@@ -458,6 +527,23 @@ function sessionTokenPayload(session) {
     mode: session.mode,
     team_code: session.team?.code || "",
     question_ids: (session.questions || []).map((question) => question.id),
+    refinement: session.refinement ? {
+      source_session_id: cleanText(session.refinement.source_session_id || "", 80),
+      source_mode: normalizeMode(session.refinement.source_mode),
+      source_question_ids: Array.isArray(session.refinement.source_question_ids)
+        ? session.refinement.source_question_ids.map((id) => cleanText(id || "", 80)).filter(Boolean)
+        : [],
+      candidate_types: Array.isArray(session.refinement.candidate_types)
+        ? session.refinement.candidate_types.map(Number).filter((type) => type >= 1 && type <= 9).slice(0, 4)
+        : [],
+      original_top: Array.isArray(session.refinement.original_top)
+        ? session.refinement.original_top.slice(0, 4).map((item) => ({
+          element: Number(item.element || 0),
+          type_score: round2(item.type_score || 0)
+        })).filter((item) => item.element >= 1 && item.element <= 9)
+        : [],
+      question_count: Number(session.refinement.question_count || 0)
+    } : null,
     exp: Date.now() + TEST_SESSION_TTL_MS
   };
 }
@@ -507,6 +593,43 @@ function validateSessionSubmission(payload) {
   const matchesQuestions = answerIds.length === expectedIds.length && answerIds.every((id, index) => id === expectedIds[index]);
   if (payload.session_id !== claims.session_id || mode !== claims.mode || teamCode !== claims.team_code || !matchesQuestions) {
     const err = new Error("测试题目与会话不匹配，请重新开始");
+    err.status = 400;
+    throw err;
+  }
+  return claims;
+}
+
+function validateRefinementSubmission(payload) {
+  const claims = verifySessionToken(payload.session_token);
+  if (!claims) {
+    const err = new Error("补题会话已失效，请重新开始");
+    err.status = 400;
+    throw err;
+  }
+  const mode = normalizeMode(payload.mode);
+  const teamCode = cleanTeamCode(payload.team_code || "");
+  const answerIds = Array.isArray(payload.answers) ? payload.answers.map((item) => cleanText(item.question_id || "", 80)) : [];
+  const expectedIds = claims.question_ids.map((id) => cleanText(id || "", 80));
+  const matchesQuestions = answerIds.length === expectedIds.length && answerIds.every((id, index) => id === expectedIds[index]);
+  if (payload.session_id !== claims.session_id || mode !== claims.mode || teamCode !== claims.team_code || !matchesQuestions) {
+    const err = new Error("补题题目与会话不匹配，请重新开始");
+    err.status = 400;
+    throw err;
+  }
+  const refinement = claims.refinement || null;
+  if (!refinement?.source_session_id || !Array.isArray(refinement.source_question_ids) || !refinement.source_question_ids.length) {
+    const err = new Error("补题会话已失效，请重新开始");
+    err.status = 400;
+    throw err;
+  }
+  const sourceMode = normalizeMode(payload.source?.mode || payload.source_mode || refinement.source_mode);
+  const sourceSessionId = cleanText(payload.source?.session_id || payload.source_session_id || "", 80);
+  const sourceAnswers = Array.isArray(payload.source?.answers) ? payload.source.answers : [];
+  const sourceIds = sourceAnswers.map((item) => cleanText(item.question_id || "", 80));
+  const sourceExpectedIds = refinement.source_question_ids.map((id) => cleanText(id || "", 80));
+  const sourceMatches = sourceIds.length === sourceExpectedIds.length && sourceIds.every((id, index) => id === sourceExpectedIds[index]);
+  if (sourceMode !== refinement.source_mode || sourceSessionId !== refinement.source_session_id || !sourceMatches) {
+    const err = new Error("补题与原测试不匹配，请重新开始");
     err.status = 400;
     throw err;
   }
@@ -572,6 +695,118 @@ function makeSession(options = {}) {
   return attachSessionToken(session);
 }
 
+function previewMainSubmission(payload) {
+  validateSessionSubmission(payload);
+  const mode = normalizeMode(payload.mode);
+  if (!MAIN_MODES.has(mode)) return { needs_refinement: false };
+  const analysis = analyzeMainAnswers(payload, mode);
+  const plan = mainRefinementPlan(analysis, mode);
+  if (!plan.needs_refinement) {
+    return {
+      needs_refinement: false,
+      confidence_label: shouldReviewPrimary(analysis.quality_flags) ? "candidate" : "stable",
+      top_types: analysis.top,
+      quality_flags: analysis.quality_flags
+    };
+  }
+  return {
+    needs_refinement: true,
+    confidence_label: "crowded",
+    plan: publicRefinementPlan(plan),
+    top_types: analysis.top,
+    quality_flags: analysis.quality_flags,
+    refinement_session: makeRefinementSession(payload, analysis, plan)
+  };
+}
+
+function makeRefinementSession(payload, analysis, plan) {
+  const mode = normalizeMode(payload.mode);
+  const sourceQuestions = Array.isArray(payload.answers) ? payload.answers.map((item) => cleanText(item.question_id || "", 80)).filter(Boolean) : [];
+  const team = payload.team_code ? publicTeamByCode(payload.team_code) : null;
+  const questions = buildRefinementQuestions(plan.candidate_types, plan.question_count);
+  const session = {
+    session_id: `X${Date.now().toString(36).toUpperCase()}${crypto.randomBytes(3).toString("hex").toUpperCase()}`,
+    mode,
+    mode_label: REFINEMENT_MODE_LABEL,
+    kind: "main_refinement",
+    answer_scale: REFINEMENT_ANSWER_SCALE,
+    question_count: questions.length,
+    encouragements: makeRefinementEncouragements(questions.length),
+    team,
+    refinement: {
+      source_session_id: cleanText(payload.session_id || "", 80),
+      source_mode: mode,
+      source_question_ids: sourceQuestions,
+      candidate_types: plan.candidate_types,
+      original_top: (analysis.top || []).map((item) => ({ element: item.element, type_score: item.type_score })),
+      reason: plan.reason,
+      question_count: questions.length
+    },
+    questions: questions.map((question, index) => ({
+      ...question,
+      order: index + 1
+    }))
+  };
+  return attachSessionToken(session);
+}
+
+function makeRefinementEncouragements(total) {
+  const middle = Math.max(6, Math.floor(total / 2));
+  return [
+    { at: middle, title: "候选正在拉开", body: "不用重新证明自己，只是在几个高位之间做小校准。" },
+    { at: total, title: "补题完成", body: "jojo把正式题和补题一起合上，马上出图。" }
+  ].filter((item, index, arr) => item.at <= total && arr.findIndex((next) => next.at === item.at) === index);
+}
+
+function buildRefinementQuestions(candidateTypes, count) {
+  const types = [...new Set(candidateTypes.map(Number).filter((type) => type >= 1 && type <= 9))].slice(0, 4);
+  const pairs = [];
+  for (let leftIndex = 0; leftIndex < types.length; leftIndex += 1) {
+    for (let rightIndex = leftIndex + 1; rightIndex < types.length; rightIndex += 1) {
+      pairs.push([types[leftIndex], types[rightIndex]]);
+    }
+  }
+  if (!pairs.length) pairs.push([types[0] || 7, types[1] || 2]);
+  const questions = [];
+  let index = 0;
+  while (questions.length < count) {
+    const pair = pairs[index % pairs.length];
+    const dimension = REFINEMENT_DIMENSIONS[index % REFINEMENT_DIMENSIONS.length];
+    const left = pair[index % 2 === 0 ? 0 : 1];
+    const right = pair[index % 2 === 0 ? 1 : 0];
+    questions.push({
+      id: `RF-${left}-${right}-${dimension.key}-${questions.length + 1}`,
+      text: dimension.label,
+      left_type: left,
+      right_type: right,
+      left_label: `${left}号`,
+      right_label: `${right}号`,
+      left_text: REFINEMENT_PROMPTS[left]?.[dimension.key] || `${left}号更像我`,
+      right_text: REFINEMENT_PROMPTS[right]?.[dimension.key] || `${right}号更像我`,
+      dimension: dimension.key,
+      dimension_label: dimension.label
+    });
+    index += 1;
+  }
+  return softenRefinementOrder(questions);
+}
+
+function softenRefinementOrder(questions) {
+  const pool = [...questions];
+  const ordered = [];
+  while (pool.length) {
+    const last = ordered[ordered.length - 1];
+    let idx = pool.findIndex((question) => {
+      if (!last) return true;
+      const samePair = new Set([last.left_type, last.right_type]);
+      return !(samePair.has(question.left_type) && samePair.has(question.right_type));
+    });
+    if (idx < 0) idx = 0;
+    ordered.push(pool.splice(idx, 1)[0]);
+  }
+  return ordered;
+}
+
 function makeSubtypeSession(mode, options = {}) {
   const bank = SUBTYPE_BANKS[mode];
   if (!bank) throw new Error(`Unknown subtype mode: ${mode}`);
@@ -632,7 +867,11 @@ function computeResult(payload, req = null) {
   validateSessionSubmission(payload);
   const mode = normalizeMode(payload.mode);
   if (SUBTYPE_MODES.has(mode)) return computeSubtypeResult(payload, mode, req);
+  const analysis = analyzeMainAnswers(payload, mode);
+  return buildMainResultFromAnalysis(payload, mode, analysis, req);
+}
 
+function analyzeMainAnswers(payload, mode = normalizeMode(payload.mode)) {
   const bank = new Map(QUESTION_BANK.map((q) => [q.id, q]));
   const answers = Array.isArray(payload.answers) ? payload.answers : [];
   const detailed = [];
@@ -707,10 +946,18 @@ function computeResult(payload, req = null) {
   const top = ranked.slice(0, 3);
   const low = [...ranked].reverse().slice(0, 2);
   const quality_flags = qualityFlags(rawValues, byElement, scores, top);
+  return { scores, ranked, top, low, quality_flags, answers: detailed, question_ids: detailed.map((d) => d.question_id), rawValues, byElement };
+}
+
+function buildMainResultFromAnalysis(payload, mode, analysis, req = null, refinement = null) {
+  const top = analysis.top || [];
+  const low = analysis.low || [];
+  const scores = analysis.scores || {};
+  const quality_flags = analysis.quality_flags || [];
   const primary = top[0]?.element || 9;
   const code = makeVerificationCode();
   const share = SHARE_NAMES[primary] || SHARE_NAMES[9];
-  const report = buildMainReport(top, low, scores, quality_flags);
+  const report = buildMainReport(top, low, scores, quality_flags, refinement);
   const account = accountForSubmission(payload);
   const wechat = req ? wechatForSubmission(req) : null;
   const result = {
@@ -734,17 +981,214 @@ function computeResult(payload, req = null) {
     low_types: low,
     quality_flags,
     report,
+    refinement: publicRefinementMeta(refinement),
     share: {
       primary_type: primary,
       title: share.name,
       line: share.line,
       summary: ELEMENT_SUMMARY[primary]
     },
-    answers: detailed,
-    question_ids: detailed.map((d) => d.question_id),
+    answers: analysis.answers || [],
+    question_ids: analysis.question_ids || [],
     team: teamForSubmission(payload, mode)
   };
   return result;
+}
+
+function mainRefinementPlan(analysis, mode = "main90") {
+  const ranked = analysis.ranked || [];
+  const flags = Array.isArray(analysis.quality_flags) ? analysis.quality_flags : [];
+  if (ranked.length < 3) {
+    return { needs_refinement: false, reason: "not_enough_scores", candidate_types: [], question_count: 0 };
+  }
+  const topGap = Number(ranked[0].type_score || 0) - Number(ranked[1].type_score || 0);
+  const topThreeGap = Number(ranked[0].type_score || 0) - Number(ranked[2].type_score || 0);
+  const fourthGap = ranked[3] ? Number(ranked[0].type_score || 0) - Number(ranked[3].type_score || 0) : 99;
+  const consistencyCount = flags.filter((flag) => String(flag || "").startsWith("reverse_consistency_risk") || String(flag || "").startsWith("scenario_mismatch_risk")).length;
+  const crowded = topGap < 0.22 || topThreeGap < 0.35 || fourthGap < 0.42;
+  const qualityCrowded = topThreeGap < 0.5 && (
+    flags.includes("over_agree_risk") ||
+    flags.includes("soft_agree_risk") ||
+    flags.includes("low_variance_risk") ||
+    flags.includes("moderate_uncertainty_risk") ||
+    consistencyCount >= 1
+  );
+  const strongRisk = flags.includes("straight_line_risk") || flags.includes("uncertainty_risk") || flags.includes("over_deny_risk");
+  const needs = (crowded || qualityCrowded) && !strongRisk;
+  if (!needs) {
+    return {
+      needs_refinement: false,
+      reason: strongRisk ? "answer_quality_too_low" : "stable_enough",
+      candidate_types: ranked.slice(0, 3).map((item) => item.element),
+      question_count: 0,
+      gaps: { top: round2(topGap), top_three: round2(topThreeGap), fourth: round2(fourthGap) }
+    };
+  }
+  const candidateLimit = fourthGap < 0.42 ? 4 : 3;
+  const candidateTypes = ranked.slice(0, candidateLimit).map((item) => item.element);
+  const baseCount = mode === "main180" || mode === "main270" ? 18 : 12;
+  const questionCount = candidateTypes.length >= 4 ? Math.min(baseCount + 6, mode === "main90" ? 18 : 24) : baseCount;
+  return {
+    needs_refinement: true,
+    reason: crowded ? "top_types_crowded" : "quality_crowded",
+    candidate_types: candidateTypes,
+    question_count: questionCount,
+    gaps: { top: round2(topGap), top_three: round2(topThreeGap), fourth: round2(fourthGap) },
+    quality_flags: flags
+  };
+}
+
+function publicRefinementPlan(plan) {
+  return {
+    reason: plan.reason || "",
+    candidate_types: plan.candidate_types || [],
+    question_count: plan.question_count || 0,
+    gaps: plan.gaps || {}
+  };
+}
+
+function computeRefinedMainResult(payload, req = null) {
+  const claims = validateRefinementSubmission(payload);
+  const source = payload.source || {};
+  const sourceMode = normalizeMode(source.mode || claims.refinement?.source_mode || payload.mode);
+  const baseAnalysis = analyzeMainAnswers({ ...source, mode: sourceMode }, sourceMode);
+  const refined = applyRefinementAnswers(baseAnalysis, payload.answers || [], claims.refinement || {});
+  const finalPayload = {
+    ...payload,
+    session_id: source.session_id || claims.refinement?.source_session_id || payload.session_id,
+    mode: sourceMode,
+    team_code: cleanTeamCode(payload.team_code || ""),
+    answers: source.answers || [],
+    started_at: source.started_at || payload.started_at,
+    finished_at: payload.finished_at || new Date().toISOString()
+  };
+  return buildMainResultFromAnalysis(finalPayload, sourceMode, refined.analysis, req, refined.meta);
+}
+
+function applyRefinementAnswers(baseAnalysis, answers, refinementClaims) {
+  const scores = cloneScores(baseAnalysis.scores || {});
+  const refinementQuestions = buildRefinementQuestions(refinementClaims.candidate_types || [], Math.max(answers.length, Number(refinementClaims.question_count || 0) || answers.length));
+  const questionMap = new Map(refinementQuestions.map((question) => [question.id, question]));
+  const detailed = [];
+  const deltas = {};
+  for (const type of refinementClaims.candidate_types || []) {
+    deltas[type] = { element: Number(type), points: 0, left_picks: 0, right_picks: 0, uncertain: 0 };
+  }
+  for (const ans of answers) {
+    const question = questionMap.get(cleanText(ans.question_id || "", 80));
+    const raw = Number(ans.answer);
+    if (!question || !Number.isInteger(raw) || raw < 1 || raw > 5) continue;
+    const left = Number(question.left_type);
+    const right = Number(question.right_type);
+    if (!deltas[left]) deltas[left] = { element: left, points: 0, left_picks: 0, right_picks: 0, uncertain: 0 };
+    if (!deltas[right]) deltas[right] = { element: right, points: 0, left_picks: 0, right_picks: 0, uncertain: 0 };
+    let leftDelta = 0;
+    let rightDelta = 0;
+    if (raw <= 2) {
+      leftDelta = 1;
+      rightDelta = -0.35;
+      deltas[left].left_picks += 1;
+    } else if (raw >= 4) {
+      rightDelta = 1;
+      leftDelta = -0.35;
+      deltas[right].right_picks += 1;
+    } else {
+      leftDelta = 0.12;
+      rightDelta = 0.12;
+      deltas[left].uncertain += 1;
+      deltas[right].uncertain += 1;
+    }
+    deltas[left].points += leftDelta;
+    deltas[right].points += rightDelta;
+    detailed.push({
+      question_id: question.id,
+      dimension: question.dimension,
+      left_type: left,
+      right_type: right,
+      raw_answer: raw,
+      left_delta: leftDelta,
+      right_delta: rightDelta
+    });
+  }
+  const answeredCount = detailed.length;
+  const maxShift = answeredCount >= 18 ? 0.42 : 0.34;
+  for (const [element, item] of Object.entries(deltas)) {
+    const score = scores[element];
+    if (!score) continue;
+    const shift = Math.max(-maxShift, Math.min(maxShift, (Number(item.points || 0) / Math.max(1, answeredCount)) * 0.95));
+    score.type_score = round2(Math.max(1, Math.min(5, Number(score.type_score || 0) + shift)));
+    score.type_percent = percentile(score.type_score, 5);
+    score.refinement_delta = round2(shift);
+  }
+  const ranked = Object.values(scores).sort((a, b) => b.type_score - a.type_score);
+  const top = ranked.slice(0, 3);
+  const low = [...ranked].reverse().slice(0, 2);
+  let qualityFlags = [...new Set([...(baseAnalysis.quality_flags || [])])];
+  if (top.length >= 3 && top[0].type_score - top[2].type_score >= 0.35) {
+    qualityFlags = qualityFlags.filter((flag) => flag !== "close_top_three_risk");
+  }
+  const analysis = {
+    ...baseAnalysis,
+    scores,
+    ranked,
+    top,
+    low,
+    quality_flags: qualityFlags,
+    answers: [
+      ...(baseAnalysis.answers || []),
+      ...detailed.map((item) => ({
+        ...item,
+        element: null,
+        form: "refinement",
+        scored_value: item.raw_answer
+      }))
+    ],
+    question_ids: [
+      ...(baseAnalysis.question_ids || []),
+      ...detailed.map((item) => item.question_id)
+    ]
+  };
+  return {
+    analysis,
+    meta: {
+      status: "completed",
+      source_session_id: refinementClaims.source_session_id || "",
+      source_mode: refinementClaims.source_mode || "",
+      candidate_types: refinementClaims.candidate_types || [],
+      original_top: refinementClaims.original_top || [],
+      answered_count: answeredCount,
+      deltas: Object.values(deltas).map((item) => ({
+        element: item.element,
+        points: round2(item.points || 0),
+        uncertain: item.uncertain || 0
+      })),
+      questions: detailed
+    }
+  };
+}
+
+function cloneScores(scores) {
+  const out = {};
+  for (const [key, value] of Object.entries(scores || {})) {
+    out[key] = { ...value };
+  }
+  return out;
+}
+
+function publicRefinementMeta(refinement) {
+  if (!refinement) return null;
+  return {
+    status: refinement.status || "",
+    source_mode: refinement.source_mode || "",
+    candidate_types: Array.isArray(refinement.candidate_types) ? refinement.candidate_types.slice(0, 4) : [],
+    original_top: Array.isArray(refinement.original_top) ? refinement.original_top.slice(0, 4) : [],
+    answered_count: Number(refinement.answered_count || 0),
+    deltas: Array.isArray(refinement.deltas) ? refinement.deltas.slice(0, 6) : []
+  };
+}
+
+function round2(value) {
+  return Math.round(Number(value || 0) * 100) / 100;
 }
 
 function computeSubtypeResult(payload, mode, req = null) {
@@ -932,7 +1376,7 @@ function shouldReviewPrimary(qualityFlags = []) {
   return flags.some((flag) => PRIMARY_REVIEW_FLAGS.has(flag)) || consistencyFlags.length >= 2;
 }
 
-function buildMainReport(top, low, scores, qualityFlags) {
+function buildMainReport(top, low, scores, qualityFlags, refinement = null) {
   const primary = top[0]?.element || 9;
   const secondary = top[1]?.element || null;
   const third = top[2]?.element || null;
@@ -959,19 +1403,29 @@ function buildMainReport(top, low, scores, qualityFlags) {
   const topText = top.map((item) => `${item.element}号`).join(" / ");
   const wingText = wing?.label || "侧翼待复核";
   const sceneText = `关系：${RELATION_STYLE[primary]} 职场：${WORK_STYLE[primary]} 压力：${PRESSURE_STYLE[primary]}`;
+  const refinedCount = Number(refinement?.answered_count || 0);
+  const refinedLine = refinedCount
+    ? `已加做 ${refinedCount} 道候选拆分题，结果已结合正式题和补题一起看。`
+    : "";
   return {
     version: "1.3",
     confidence_label: needsReview ? "需复核" : "可参考",
     title: needsReview ? `前三候选 · ${topText}` : `${primary}号 · ${wingText} · ${topText}`,
     focus: needsReview
-      ? `本次先看前三候选 ${topText}，不要急着定成单一主型。建议结合真实场景和老师访谈复核。`
-      : `主型先看 ${primary}号，侧翼先看 ${wingText}。本次前三元素为 ${topText}，更适合按“主型 + 侧翼 + 证据 + 场景”来读。`,
+      ? `${refinedLine ? `${refinedLine} ` : ""}本次先看前三候选 ${topText}，不要急着定成单一主型。建议结合真实场景和老师访谈复核。`
+      : `${refinedLine ? `${refinedLine} ` : ""}主型先看 ${primary}号，侧翼先看 ${wingText}。本次前三元素为 ${topText}，更适合按“主型 + 侧翼 + 证据 + 场景”来读。`,
     summary_cards: [
       needsReview
         ? { label: "主型候选", value: topText, text: "本次分数或作答质量提示需要复核，先看前三候选更稳。" }
         : { label: "主型", value: `${primary}号`, text: ELEMENT_SUMMARY[primary] },
       { label: "侧翼", value: wingText, text: wing?.text || "侧翼用于解释主型在日常中的偏好方向。" },
-      { label: "稳定性", value: needsReview ? "需复核" : "可参考", text: needsReview ? "存在作答质量提示，建议老师再看访谈。" : "当前结果可先作为探索地图。" }
+      {
+        label: refinedCount ? "补题" : "稳定性",
+        value: refinedCount ? `已补 ${refinedCount} 题` : (needsReview ? "需复核" : "可参考"),
+        text: refinedCount
+          ? (needsReview ? "补题后仍建议保留候选范围。" : "已用候选拆分题提高区分度。")
+          : (needsReview ? "存在作答质量提示，建议老师再看访谈。" : "当前结果可先作为探索地图。")
+      }
     ],
     sections: [
       {
@@ -4235,7 +4689,7 @@ function serveStatic(req, res, pathname) {
 function toCsv(results) {
   const header = [
     "created_at", "code", "mode", "team", "team_code", "nickname", "contact", "wechat_nickname", "primary",
-    "top_types", "low_types", "subtype_rank", "quality_flags",
+    "top_types", "low_types", "subtype_rank", "quality_flags", "refinement_count", "refinement_candidates",
     ...[1,2,3,4,5,6,7,8,9].map((n) => `type_${n}`),
     "subtype_social", "subtype_one_to_one", "subtype_self_preservation"
   ];
@@ -4256,6 +4710,8 @@ function toCsv(results) {
       item.low_types ? item.low_types.map((x) => x.element).join("|") : "",
       subtypeRank,
       item.quality_flags ? item.quality_flags.join("|") : "",
+      item.refinement?.answered_count || "",
+      item.refinement?.candidate_types ? item.refinement.candidate_types.join("|") : "",
       ...[1,2,3,4,5,6,7,8,9].map((n) => item.scores?.[n]?.type_score ?? ""),
       item.subtype_scores?.social?.percent ?? "",
       item.subtype_scores?.one_to_one?.percent ?? "",
@@ -4776,6 +5232,16 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, { result: publicResult(result), reused: true });
       }
     }
+    if (req.method === "POST" && reqUrl.pathname === "/api/submit/preview") {
+      const payload = await readBody(req);
+      return sendJson(res, 200, previewMainSubmission(payload));
+    }
+    if (req.method === "POST" && reqUrl.pathname === "/api/submit/refined") {
+      const payload = await readBody(req);
+      const result = computeRefinedMainResult(payload, req);
+      appendResult(result);
+      return sendJson(res, 200, publicResult(result));
+    }
     if (req.method === "POST" && reqUrl.pathname === "/api/submit") {
       const payload = await readBody(req);
       const result = computeResult(payload, req);
@@ -5032,6 +5498,7 @@ function publicResult(result) {
     subtype_confidence: result.subtype_confidence,
     quality_flags: result.quality_flags,
     report: publicReportSummary(result.report),
+    refinement: publicRefinementMeta(result.refinement),
     share: result.share,
     account: null,
     wechat: null,

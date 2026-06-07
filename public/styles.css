@@ -1036,6 +1036,24 @@ select:focus {
   opacity: 0.78;
 }
 
+.refinement-progress-dots {
+  width: min(220px, 70%);
+  justify-content: center;
+  gap: 42px;
+  padding-inline: 0;
+}
+
+.refinement-progress-dots .jo-step {
+  width: 14px;
+  height: 14px;
+  opacity: 0.2;
+}
+
+.refinement-progress-dots .jo-step.current,
+.refinement-progress-dots .jo-step.complete {
+  opacity: 0.62;
+}
+
 .question-stage {
   display: flex;
   align-items: center;
@@ -1200,6 +1218,46 @@ select:focus {
 
 .answer-grid button.selected {
   animation: answerPop 150ms ease both;
+}
+
+.answer-grid.refinement-answer-grid {
+  grid-template-columns: 1fr;
+  gap: 9px;
+}
+
+.answer-grid.refinement-answer-grid button {
+  min-height: 74px;
+  display: grid;
+  gap: 5px;
+  align-content: center;
+  padding: 12px 14px 12px 20px;
+  text-align: left;
+}
+
+.answer-grid.refinement-answer-grid button strong,
+.answer-grid.refinement-answer-grid button small {
+  position: relative;
+  z-index: 1;
+  display: block;
+}
+
+.answer-grid.refinement-answer-grid button strong {
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 920;
+}
+
+.answer-grid.refinement-answer-grid button small {
+  color: var(--soft-ink);
+  font-size: 12px;
+  font-weight: 680;
+  line-height: 1.38;
+}
+
+.refinement-question-panel h2 {
+  min-height: 56px;
+  margin-bottom: 15px;
+  font-size: clamp(19px, 2.8vw, 25px);
 }
 
 .answer-grid button:nth-child(1) {
@@ -4852,34 +4910,65 @@ select:focus {
   text-align: left;
 }
 
+.refinement-backdrop {
+  background:
+    radial-gradient(circle at 50% 16%, rgba(255, 255, 255, 0.62), transparent 30%),
+    linear-gradient(150deg, rgba(255, 247, 232, 0.78), rgba(236, 255, 252, 0.84));
+  backdrop-filter: blur(13px);
+}
+
+.refinement-panel {
+  width: min(370px, 100%);
+  padding: 18px;
+  text-align: left;
+}
+
 .team-created-panel .modal-badge,
 .team-created-panel .modal-kicker,
 .team-created-panel h2,
 .team-created-panel p,
 .team-created-panel input,
-.team-created-panel .team-modal-actions {
+.team-created-panel .team-modal-actions,
+.refinement-panel .modal-badge,
+.refinement-panel .modal-kicker,
+.refinement-panel h2,
+.refinement-panel p,
+.refinement-panel small,
+.refinement-panel .refinement-actions {
   position: relative;
   z-index: 1;
 }
 
-.team-created-panel .modal-badge {
+.team-created-panel .modal-badge,
+.refinement-panel .modal-badge {
   width: 42px;
   height: 42px;
   margin: 0 0 10px;
 }
 
-.team-created-panel h2 {
+.team-created-panel h2,
+.refinement-panel h2 {
   margin: 4px 0 8px;
   color: var(--ink);
   font-size: 23px;
   line-height: 1.18;
 }
 
-.team-created-panel p {
+.team-created-panel p,
+.refinement-panel p {
   margin: 0 0 12px;
   color: var(--soft-ink);
   font-size: 12.5px;
   line-height: 1.48;
+}
+
+.refinement-panel small {
+  display: block;
+  margin: -4px 0 13px;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 760;
+  line-height: 1.45;
 }
 
 .team-created-panel input {
@@ -6536,6 +6625,17 @@ select:focus {
     min-height: 52px;
     padding: 8px 10px 8px 18px;
     text-align: center;
+  }
+
+  .answer-grid.refinement-answer-grid button {
+    min-height: 70px;
+    padding: 10px 12px 10px 18px;
+    text-align: left;
+  }
+
+  .answer-grid.refinement-answer-grid button small {
+    font-size: 11.5px;
+    line-height: 1.34;
   }
 
   .test-actions {

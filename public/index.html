@@ -8,7 +8,7 @@
     <link rel="icon" href="/jojo-icon.svg" type="image/svg+xml">
     <link rel="icon" href="/jojo-icon.png" type="image/png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <link rel="stylesheet" href="/styles.css?v=20260606-v20-question-confidence">
+    <link rel="stylesheet" href="/styles.css?v=20260607-v21-refinement">
   </head>
   <body>
     <div class="app-shell">
@@ -453,6 +453,20 @@
       </div>
     </div>
 
+    <div class="modal-backdrop refinement-backdrop" id="refinementModal" hidden>
+      <div class="modal-panel refinement-panel" role="dialog" aria-modal="true" aria-labelledby="refinementTitle">
+        <span class="modal-badge marker-logo" aria-hidden="true"><img src="/jojo-icon.svg" alt=""></span>
+        <span class="modal-kicker">小校准</span>
+        <h2 id="refinementTitle">前三有点挤</h2>
+        <p id="refinementBody">再补几道小题，把候选拉清楚一点。</p>
+        <small id="refinementMeta">也可以先看候选报告。</small>
+        <div class="team-modal-actions refinement-actions">
+          <button class="primary-action compact" id="refinementStartButton" type="button">补几题，更准一点</button>
+          <button class="ghost-action compact" id="refinementSkipButton" type="button">先看候选报告</button>
+        </div>
+      </div>
+    </div>
+
     <div class="modal-backdrop" id="shareImageModal" hidden>
       <div class="modal-panel share-image-panel" role="dialog" aria-modal="true" aria-labelledby="shareImageTitle">
         <span class="modal-badge marker-logo" aria-hidden="true"><img src="/jojo-icon.svg" alt=""></span>
@@ -563,6 +577,6 @@
       </div>
     </div>
 
-    <script src="/app.js?v=20260606-v20-question-confidence"></script>
+    <script src="/app.js?v=20260607-v21-refinement"></script>
   </body>
 </html>

@@ -1410,14 +1410,14 @@ function buildMainReport(top, low, scores, qualityFlags, refinement = null) {
   return {
     version: "1.3",
     confidence_label: needsReview ? "需复核" : "可参考",
-    title: needsReview ? `前三候选 · ${topText}` : `${primary}号 · ${wingText} · ${topText}`,
+    title: needsReview ? `前三候选 · ${topText}` : `可能 ${primary}号 · 侧翼倾向 ${wingText} · ${topText}`,
     focus: needsReview
       ? `${refinedLine ? `${refinedLine} ` : ""}本次先看前三候选 ${topText}，不要急着定成单一主型。建议结合真实场景和老师访谈复核。`
-      : `${refinedLine ? `${refinedLine} ` : ""}主型先看 ${primary}号，侧翼先看 ${wingText}。本次前三元素为 ${topText}，更适合按“主型 + 侧翼 + 证据 + 场景”来读。`,
+      : `${refinedLine ? `${refinedLine} ` : ""}可能主型先看 ${primary}号，侧翼倾向先看 ${wingText}。本次前三元素为 ${topText}，更适合按“高位动力 + 侧翼倾向 + 证据 + 场景”来读。`,
     summary_cards: [
       needsReview
         ? { label: "主型候选", value: topText, text: "本次分数或作答质量提示需要复核，先看前三候选更稳。" }
-        : { label: "主型", value: `${primary}号`, text: ELEMENT_SUMMARY[primary] },
+        : { label: "可能主型", value: `${primary}号`, text: ELEMENT_SUMMARY[primary] },
       { label: "侧翼", value: wingText, text: wing?.text || "侧翼用于解释主型在日常中的偏好方向。" },
       {
         label: refinedCount ? "补题" : "稳定性",
@@ -1432,9 +1432,9 @@ function buildMainReport(top, low, scores, qualityFlags, refinement = null) {
         label: needsReview ? "候选画像" : "主型画像",
         text: needsReview
           ? `${topText} 是本次最值得优先复核的范围。第一名暂时是 ${primary}号，但需要放进真实场景里再确认。`
-          : `${USER_ANALYSIS[primary]?.strength || ELEMENT_SUMMARY[primary]} 这次更像是 ${primary}号 的主调，不急着定死，先当作观察入口。`
+          : `${USER_ANALYSIS[primary]?.strength || ELEMENT_SUMMARY[primary]} 这次更像是 ${primary}号 的高位倾向，不急着定死，先当作观察入口。`
       },
-      { label: "侧翼特征", text: wing?.text || "侧翼用于描述主型在日常中更常被调用的辅助方向。" },
+      { label: "侧翼倾向", text: wing?.text || "侧翼用于描述主型在日常中更常被调用的辅助方向。" },
       { label: "前三证据", text: `${topText} 是本次最值得优先复核的三项，适合和真实场景一起看。` },
       { label: "关系与职场", text: sceneText },
       { label: "防御机制", text: `${PRESSURE_STYLE[primary]} 这也是为什么同一个主型，在压力下会更像另一面。` },
@@ -1445,7 +1445,7 @@ function buildMainReport(top, low, scores, qualityFlags, refinement = null) {
         label: "你最像什么",
         text: needsReview
           ? `先看 ${topText} 这组候选。当前第一名是 ${primary}号，但本次更适合复核后再定。`
-          : `${primary}号是当前主线，侧翼 ${wingText} 让它有了更具体的生活味道。`
+          : `${primary}号是当前最值得优先观察的主型倾向，侧翼 ${wingText} 让它有了更具体的生活味道。`
       },
       { label: "你最有力的地方", text: USER_ANALYSIS[primary]?.strength || ELEMENT_SUMMARY[primary] },
       { label: "容易卡住", text: USER_ANALYSIS[primary]?.watch || "当状态紧张时，可能会更依赖熟悉的应对方式。" },
@@ -1471,7 +1471,7 @@ function deriveWing(primary, scores) {
   return {
     value: best,
     label: `${best}号侧翼`,
-    text: `${primary}号通常会更靠近 ${best}号 这一侧。当前结果里，${best}号的存在感更高，适合作为主型的辅助解释。`
+    text: `如果以 ${primary}号 作为可能主型，当前结果里 ${best}号 的存在感更高，适合作为侧翼倾向观察。`
   };
 }
 
@@ -1633,26 +1633,26 @@ function buildCombinedReport(main, subtype) {
   const wing = deriveWing(primary, main.scores || {});
   return {
     version: "1.3",
-    title: `${primary}号主调 · ${subtypeText}`,
-    focus: `主型看 ${primary}号 和 ${wing?.label || "侧翼待复核"}，副型看 ${subtypeText}。主型解释核心动机，副型解释这个动机最常进入生活的入口。`,
+    title: `可能 ${primary}号 · ${subtypeText}`,
+    focus: `可能主型先看 ${primary}号，侧翼倾向先看 ${wing?.label || "待复核"}，副型看 ${subtypeText}。主型用于观察长期动机，副型解释这个动机最常进入生活的入口。`,
     main_code: main.verification_code,
     subtype_code: subtype.verification_code,
     summary_cards: [
-      { label: "主型", value: `${primary}号`, text: main.share?.title || `${primary}号` },
-      { label: "侧翼", value: wing?.label || "待复核", text: wing?.text || "先把它当作辅助方向。" },
+      { label: "可能主型", value: `${primary}号`, text: main.share?.title || `${primary}号` },
+      { label: "侧翼倾向", value: wing?.label || "待复核", text: wing?.text || "先把它当作辅助方向。" },
       { label: "副型", value: subtypeText, text: subtype.share?.summary || subtypeLabel.line }
     ],
     sections: [
-      { label: "主型概览", text: `${USER_ANALYSIS[primary]?.strength || ELEMENT_SUMMARY[primary]} 这部分负责解释你真正想守住什么。` },
-      { label: "侧翼特征", text: wing?.text || "侧翼用于解释主型在日常中的偏好方向。" },
+      { label: "可能主型概览", text: `${USER_ANALYSIS[primary]?.strength || ELEMENT_SUMMARY[primary]} 这部分用于观察你长期反复想守住什么。` },
+      { label: "侧翼倾向", text: wing?.text || "侧翼用于解释主型在日常中的偏好方向。" },
       { label: "副型排序", text: mixedSubtype ? `前两项是 ${subtypeLabel.name} / ${secondLabel.name}，建议一起看。` : `副型当前更偏 ${subtypeLabel.name}。` },
       { label: "关系与职场", text: `关系：${RELATION_STYLE[primary]} 职场：${WORK_STYLE[primary]}` },
       { label: "压力姿势", text: `${PRESSURE_STYLE[primary]} 副型会进一步影响你先稳哪一块。` },
       { label: "下一步探索", text: `${USER_ANALYSIS[primary]?.next || "建议结合真实场景继续观察。"}` }
     ],
     user_analysis: [
-      { label: "主型", text: `${primary}号是主线。` },
-      { label: "侧翼", text: wing?.text || "侧翼待复核。" },
+      { label: "可能主型", text: `${primary}号是当前最值得优先观察的主型倾向。` },
+      { label: "侧翼倾向", text: wing?.text || "侧翼待复核。" },
       { label: "副型", text: mixedSubtype ? `${subtypeLabel.name} / ${secondLabel.name}` : subtypeLabel.name },
       { label: "使用方式", text: "这是一份合并观察，不是三份报告简单相加。" }
     ],

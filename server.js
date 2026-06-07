@@ -1418,7 +1418,7 @@ function buildMainReport(top, low, scores, qualityFlags, refinement = null) {
       needsReview
         ? { label: "主型候选", value: topText, text: "本次分数或作答质量提示需要复核，先看前三候选更稳。" }
         : { label: "可能主型", value: `${primary}号`, text: ELEMENT_SUMMARY[primary] },
-      { label: "侧翼", value: wingText, text: wing?.text || "侧翼用于解释主型在日常中的偏好方向。" },
+      { label: "侧翼倾向", value: wingText, text: wing?.text || "侧翼用于解释主型在日常中的偏好方向。" },
       {
         label: refinedCount ? "补题" : "稳定性",
         value: refinedCount ? `已补 ${refinedCount} 题` : (needsReview ? "需复核" : "可参考"),

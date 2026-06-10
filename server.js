@@ -953,6 +953,7 @@ function buildMainResultFromAnalysis(payload, mode, analysis, req = null, refine
   const top = analysis.top || [];
   const low = analysis.low || [];
   const scores = analysis.scores || {};
+  const teamScores = cloneScores(analysis.team_scores || scores);
   const quality_flags = analysis.quality_flags || [];
   const primary = top[0]?.element || 9;
   const code = makeVerificationCode();
@@ -977,6 +978,7 @@ function buildMainResultFromAnalysis(payload, mode, analysis, req = null, refine
     account,
     wechat,
     scores,
+    team_scores: teamScores,
     top_types: top,
     low_types: low,
     quality_flags,
@@ -1130,6 +1132,7 @@ function applyRefinementAnswers(baseAnalysis, answers, refinementClaims) {
   const analysis = {
     ...baseAnalysis,
     scores,
+    team_scores: cloneScores(baseAnalysis.scores || {}),
     ranked,
     top,
     low,
@@ -4483,6 +4486,32 @@ function round1(value) {
   return Math.round(value * 10) / 10;
 }
 
+function hasMainTeamScoreSet(scores) {
+  return [1, 2, 3, 4, 5, 6, 7, 8, 9].every((element) => scores?.[element]);
+}
+
+function mainTeamScores(result) {
+  if (hasMainTeamScoreSet(result?.team_scores)) return result.team_scores;
+  if (result?.refinement?.answered_count && Array.isArray(result.answers) && result.answers.length) {
+    try {
+      const baseAnswers = result.answers
+        .filter((answer) => answer?.form !== "refinement")
+        .map((answer) => ({
+          question_id: answer.question_id,
+          answer: Number(answer.raw_answer)
+        }));
+      const analysis = analyzeMainAnswers({
+        mode: result.test_mode || "main90",
+        answers: baseAnswers
+      }, result.test_mode || "main90");
+      return analysis.scores;
+    } catch {
+      return result.scores || {};
+    }
+  }
+  return result?.scores || {};
+}
+
 function teamSummary(code) {
   const team = findTeamByCode(code);
   if (!team) return null;
@@ -4493,11 +4522,11 @@ function teamSummary(code) {
   const elements = [1, 2, 3, 4, 5, 6, 7, 8, 9];
   const stats = {};
   for (const element of elements) {
-    const elementScores = results.map((result) => result.scores?.[element]).filter(Boolean);
+    const elementScores = results.map((result) => mainTeamScores(result)?.[element]).filter(Boolean);
     const percents = elementScores.map((score) => Number(score.type_percent || 0));
-    const yes = results.reduce((sum, result) => sum + Number(result.scores?.[element]?.yes || 0), 0);
-    const uncertain = results.reduce((sum, result) => sum + Number(result.scores?.[element]?.uncertain || 0), 0);
-    const no = results.reduce((sum, result) => sum + Number(result.scores?.[element]?.no || 0), 0);
+    const yes = elementScores.reduce((sum, score) => sum + Number(score.yes || 0), 0);
+    const uncertain = elementScores.reduce((sum, score) => sum + Number(score.uncertain || 0), 0);
+    const no = elementScores.reduce((sum, score) => sum + Number(score.no || 0), 0);
     const evidenceRates = elementScores.map((score) => {
       const scoreYes = Number(score.yes || 0);
       const scoreUncertain = Number(score.uncertain || 0);

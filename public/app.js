@@ -3079,7 +3079,7 @@ function subtypeShareChipsHtml(result) {
 function mainSnapshotHtml(result) {
   const top = result.top_types || [];
   const primary = top[0];
-  const wing = result.report?.summary_cards?.find((item) => item.label === "侧翼");
+  const wing = findSummaryCard(result.report, ["侧翼倾向", "侧翼"]);
   const primaryLabel = primary ? `${primary.element}号 ${TYPE_NAMES[primary.element] || ""}` : "待确认";
   const ranked = top.map((item) => `${item.element}号`).join(" / ") || "暂无";
   const evidence = result.quality_flags?.length ? "建议老师复核" : "可进入解读";
@@ -3341,8 +3341,8 @@ function renderCombinedReport(data) {
   const main = data.main || {};
   const subtype = data.subtype || {};
   const primary = main.share?.primary_type || main.top_types?.[0]?.element || "-";
-  const wing = report.summary_cards?.find((item) => item.label === "侧翼")?.value
-    || main.report?.summary_cards?.find((item) => item.label === "侧翼")?.value
+  const wing = findSummaryCard(report, ["侧翼倾向", "侧翼"])?.value
+    || findSummaryCard(main.report, ["侧翼倾向", "侧翼"])?.value
     || "侧翼待复核";
   const ranked = subtype.subtype_ranked || [];
   const topSubtype = ranked[0];
@@ -3577,10 +3577,15 @@ function mainCandidateText(main, separator = "/") {
   return (main?.top_types || []).slice(0, 3).map((item) => item.element).join(separator) || "-";
 }
 
+function findSummaryCard(report, labels = []) {
+  const wanted = new Set(labels);
+  return report?.summary_cards?.find((item) => wanted.has(item.label)) || null;
+}
+
 function getWingNumber(main) {
   const primary = getMainPrimary(main);
   if (!primary) return null;
-  const value = main?.report?.summary_cards?.find((item) => item.label === "侧翼")?.value || "";
+  const value = findSummaryCard(main?.report, ["侧翼倾向", "侧翼"])?.value || "";
   const parsed = Number(String(value).match(/(\d+)/)?.[1] || 0);
   if (parsed >= 1 && parsed <= 9) return parsed;
   const left = primary === 1 ? 9 : primary - 1;

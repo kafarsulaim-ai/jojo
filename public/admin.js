@@ -1017,7 +1017,7 @@ function renderSubtypeDetail(item, targetId = "resultDetail") {
       <div class="detail-cell"><span>昵称</span><strong>${escapeHtml(item.user?.nickname || "未填写")}</strong></div>
       <div class="detail-cell"><span>联系方式</span><strong>${escapeHtml(item.user?.contact || "未填写")}</strong></div>
       <div class="detail-cell"><span>测试模式</span><strong>${escapeHtml(modeLabel(item))}</strong></div>
-      <div class="detail-cell"><span>副型排序</span><strong>${escapeHtml(ranked.map((x) => SUBTYPE_NAMES[x.key] || x.label || x.key).join(" / ") || "-")}</strong></div>
+      <div class="detail-cell"><span>副型匹配</span><strong>${escapeHtml(ranked.map((x) => SUBTYPE_NAMES[x.key] || x.label || x.key).join(" / ") || "-")}</strong></div>
       <div class="detail-cell"><span>置信提示</span><strong>${escapeHtml(item.subtype_confidence || "-")}</strong></div>
       <div class="detail-cell"><span>答题数</span><strong>${escapeHtml(item.answers?.length || 0)}</strong></div>
     </div>
@@ -1069,7 +1069,7 @@ function renderAnonymousTeamSubtypeDetail(item, targetId = "resultDetail") {
       <div class="detail-cell"><span>团队</span><strong>${escapeHtml(item.team?.name || "团队")}</strong></div>
       <div class="detail-cell"><span>隐私</span><strong>匿名汇总</strong></div>
     </div>
-    <p class="muted">团队副型不展示个人副型排序，只进入团队层面的汇总。</p>
+    <p class="muted">团队副型不展示个人匹配排序，只进入团队层面的汇总。</p>
   `;
   bindTeacherNoteForm(targetId);
   recordResultView(item.verification_code);

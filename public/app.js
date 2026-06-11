@@ -113,7 +113,7 @@ const TYPE_ANALYSIS = {
 };
 
 const SUBTYPE_IDENTITY_LINES = {
-  social: "先看自己在关系网、团队和群体里的位置。",
+  social: "更在意自己在关系网、团队和群体里的位置。",
   one_to_one: "更容易被关键关系、强连接和真实回应点亮。",
   self_preservation: "会优先照顾节奏、资源、身体感和基本盘。"
 };
@@ -125,9 +125,9 @@ const SUBTYPE_PERSONA_NAMES = {
 };
 
 const SUBTYPE_PARENT_LINES = {
-  social: "孩子会更在意同伴、归属和自己在小集体里的位置。",
-  one_to_one: "孩子更容易被一对一的陪伴、回应和专属感点亮。",
-  self_preservation: "孩子更需要稳定节奏、熟悉环境和可预期的照顾。"
+  social: "近期更在意同伴、归属和自己在小集体里的位置。",
+  one_to_one: "近期更容易被一对一的陪伴、回应和专属感点亮。",
+  self_preservation: "近期更需要稳定节奏、熟悉环境和可预期的照顾。"
 };
 
 const FLAG_COPY = {
@@ -148,7 +148,7 @@ const FLAG_COPY = {
 
 const MODE_COPY = {
   main90: {
-    eyebrow: "选择测试入口",
+    eyebrow: "选择测试",
     line: "先选地图。",
     button: "开始测试",
     testBadge: "主型快测",
@@ -156,7 +156,7 @@ const MODE_COPY = {
     testHint: "按最近真实反应选"
   },
   main180: {
-    eyebrow: "专业深测入口",
+    eyebrow: "专业深测",
     line: "深一点。",
     button: "开始测试",
     testBadge: "主型深测",
@@ -164,7 +164,7 @@ const MODE_COPY = {
     testHint: "慢一点也没关系"
   },
   main270: {
-    eyebrow: "专业深测入口",
+    eyebrow: "专业深测",
     line: "深一点。",
     button: "开始测试",
     testBadge: "主型深测",
@@ -172,16 +172,16 @@ const MODE_COPY = {
     testHint: "慢一点也没关系"
   },
   subtype_adult: {
-    eyebrow: "副型补充入口",
-    line: "补一张入口图。",
+    eyebrow: "副型匹配度",
+    line: "补一张匹配图。",
     button: "开始测试",
     testBadge: "个人副型",
-    testTitle: "看注意力入口",
-    testHint: "看第一、第二副型排序"
+    testTitle: "看副型匹配",
+    testHint: "看一对一 / 社群 / 自保排序"
   },
   subtype_child: {
-    eyebrow: "亲子观察入口",
-    line: "给孩子看入口。",
+    eyebrow: "少儿副型匹配",
+    line: "看近期匹配。",
     button: "开始测试",
     testBadge: "少儿副型",
     testTitle: "按近三个月状态选",
@@ -323,7 +323,7 @@ const GROUP_LINES = [
 const RESULT_FEEDBACK_COPY = {
   fit: "收到。这个“挺像”，会帮助jojo继续校准。",
   unsure: "收到。拿不准也很正常，可以带着编号找老师复核。",
-  helpful: "收到。先把它当作亲子观察入口，慢慢看就好。",
+  helpful: "收到。先把它当作近期观察，慢慢看就好。",
   review: "收到。少儿结果更建议结合年龄、家庭互动和老师复核。"
 };
 
@@ -2659,10 +2659,10 @@ function showGeneratingState(stage = "submit") {
     ? "jojo正在看结果稳不稳"
     : state.isRefinement
       ? "jojo正在合上正式题和补题"
-      : isSubtypeMode(state.mode) ? "jojo正在整理你的注意力入口" : "jojo正在把答案整理成一张地图";
+      : isSubtypeMode(state.mode) ? "jojo正在整理你的副型匹配度" : "jojo正在把答案整理成一张地图";
   $("generatingTitle").textContent = title;
   $("generatingStepOne").textContent = stage === "preview" ? "收好答案" : (isSubtypeMode(state.mode) ? "收好选择" : "收好答案");
-  $("generatingStepTwo").textContent = stage === "preview" ? "看前三距离" : (state.isRefinement ? "合并补题" : isSubtypeMode(state.mode) ? "整理入口" : "整理线索");
+  $("generatingStepTwo").textContent = stage === "preview" ? "看前三距离" : (state.isRefinement ? "合并补题" : isSubtypeMode(state.mode) ? "整理匹配" : "整理线索");
   $("generatingStepThree").textContent = stage === "preview" ? "判断是否补题" : (isSubtypeMode(state.mode) ? "生成排序" : "生成倾向");
   ["generatingStepOne", "generatingStepTwo", "generatingStepThree"].forEach((id) => $(id).classList.remove("active"));
   overlay.hidden = false;
@@ -3060,7 +3060,7 @@ function subtypeHeroMetaHtml(result) {
     mixed: "双倾向"
   }[result.subtype_confidence] || "需复核";
   return `
-    <span><small>入口</small>${escapeHtml(topName)}</span>
+    <span><small>匹配</small>${escapeHtml(topName)}</span>
     <span><small>编号</small>${escapeHtml(result.verification_code || "------")}</span>
     <span><small>状态</small>${escapeHtml(confidence)}</span>
   `;
@@ -3071,7 +3071,7 @@ function subtypeShareChipsHtml(result) {
   const topText = ranked.slice(0, 2).map((item) => SUBTYPE_NAMES[item.key] || item.label).join(" / ") || "副型";
   return `
     <span>${escapeHtml(topText)}</span>
-    <span>${escapeHtml(result.subtype_confidence === "mixed" ? "双倾向" : "副型入口")}</span>
+    <span>${escapeHtml(result.subtype_confidence === "mixed" ? "双倾向" : "副型匹配")}</span>
     <span>ref ${escapeHtml(result.verification_code || "------")}</span>
   `;
 }
@@ -3116,12 +3116,12 @@ function subtypeSnapshotHtml(result) {
   }[result.subtype_confidence] || "需要复核";
   return `
     <div class="snapshot-card hero">
-      <span>第一副型</span>
+      <span>第一匹配</span>
       <strong>${escapeHtml(title)}</strong>
       <p>${escapeHtml(result.share?.summary || "副型用于补充主型，不单独定论。")}</p>
     </div>
     <div class="snapshot-card">
-      <span>第二副型</span>
+      <span>高位匹配</span>
       <strong>${escapeHtml(pairing)}</strong>
       <p>${escapeHtml(confidence)}，建议结合主型一起看。</p>
     </div>
@@ -3183,7 +3183,7 @@ function mainTopTypeHtml(result) {
 }
 
 function subtypeTypeHtml(item, index) {
-  const rank = ["主倾向", "第二倾向", "第三倾向"][index] || "参考";
+  const rank = ["第一匹配", "第二匹配", "第三匹配"][index] || "参考";
   return `
     <div class="top-type-item">
       <span>${rank}</span>
@@ -3203,7 +3203,7 @@ function subtypeRankHtml(result) {
   const third = ranked[2];
   return `
     <div class="top-type-item">
-      <span>第一副型</span>
+      <span>第一匹配</span>
       <div class="top-type-head">
         <strong>${SUBTYPE_NAMES[primary?.key] || primary?.label || "待确认"}</strong>
         <strong>${Math.round(primary?.percent || 0)}%</strong>
@@ -3211,7 +3211,7 @@ function subtypeRankHtml(result) {
       <div class="type-bar"><span style="width:${Math.round(primary?.percent || 0)}%"></span></div>
     </div>
     <div class="top-type-item">
-      <span>第二副型</span>
+      <span>第二匹配</span>
       <div class="top-type-head">
         <strong>${SUBTYPE_NAMES[secondary?.key] || secondary?.label || "待确认"}</strong>
         <strong>${Math.round(secondary?.percent || 0)}%</strong>
@@ -3219,7 +3219,7 @@ function subtypeRankHtml(result) {
       <div class="type-bar"><span style="width:${Math.round(secondary?.percent || 0)}%"></span></div>
     </div>
     <div class="top-type-item">
-      <span>第三副型</span>
+      <span>第三匹配</span>
       <div class="top-type-head">
         <strong>${SUBTYPE_NAMES[third?.key] || third?.label || "待确认"}</strong>
         <strong>${Math.round(third?.percent || 0)}%</strong>
@@ -3257,7 +3257,7 @@ function evidenceBarsHtml(scores) {
 
 function subtypeBarsHtml(items = []) {
   return `
-    <div class="evidence-title">副型三项分布</div>
+    <div class="evidence-title">副型匹配度</div>
     ${items.map((item) => `
       <div class="evidence-row subtype">
         <span class="evidence-label">${SUBTYPE_NAMES[item.key] || item.label}</span>
@@ -3281,12 +3281,12 @@ function teamSubtypeSnapshotHtml(result) {
     <div class="snapshot-card">
       <span>团队</span>
       <strong>${escapeHtml(result.team?.name || "团队")}</strong>
-      <p>本次结果会计入团队副型总图。</p>
+      <p>本次匹配度会计入团队副型总图。</p>
     </div>
     <div class="snapshot-card soft">
       <span>匿名提交</span>
       <strong>只看整体</strong>
-      <p>个人排序不公开。</p>
+      <p>个人匹配排序不公开。</p>
     </div>
   `;
 }
@@ -3351,13 +3351,13 @@ function renderCombinedReport(data) {
     ? `${SUBTYPE_NAMES[topSubtype.key] || topSubtype.label}${secondSubtype ? ` / ${SUBTYPE_NAMES[secondSubtype.key] || secondSubtype.label}` : ""}`
     : "副型待确认";
   const mainTop = (main.top_types || []).map((item) => `${item.element}号`).join(" / ") || "暂无";
-  const subtypeRank = ranked.map((item) => `${SUBTYPE_NAMES[item.key] || item.label} ${Math.round(item.percent || 0)}%`).join(" / ") || "暂无";
+  const subtypeRank = ranked.map((item) => `${SUBTYPE_NAMES[item.key] || item.label} 匹配${Math.round(item.percent || 0)}%`).join(" / ") || "暂无";
   const codeText = `${main.verification_code || ""} · ${subtype.verification_code || ""}`;
   $("combinedTitle").textContent = report.title || "可能主型 × 副型";
   $("combinedNote").textContent = "截图结果卡即可转发；更完整的判断交给老师结合真实场景校准。";
   $("combinedCodes").textContent = codeText;
-  const combinedFocus = report.focus || "可能主型看高位动机，副型看这个动机最常进入生活的入口。";
-  const briefFocus = combinedFocus.split("。").filter(Boolean)[0] || "可能主型看高位动机，副型看注意力入口";
+  const combinedFocus = report.focus || "可能主型看高位动机，副型看一对一、社群、自保的匹配倾向。";
+  const briefFocus = combinedFocus.split("。").filter(Boolean)[0] || "可能主型看高位动机，副型看匹配倾向";
   const primaryCardTitle = `可能 ${primary}号 × ${subtypeTitle}`;
   $("combinedContent").innerHTML = `
     <section class="share-deck combined-share-deck" aria-label="综合结果分享卡">
@@ -3391,9 +3391,9 @@ function renderCombinedReport(data) {
           <span>02 / 02</span>
         </div>
         <div class="share-core share-card-stack">
-          <p class="share-label">副型排序</p>
+          <p class="share-label">副型匹配度</p>
           <h3>${escapeHtml(subtypeTitle)}</h3>
-          <p>副型不是单选标签，更像注意力入口的前后顺序。</p>
+          <p>三项分别计算匹配度，不是加到100%。</p>
           <div class="poster-analysis poster-combined-visual">
             ${subtypePieHtml(ranked)}
           </div>
@@ -3652,8 +3652,8 @@ function mainIdentitySentence(main) {
 function subtypeIdentitySentence(subtype) {
   const top = getSubtypeTop(subtype);
   if (!top) return "副型可以之后补，本次先看主型倾向。";
-  if (isChildSubtypeResult(subtype)) return SUBTYPE_PARENT_LINES[top.key] || "先观察孩子更常进入的注意力入口。";
-  return SUBTYPE_IDENTITY_LINES[top.key] || "副型看注意力入口，不是单一标签。";
+  if (isChildSubtypeResult(subtype)) return SUBTYPE_PARENT_LINES[top.key] || "先把它当作近期观察，不急着定性。";
+  return SUBTYPE_IDENTITY_LINES[top.key] || "副型看匹配倾向，不是单一标签。";
 }
 
 function resultConfidenceLabel(result) {
@@ -3701,30 +3701,53 @@ function subtypePairText(subtype, withPercent = false) {
   const ranked = subtype?.subtype_ranked || [];
   return ranked.slice(0, 2).map((item) => {
     const name = SUBTYPE_NAMES[item.key] || item.label || "副型";
-    return withPercent ? `${name}${Math.round(item.percent || 0)}%` : name;
+    return withPercent ? `${name} 匹配${Math.round(item.percent || 0)}%` : name;
   }).join(" / ") || "副型待补";
+}
+
+function subtypeItemName(item) {
+  return item ? (SUBTYPE_NAMES[item.key] || item.label || "副型") : "";
+}
+
+function subtypeItemMatchText(item) {
+  return item ? `${subtypeItemName(item)} ${Math.round(item.percent || 0)}%` : "待确认";
+}
+
+function subtypeFollowupMatchText(ranked = [], options = {}) {
+  const items = ranked.slice(1, 3).filter(Boolean);
+  if (!items.length) return options.empty || "暂不明显，先不急着补结论。";
+  const second = items[0];
+  const third = items[1];
+  if (third && Math.abs(Number(second.percent || 0) - Number(third.percent || 0)) <= 3) {
+    return `${subtypeItemName(second)} / ${subtypeItemName(third)}都在${Math.round(second.percent || 0)}%附近，适合一起观察。`;
+  }
+  return `${subtypeItemMatchText(second)}，会影响表达方式和关系节奏。`;
+}
+
+function subtypeMatchNote() {
+  return "三项分别计算，不是加到100%。";
 }
 
 function identityCardKicker(deck) {
   const kind = bundleCurrentKind(deck);
   if (kind === "team_main") return "我的团队主型提交";
-  if (kind === "child_subtype") return "亲子观察卡";
+  if (kind === "child_subtype") return "少儿副型匹配卡";
   if (deck.main && deck.subtype) return mainNeedsReview(deck.main) ? "我的九型候选卡" : "我的九型倾向卡";
   if (deck.main) return mainNeedsReview(deck.main) ? "我的主型候选卡" : "我的主型倾向卡";
-  return "我的副型倾向卡";
+  return "我的副型匹配卡";
 }
 
 function identityCardTitle(deck) {
   const main = deck.main;
   const subtype = deck.subtype;
   if (main && subtype) {
-    if (mainNeedsReview(main)) return `先看 ${mainCandidateText(main, "/")} · ${subtypeTopName(subtype, true)}优先`;
-    return `更像 ${mainTypeCode(main)} · ${subtypeTopName(subtype, true)}优先的${mainPersonaName(main)}`;
+    if (mainNeedsReview(main)) return `先看 ${mainCandidateText(main, "/")} · ${subtypeTopName(subtype, true)}匹配高`;
+    return `更像 ${mainTypeCode(main)} · ${subtypeTopName(subtype, true)}匹配高的${mainPersonaName(main)}`;
   }
   if (main?.team?.code) return `以 ${possibleMainTypeCode(main)} 计入团队总图`;
   if (main) return mainNeedsReview(main) ? `先看前三候选 ${mainCandidateText(main, " / ")}` : `更像 ${mainTypeCode(main)} 的${mainPersonaName(main)}`;
-  if (isChildSubtypeResult(subtype)) return `${subtypeTopName(subtype)}优先的亲子观察`;
-  if (subtype) return `${subtypeTopName(subtype)}优先的${subtypePersonaName(subtype)}`;
+  if (isChildSubtypeResult(subtype)) return `${subtypeTopName(subtype)}匹配较高`;
+  if (subtype) return `${subtypeTopName(subtype)}匹配较高`;
   return "结果待确认";
 }
 
@@ -3746,9 +3769,9 @@ function identityCardLine(deck, result) {
     return `${mainIdentitySentence(main)} 这张卡先呈现你的可能主型和侧翼倾向。`;
   }
   if (isChildSubtypeResult(subtype)) {
-    return `${subtypeIdentitySentence(subtype)} 这不是标签，是亲子沟通的观察入口。`;
+    return `${subtypeIdentitySentence(subtype)} 这不是标签，只是近期观察。`;
   }
-  return `${subtypeIdentitySentence(subtype)} 这张卡先看副型排序；补上主型后，老师能读得更稳。`;
+  return `${subtypeIdentitySentence(subtype)} 这张卡先看副型匹配度；补上主型后，老师能读得更稳。`;
 }
 
 function identityCardChips(deck, result) {
@@ -3769,11 +3792,11 @@ function identityCardChips(deck, result) {
       return chips.filter(Boolean).slice(0, 4);
     }
   } else {
-    chips.push(isChildSubtypeResult(subtype) ? "亲子观察" : "主型可补");
+    chips.push(isChildSubtypeResult(subtype) ? "少儿副型" : "主型可补");
   }
   if (isPersonalSubtypeResult(subtype)) {
     const topSubtype = getSubtypeTop(subtype);
-    chips.push(topSubtype ? `${SUBTYPE_SHORT_NAMES[topSubtype.key] || SUBTYPE_NAMES[topSubtype.key] || topSubtype.label}优先` : "副型待确认");
+    chips.push(topSubtype ? `${SUBTYPE_SHORT_NAMES[topSubtype.key] || SUBTYPE_NAMES[topSubtype.key] || topSubtype.label}匹配高` : "副型待确认");
   } else if (main) {
     chips.push("副型可补");
   }
@@ -3796,10 +3819,10 @@ function identityTitle(bundle) {
   const topSubtype = getSubtypeTop(subtype);
   const typeName = primary ? (TYPE_NAMES[primary] || main?.share?.title || `${primary}号`) : "";
   const subtypeName = topSubtype
-    ? `${SUBTYPE_SHORT_NAMES[topSubtype.key] || SUBTYPE_NAMES[topSubtype.key] || topSubtype.label}优先`
+    ? `${SUBTYPE_SHORT_NAMES[topSubtype.key] || SUBTYPE_NAMES[topSubtype.key] || topSubtype.label}匹配高`
     : "副型可补";
   if (!primary) {
-    return topSubtype ? `${subtypeName} · 副型入口` : "副型入口";
+    return topSubtype ? `${subtypeName} · 副型匹配` : "副型匹配";
   }
   return topSubtype ? `${possibleMainTypeCode(main)} · ${subtypeName} · ${typeName}` : `${possibleMainTypeCode(main)} · ${typeName}`;
 }
@@ -3807,7 +3830,7 @@ function identityTitle(bundle) {
 function resultOverviewKicker(bundle) {
   if (bundle.main && bundle.subtype) return "结果总览";
   if (bundle.main) return bundle.main?.team?.code ? "团队主型已提交" : "主型倾向";
-  return "副型排序结果";
+  return "副型匹配结果";
 }
 
 function resultOverviewTitle(bundle) {
@@ -3817,13 +3840,13 @@ function resultOverviewTitle(bundle) {
     const primary = getMainPrimary(main);
     const typeName = primary ? TYPE_NAMES[primary] || `${primary}号` : "主型";
     const subtypeTop = getSubtypeTop(subtype);
-    const subtypeText = subtypeTop ? `${SUBTYPE_SHORT_NAMES[subtypeTop.key] || SUBTYPE_NAMES[subtypeTop.key] || subtypeTop.label}优先` : "";
+    const subtypeText = subtypeTop ? `${SUBTYPE_SHORT_NAMES[subtypeTop.key] || SUBTYPE_NAMES[subtypeTop.key] || subtypeTop.label}匹配高` : "";
     if (mainNeedsReview(main)) return subtypeText ? `候选 ${mainCandidateText(main, "/")} · ${subtypeText}` : `前三候选 ${mainCandidateText(main, " / ")}`;
     return subtypeText ? `${possibleMainTypeCode(main)} · ${subtypeText}` : `${possibleMainTypeCode(main)} · ${typeName}`;
   }
   const top = getSubtypeTop(subtype);
   const second = getSubtypeSecond(subtype);
-  if (!top) return "副型排序待确认";
+  if (!top) return "副型匹配待确认";
   const first = SUBTYPE_NAMES[top.key] || top.label;
   const next = second ? ` / ${SUBTYPE_NAMES[second.key] || second.label}` : "";
   return `${first}${next}`;
@@ -3840,7 +3863,7 @@ function resultOverviewLine(bundle) {
     const first = getSubtypeTop(subtype);
     const second = getSubtypeSecond(subtype);
     if (mainNeedsReview(main)) return `主型先看 ${mainCandidateText(main, " / ")} 这组候选，副型前两项为 ${SUBTYPE_NAMES[first?.key] || first?.label || "待确认"}${second ? ` / ${SUBTYPE_NAMES[second.key] || second.label}` : ""}。`;
-    return `可能主型看长期动机，副型看注意力入口。本次副型前两项为 ${SUBTYPE_NAMES[first?.key] || first?.label || "待确认"}${second ? ` / ${SUBTYPE_NAMES[second.key] || second.label}` : ""}。`;
+    return `可能主型看长期动机，副型看一对一、社群、自保的匹配倾向。本次副型前两项为 ${SUBTYPE_NAMES[first?.key] || first?.label || "待确认"}${second ? ` / ${SUBTYPE_NAMES[second.key] || second.label}` : ""}。`;
   }
   if (main) {
     if (mainNeedsReview(main)) return `本次先看 ${mainCandidateText(main, " / ")} 这组候选，结合真实场景再定主型会更稳。`;
@@ -3851,7 +3874,7 @@ function resultOverviewLine(bundle) {
   if (ranked.length) {
     return "副型不是单一标签，更适合看从高到低的排序；补充主型后会更完整。";
   }
-  return "本次先生成副型入口，建议与主型一起校准。";
+  return "本次先生成副型匹配图，建议与主型一起校准。";
 }
 
 function resultOverviewChips(bundle) {
@@ -3872,7 +3895,7 @@ function resultOverviewChips(bundle) {
     chips.push("主型可补");
   }
   if (isPersonalSubtypeResult(subtype)) {
-    chips.push(topSubtype ? `${SUBTYPE_SHORT_NAMES[topSubtype.key] || SUBTYPE_NAMES[topSubtype.key] || topSubtype.label}优先` : "副型待确认");
+    chips.push(topSubtype ? `${SUBTYPE_SHORT_NAMES[topSubtype.key] || SUBTYPE_NAMES[topSubtype.key] || topSubtype.label}匹配高` : "副型待确认");
   } else if (main) {
     chips.push("副型可补");
   }
@@ -3882,18 +3905,18 @@ function resultOverviewChips(bundle) {
 
 function briefAnalysisTitle(bundle, result = null) {
   if (bundle.main?.team?.code) return "团队主型样本";
-  if (isChildSubtypeResult(bundle.subtype || result)) return `${subtypeTopName(bundle.subtype || result)}亲子观察`;
+  if (isChildSubtypeResult(bundle.subtype || result)) return `${subtypeTopName(bundle.subtype || result)}匹配重点`;
   if (bundle.main && bundle.subtype) return mainNeedsReview(bundle.main) ? `候选 ${mainCandidateText(bundle.main, "/")} 主副型` : `${possibleMainTypeCode(bundle.main)} 主副型倾向`;
   if (bundle.main) return mainNeedsReview(bundle.main) ? `前三候选 ${mainCandidateText(bundle.main, "/")}` : `${possibleMainTypeCode(bundle.main)} 倾向画像`;
-  return `${subtypeTopName(bundle.subtype || result)}副型特征`;
+  return `${subtypeTopName(bundle.subtype || result)}匹配重点`;
 }
 
 function briefAnalysisLine(bundle, result = null) {
   if (bundle.main?.team?.code) return "团队看分布，不给个人打分。";
-  if (isChildSubtypeResult(bundle.subtype || result)) return "先看入口，再看家庭里的靠近方式。";
-  if (bundle.main && bundle.subtype) return mainNeedsReview(bundle.main) ? "主型先看候选范围，副型看注意力入口。" : "可能主型看动力，副型看这个动力的入口。";
+  if (isChildSubtypeResult(bundle.subtype || result)) return "先看匹配度，再看日常里的靠近方式。";
+  if (bundle.main && bundle.subtype) return mainNeedsReview(bundle.main) ? "主型先看候选范围，副型看匹配倾向。" : "可能主型看动力，副型看三项匹配倾向。";
   if (bundle.main) return mainNeedsReview(bundle.main) ? "先看前三候选，再用真实场景校准。" : "先看高位动力，再看优势、压力和一句话翻译。";
-  return "看第一、第二入口如何影响日常表现。";
+  return "看一对一、社群、自保的高低排序如何影响日常表现。";
 }
 
 function briefAnalysisHtml(bundle, translation, usage, result) {
@@ -3902,20 +3925,20 @@ function briefAnalysisHtml(bundle, translation, usage, result) {
     const ranked = subtype?.subtype_ranked || [];
     const first = ranked[0];
     const second = ranked[1];
-    const firstName = first ? SUBTYPE_NAMES[first.key] || first.label : "待观察";
-    const secondName = second ? SUBTYPE_NAMES[second.key] || second.label : "暂不明显";
+    const firstName = subtypeItemName(first) || "待观察";
+    const secondName = subtypeItemName(second) || "暂不明显";
     return analysisOneBoxHtml({
-      eyebrow: "亲子观察重点",
-      title: `${firstName}优先的靠近方式`,
-      lead: `${subtypeIdentitySentence(subtype)} 这张卡适合先帮助家长看见孩子的入口，而不是急着给孩子定性。`,
-      tags: [`第一 ${firstName}`, `第二 ${secondName}`, "先观察再沟通"],
+      eyebrow: "少儿副型匹配",
+      title: `${firstName}匹配较高`,
+      lead: `${subtypeIdentitySentence(subtype)} 这张卡适合先看近期状态，而不是急着给孩子定性。`,
+      tags: [`第一 ${firstName}`, `高位 ${secondName}`, "先观察再沟通"],
       items: [
-        ["第一入口", first ? `${SUBTYPE_NAMES[first.key] || first.label} ${Math.round(first.percent || 0)}%，更像孩子默认会先使用的靠近方式。` : "待继续观察。"],
-        ["第二入口", second ? `${SUBTYPE_NAMES[second.key] || second.label}会一起影响亲近方式，尤其在家庭关系里容易出现。` : "暂不明显，先不急着补结论。"],
-        ["家庭提示", "先接住孩子的入口，再谈要求和规则；把一次表现当线索，不把孩子固定成标签。"],
-        ["老师校准", "少儿版一定要结合年龄、家庭互动和真实事件再判断。"]
+        ["第一匹配", first ? `${subtypeItemMatchText(first)}，近期更明显。` : "待继续观察。"],
+        ["并列观察", subtypeFollowupMatchText(ranked)],
+        ["怎么理解", subtypeMatchNote()],
+        ["家庭提示", "先接住感受和节奏，再谈要求和规则；一次表现只当线索。"]
       ],
-      teacher: "亲子教育和亲密关系里，真实互动比单次分数更重要。"
+      teacher: "少儿版一定要结合年龄、家庭互动和真实事件再判断。"
     });
   }
   if (bundle.main) {
@@ -3936,7 +3959,7 @@ function briefAnalysisHtml(bundle, translation, usage, result) {
     const subtype = bundle.subtype;
     const fourthLabel = hasSubtype ? "副型影响" : "一句话";
     const fourthText = hasSubtype
-      ? `${subtypeTopName(subtype)}优先，会让这个高位倾向更常从「${SUBTYPE_NAMES[getSubtypeTop(subtype)?.key] || subtypeTopName(subtype)}」入口表现出来。`
+      ? `${subtypeTopName(subtype)}匹配较高，会影响这个高位倾向在关系、资源和压力里的表现方式。`
       : translation.friend;
     const typeTitle = needsReview ? `前三候选 ${mainCandidateText(main, " / ")}` : (primary ? `可能 ${primary}号 · ${TYPE_NAMES[primary] || "主型"}` : "高位动力");
     const usageText = `朋友翻译：${fourthText} 靠近：${usage.near}；避雷：${usage.avoid}；补能：${usage.charge}。`;
@@ -3958,20 +3981,20 @@ function briefAnalysisHtml(bundle, translation, usage, result) {
   const ranked = subtype?.subtype_ranked || [];
   const first = ranked[0];
   const second = ranked[1];
-  const firstName = first ? SUBTYPE_NAMES[first.key] || first.label : "待确认";
-  const secondName = second ? SUBTYPE_NAMES[second.key] || second.label : "待确认";
+  const firstName = subtypeItemName(first) || "待确认";
+  const secondName = subtypeItemName(second) || "待确认";
   return analysisOneBoxHtml({
-    eyebrow: "副型重点",
-    title: `${firstName}优先${second ? ` · ${secondName}跟上` : ""}`,
-    lead: first ? `你的注意力更容易先进入「${firstName}」，第二入口会一起影响日常表现。副型看的是入口排序，不是给人贴单选标签。` : "先看排序，再和主型一起校准。",
+    eyebrow: "副型匹配重点",
+    title: `${firstName}匹配较高${second ? ` · ${secondName}跟上` : ""}`,
+    lead: first ? `${firstName}是本次最高匹配项，后面的高位项会一起影响日常表现。副型看排序，不是给人贴单选标签。` : "先看排序，再和主型一起校准。",
     tags: [`第一 ${firstName}`, `第二 ${secondName}`, resultConfidenceLabel(subtype)],
     items: [
-      ["第一入口", first ? `${SUBTYPE_NAMES[first.key] || first.label} ${Math.round(first.percent || 0)}%，更像你进入生活和压力场景的默认入口。` : "待确认。"],
-      ["第二入口", second ? `${SUBTYPE_NAMES[second.key] || second.label} ${Math.round(second.percent || 0)}%，会影响你的表达方式和关系节奏。` : "待确认。"],
-      ["怎么理解", "第一副型像默认入口，第二副型像常用辅助手；两者组合起来，才更接近日常的你。"],
+      ["第一匹配", first ? `${subtypeItemMatchText(first)}，近期更明显。` : "待确认。"],
+      ["高位跟随", subtypeFollowupMatchText(ranked, { empty: "待确认。" })],
+      ["怎么理解", subtypeMatchNote()],
       ["下一步", "补上主型，再带真实场景一起看，会更稳。"]
     ],
-    teacher: "先当入口排序看，别急着给自己下结论。"
+    teacher: "先当匹配排序看，别急着给自己下结论。"
   });
 }
 
@@ -4067,7 +4090,7 @@ function identityChips(bundle, code, options = {}) {
   }
   return [
     primary ? `可能主型 ${mainTypeCode(main)}` : "主型可补",
-    topSubtype ? `${SUBTYPE_SHORT_NAMES[topSubtype.key] || SUBTYPE_NAMES[topSubtype.key] || topSubtype.label}优先` : "",
+    topSubtype ? `${SUBTYPE_SHORT_NAMES[topSubtype.key] || SUBTYPE_NAMES[topSubtype.key] || topSubtype.label}匹配高` : "",
     `ref ${code}`
   ].filter(Boolean);
 }
@@ -4075,7 +4098,7 @@ function identityChips(bundle, code, options = {}) {
 function subtypeRankText(subtype) {
   const ranked = subtype?.subtype_ranked || [];
   if (!ranked.length) return "可补";
-  return ranked.slice(0, 3).map((item) => `${SUBTYPE_NAMES[item.key] || item.label}${Math.round(item.percent || 0)}%`).join(" / ");
+  return ranked.slice(0, 3).map((item) => `${SUBTYPE_NAMES[item.key] || item.label} ${Math.round(item.percent || 0)}%`).join(" / ");
 }
 
 function identityVisualHtml(bundle) {
@@ -4096,7 +4119,7 @@ function identityVisualHtml(bundle) {
     }
     const subtypeBlock = `<div class="identity-subtype-panel">
       <div class="main-only-visual-head">
-        <strong>副型排序</strong>
+        <strong>副型匹配</strong>
         <span>${escapeHtml(subtypeRankText(subtype))}</span>
       </div>
       ${subtypeTriangleHtml(subtype)}
@@ -4168,7 +4191,7 @@ function subtypeTriangleHtml(subtype) {
     return `
       <div class="subtype-triangle-empty">
         <strong>副型可补</strong>
-        <span>加测后显示入口排序</span>
+        <span>加测后显示匹配排序</span>
       </div>
     `;
   }
@@ -4192,7 +4215,7 @@ function subtypeTriangleHtml(subtype) {
     `;
   }).join("");
   return `
-    <svg class="subtype-triangle" viewBox="0 0 144 144" role="img" aria-label="副型三角排序">
+    <svg class="subtype-triangle" viewBox="0 0 144 144" role="img" aria-label="副型匹配排序">
       <path d="M72 18 L128 116 L16 116 Z"></path>
       ${nodes}
     </svg>
@@ -4252,8 +4275,8 @@ function nextCardTitle(deck, result) {
 
 function nextCardLine(deck, result) {
   if (deck.main?.team?.code) return "团队总图不是个人评价，适合由老师结合团队样本和访谈解释。";
-  if (isChildSubtypeResult(deck.subtype || result)) return "把这张图当成观察入口，不把孩子固定成某一种人。";
-  if (!deck.main && deck.subtype) return "副型先看入口排序，补上主型会更完整。";
+  if (isChildSubtypeResult(deck.subtype || result)) return "把这张图当成近期观察，不把孩子固定成某一种人。";
+  if (!deck.main && deck.subtype) return "副型先看匹配排序，补上主型会更完整。";
   if (deck.main && deck.subtype) return "这张卡最适合转发给亲近的人，让对方知道怎么和你配合。";
   return "本次先看主型倾向；副型可以之后补，不影响这次结果。";
 }
@@ -4288,7 +4311,7 @@ function nextCardHtml(deck, usage, result) {
   if (!deck.main && deck.subtype) {
     return `
       <div class="usage-guide-list">
-        ${briefItemHtml("现在能看", "副型排序和注意力入口。")}
+        ${briefItemHtml("现在能看", "副型匹配排序和高位倾向。")}
         ${briefItemHtml("还差一步", "补测主型后，才能判断高位动机。")}
         ${briefItemHtml("找老师看", "把主型编号和副型编号一起发过去。")}
       </div>
@@ -4323,7 +4346,7 @@ function subtypeTranslation(subtype) {
 function subtypeUsage(subtype) {
   const top = getSubtypeTop(subtype);
   const key = top?.key || "social";
-  const line = "副型先看注意力入口，补上主型后会更完整。";
+  const line = "副型先看匹配排序，补上主型后会更完整。";
   return {
     social: { line, near: "给我位置感", avoid: "把我排除在局面外", charge: "一起做成点什么" },
     one_to_one: { line, near: "认真、直接、有回应", avoid: "含糊和冷处理", charge: "高质量连接" },
@@ -4382,16 +4405,16 @@ function renderAnonymousTeamSubtypeShareDeck(result) {
 
   $("shareEvidenceTitle").textContent = "团队副型怎么看";
   $("shareEvidenceKicker").textContent = "结果重点";
-  $("shareEvidenceLine").textContent = "团队副型看的是整体注意力入口，不看个人标签。";
+  $("shareEvidenceLine").textContent = "团队副型看整体匹配倾向，不看个人标签。";
   $("shareEvidenceVisual").innerHTML = analysisOneBoxHtml({
     eyebrow: "团队副型重点",
     title: "团队默认会先关注什么",
-    lead: "有人先看资源节奏，有人先看关键连接，也有人先看群体位置；汇总后才适合判断团队氛围和协作入口。",
+    lead: "有人先看资源节奏，有人先看关键连接，也有人先看群体位置；汇总后才适合判断团队氛围和协作方式。",
     tags: ["匿名汇总", "只看整体", "老师解读"],
     items: [
-      ["自保入口", "资源、节奏、边界和基本盘。高时团队更重视稳定、可持续和风险缓冲。"],
-      ["一对一入口", "关键连接、真实回应和关系强度。高时团队更容易被强关系和关键人物牵动。"],
-      ["社群入口", "群体位置、协作氛围和共同目标。高时团队更关注位置、共识和集体方向。"],
+      ["自保型", "资源、节奏、边界和基本盘。匹配高时，团队更重视稳定、可持续和风险缓冲。"],
+      ["一对一型", "关键连接、真实回应和关系强度。匹配高时，团队更容易被强关系和关键人物牵动。"],
+      ["社群型", "群体位置、协作氛围和共同目标。匹配高时，团队更关注位置、共识和集体方向。"],
       ["专业老师", "要和团队主型、岗位结构、真实协作一起看，不能只看一个汇总图。"]
     ],
     teacher: "团队副型只服务团队观察，不看单个人。"
@@ -4399,11 +4422,11 @@ function renderAnonymousTeamSubtypeShareDeck(result) {
   $("shareEvidenceFoot").textContent = "匿名汇总 · 只看整体";
   $("shareEvidenceCode").textContent = `ref ${code}`;
 
-  $("shareNextKicker").textContent = "团队入口";
+  $("shareNextKicker").textContent = "团队总图";
   $("shareNextTitle").textContent = "查看团队总图";
   $("shareNextLine").textContent = "";
   $("shareNextQr").innerHTML = getTeamOrGroupQrHtml(result);
-  $("shareNextFoot").textContent = "团队页 / 群聊入口";
+  $("shareNextFoot").textContent = "团队页 / 群聊";
   $("shareNextCode").textContent = `ref ${code}`;
   $("shareEvidenceCard").dataset.type = 6;
   $("shareNextCard").dataset.type = 6;
@@ -4416,15 +4439,15 @@ function teamSubtypeIdentityHtml(result) {
   return `
     <div class="team-anon-visual">
       <div class="team-anon-route" aria-label="团队副型匿名流程">
-        <span>你的排序</span>
+        <span>你的匹配</span>
         <i></i>
         <strong>匿名池</strong>
         <i></i>
         <span>团队总图</span>
       </div>
       <div class="team-anon-steps">
-        <p><strong>不公开</strong><span>个人副型排序</span></p>
-        <p><strong>只统计</strong><span>团队整体入口</span></p>
+        <p><strong>不公开</strong><span>个人匹配排序</span></p>
+        <p><strong>只统计</strong><span>团队整体匹配</span></p>
         <p><strong>再解读</strong><span>结合主型和访谈</span></p>
       </div>
       <div class="team-anon-badge">
@@ -4525,29 +4548,22 @@ function mainResultDistributionHtml(result) {
 
 function subtypePieHtml(items = []) {
   const ranked = items.length ? items : [];
-  const total = ranked.reduce((sum, item) => sum + Number(item.percent || 0), 0) || 1;
-  let offset = 25;
   const colors = ["#ff7166", "#27c7ee", "#ffc83d"];
-  const circles = ranked.slice(0, 3).map((item, index) => {
-    const value = Number(item.percent || 0);
-    const dash = Math.max(0, value / total * 100);
-    const node = `<circle class="pie-seg seg-${index}" cx="72" cy="72" r="48" pathLength="100" stroke="${colors[index]}" stroke-width="${index === 0 ? 22 : 14}" stroke-dasharray="${dash} ${100 - dash}" stroke-dashoffset="${-offset}" fill="none"></circle>`;
-    offset += dash;
-    return node;
-  }).join("");
-  const top = ranked[0];
-  const topPercent = Number(top?.percent || 0);
   return `
-    <div class="poster-pie-wrap" aria-label="副型占比">
-      <svg class="poster-pie" viewBox="0 0 144 144" role="img">
-        <circle cx="72" cy="72" r="48" fill="rgba(255,255,255,.64)" stroke="rgba(20,33,38,.08)" stroke-width="14"></circle>
-        ${circles}
-        <text x="72" y="68" text-anchor="middle" class="pie-title">${escapeHtml(SUBTYPE_NAMES[top?.key] || top?.label || "副型")}</text>
-        <text x="72" y="88" text-anchor="middle" class="pie-value">${Math.round(topPercent)}%</text>
-      </svg>
-      <div class="poster-pie-legend">
+    <div class="poster-pie-wrap poster-match-wrap" aria-label="副型匹配度">
+      <div class="poster-match-head">
+        <span>匹配度</span>
+        <strong>${escapeHtml(ranked[0] ? SUBTYPE_NAMES[ranked[0].key] || ranked[0].label : "副型待确认")}</strong>
+        <small>${subtypeMatchNote()}</small>
+      </div>
+      <div class="poster-pie-legend poster-match-list">
         ${ranked.slice(0, 3).map((item, index) => `
-          <span class="${index === 0 ? "primary" : ""}"><i style="background:${colors[index]}"></i><b>${index + 1}</b>${escapeHtml(SUBTYPE_NAMES[item.key] || item.label)} ${Math.round(item.percent || 0)}%</span>
+          <span class="${index === 0 ? "primary" : ""}">
+            <b>${index + 1}</b>
+            <em>${escapeHtml(SUBTYPE_NAMES[item.key] || item.label)}</em>
+            <i><u style="width:${Math.max(0, Math.min(100, Math.round(item.percent || 0)))}%; background:${colors[index]}"></u></i>
+            <strong>${Math.round(item.percent || 0)}%</strong>
+          </span>
         `).join("")}
       </div>
     </div>
@@ -4819,10 +4835,10 @@ function posterSubtypeIdentitySvg(items, startY, palette) {
   const max = Math.max(...items.map((item) => item.percent || 0), 100);
   const colors = ["#ff7166", "#27c7ee", "#ffc83d"];
   return `<rect x="64" y="${y}" width="772" height="360" rx="30" fill="rgba(255,255,255,.78)" stroke="${palette.main}" stroke-opacity=".18" stroke-width="3"/>
-  <text x="96" y="${y + 52}" class="blockLabel">副型排序</text>
-  <text x="96" y="${y + 96}" fill="#153a3e" font-size="40" font-weight="950">${escapeSvg(items[0]?.label || "副型待确认")}优先</text>
-  <circle cx="696" cy="${y + 92}" r="62" fill="${colors[0]}" fill-opacity=".16" stroke="${colors[0]}" stroke-width="16"/>
-  <text x="696" y="${y + 86}" text-anchor="middle" class="blockLabel">第一</text>
+  <text x="96" y="${y + 52}" class="blockLabel">副型匹配度</text>
+  <text x="96" y="${y + 96}" fill="#153a3e" font-size="40" font-weight="950">${escapeSvg(items[0]?.label || "副型待确认")}匹配高</text>
+  <circle cx="696" cy="${y + 92}" r="62" fill="${colors[0]}" fill-opacity=".16" stroke="${colors[0]}" stroke-width="5"/>
+  <text x="696" y="${y + 86}" text-anchor="middle" class="blockLabel">匹配</text>
   <text x="696" y="${y + 121}" text-anchor="middle" fill="#153a3e" font-size="33" font-weight="950">${Math.round(items[0]?.percent || 0)}%</text>
   ${items.slice(0, 3).map((item, index) => {
     const rowY = y + 156 + index * 62;
@@ -4832,7 +4848,7 @@ function posterSubtypeIdentitySvg(items, startY, palette) {
   <rect x="292" y="${rowY}" width="${barWidth}" height="28" rx="14" fill="${colors[index] || palette.main}"/>
   <text x="784" y="${rowY + 22}" class="chip">${Math.round(item.percent || 0)}%</text>`;
   }).join("")}
-  <text x="96" y="${y + 332}" class="muted">副型看入口排序，第一和第二一起读会更接近日常表现。</text>`;
+  <text x="96" y="${y + 332}" class="muted">三项分别计算匹配度，不是加到100%。</text>`;
 }
 
 function posterTeamAnonSvg(visual, startY, palette) {
@@ -4988,7 +5004,7 @@ function posterTeacherCtaSvg(cta, startY) {
 function posterQrSvgBlock(footer) {
   return `<rect x="330" y="825" width="240" height="218" rx="30" fill="rgba(255,255,255,.72)" stroke="rgba(20,33,38,.1)"/>
   <rect x="364" y="878" width="172" height="118" rx="24" fill="rgba(255,255,255,.86)" stroke="rgba(20,33,38,.08)"/>
-  <text x="450" y="930" text-anchor="middle" class="chip">进群入口</text>
+  <text x="450" y="930" text-anchor="middle" class="chip">进群找老师</text>
   <text x="450" y="972" text-anchor="middle" class="muted">${escapeSvg(footer || "长按保存后继续看")}</text>`;
 }
 
@@ -5142,7 +5158,7 @@ function renderSubtypeTeamSummary(summary) {
   $("teamSummaryTitle").textContent = hasConclusion ? "团队副型总图" : "团队副型收集中";
   $("teamSummaryNote").textContent = hasConclusion
     ? teamSubtypeInsight(summary)
-    : `还差 ${missingCount} 人亮起入口排序。`;
+    : `还差 ${missingCount} 人亮起匹配图。`;
   if (hasConclusion) {
     $("teamImageLink").href = `/api/team/${encodeURIComponent(summary.team.code)}/report.svg`;
   }
@@ -5155,19 +5171,19 @@ function renderSubtypeTeamSummary(summary) {
   `;
   $("teamSummaryGrid").innerHTML = `
     <div class="top-type-item team-kpi-item">
-      <span>主导入口</span>
+      <span>高匹配项</span>
       <strong>${hasConclusion ? summary.dominant_subtypes.map((item) => escapeHtml(item.label)).join(" / ") : "等待样本"}</strong>
-      <small>${hasConclusion ? "团队更常进入的注意力入口" : "还差" + missingCount + "人"}</small>
+      <small>${hasConclusion ? "团队更常关注的副型倾向" : "还差" + missingCount + "人"}</small>
     </div>
     <div class="top-type-item team-kpi-item">
-      <span>分化入口</span>
+      <span>分化项</span>
       <strong>${hasConclusion ? (summary.split_subtypes.length ? summary.split_subtypes.map((item) => escapeHtml(item.label)).join(" / ") : "暂无明显高分化") : "暂不判断"}</strong>
-      <small>${hasConclusion ? "不同成员差异较大的入口" : "等待更多成员"}</small>
+      <small>${hasConclusion ? "不同成员差异较大的倾向" : "等待更多成员"}</small>
     </div>
     <div class="top-type-item team-kpi-item">
       <span>匿名提交</span>
       <strong>只看整体</strong>
-      <small>个人排序不公开</small>
+      <small>个人匹配不公开</small>
     </div>
   `;
   const stats = Object.values(summary.subtype_stats || {});
@@ -5175,7 +5191,7 @@ function renderSubtypeTeamSummary(summary) {
     $("teamEvidenceBars").innerHTML = `
       <div class="team-empty-state team-subtype-waiting">
         <strong>已有 ${Number(summary.member_count || 0)}/5 人匿名提交</strong>
-        <p>再来 ${missingCount} 人，入口排序就亮。</p>
+        <p>再来 ${missingCount} 人，匹配图就亮。</p>
       </div>
     `;
     return;
@@ -5183,7 +5199,7 @@ function renderSubtypeTeamSummary(summary) {
   $("teamEvidenceBars").innerHTML = `
     <div class="team-chart-head">
       <div>
-        <strong>团队副型入口均值</strong>
+        <strong>团队副型匹配均值</strong>
         <span>均值 / 分化</span>
       </div>
       <em>${Number(summary.member_count || 0)}人匿名</em>
@@ -5212,9 +5228,9 @@ function teamSubtypeInsight(summary) {
     "一对一型": "这个团队更容易先关注关键连接、真实回应和关系强度",
     "社群型": "这个团队更容易先关注群体位置、协作氛围和共同目标"
   };
-  const firstLine = copy[first] || `这个团队更容易先进入${first}入口`;
+  const firstLine = copy[first] || `这个团队的${first}匹配度更高`;
   return second
-    ? `${firstLine}；${second}会作为第二入口影响团队氛围。`
+    ? `${firstLine}；${second}会作为第二高匹配项影响团队氛围。`
     : `${firstLine}。`;
 }
 

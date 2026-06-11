@@ -171,7 +171,7 @@ const USER_ANALYSIS = {
   4: {
     strength: "你对真实感、独特性和情绪细节很敏锐，容易捕捉别人忽略的内在层次。",
     watch: "情绪强的时候，可能会反复确认自己是否被理解，也容易放大缺失感。",
-    next: "可以练习把感受表达出来，同时给现实行动留一个小入口。"
+    next: "可以练习把感受表达出来，同时给现实行动留一个小切口。"
   },
   5: {
     strength: "你擅长观察、分析和建立理解框架，面对复杂信息时比较能沉得住气。",
@@ -333,22 +333,22 @@ const ENCOURAGEMENT_LIBRARY = {
     { at: 180, title: "深测完成", body: "这份耐心很能打，jojo正在整理更细的地图。" }
   ],
   subtype_adult: [
-    { at: 10, title: "入口线索已收到", body: "副型看注意力先去哪里，不是单选标签。" },
-    { at: 20, title: "三种入口正在排序", body: "别急着选形象，选最近半年更常见的反应。" },
-    { at: 30, title: "副型完成", body: "入口排序已收好，马上出图。" }
+    { at: 10, title: "匹配线索已收到", body: "副型看一对一、社群、自保的高低倾向。" },
+    { at: 20, title: "三项匹配正在排序", body: "别急着选形象，选最近半年更常见的反应。" },
+    { at: 30, title: "副型完成", body: "匹配排序已收好，马上出图。" }
   ],
   subtype_child: [
-    { at: 10, title: "先看孩子的需要", body: "不贴标签，只多一个靠近孩子的入口。" },
+    { at: 10, title: "先看近期需要", body: "不贴标签，只多一份靠近孩子的线索。" },
     { at: 20, title: "再靠近一点", body: "想最近三个月，不用被某一次特别事件带跑。" },
     { at: 30, title: "观察完成", body: "这份答案会变成一张更温和的亲子理解图。" }
   ],
   team_subtype: [
     { at: 10, title: "匿名样本已进入", body: "团队副型只看群体，不追溯个人。" },
-    { at: 20, title: "入口开始成形", body: "按真实工作状态选就好，不用替团队答。" },
+    { at: 20, title: "匹配图开始成形", body: "按真实工作状态选就好，不用替团队答。" },
     { at: 30, title: "走完一半", body: "你提供的是团队画像的一块拼图。" },
     { at: 40, title: "继续保持真实", body: "不用替团队答，答你自己最近稳定的状态。" },
     { at: 50, title: "最后一组", body: "收尾就好，匿名汇总会保护个人明细。" },
-    { at: 60, title: "已匿名计入", body: "团队入口图又清楚了一点，个人明细不会展示。" }
+    { at: 60, title: "已匿名计入", body: "团队匹配图又清楚了一点，个人明细不会展示。" }
   ]
 };
 
@@ -1435,7 +1435,7 @@ function buildMainReport(top, low, scores, qualityFlags, refinement = null) {
         label: needsReview ? "候选画像" : "主型画像",
         text: needsReview
           ? `${topText} 是本次最值得优先复核的范围。第一名暂时是 ${primary}号，但需要放进真实场景里再确认。`
-          : `${USER_ANALYSIS[primary]?.strength || ELEMENT_SUMMARY[primary]} 这次更像是 ${primary}号 的高位倾向，不急着定死，先当作观察入口。`
+          : `${USER_ANALYSIS[primary]?.strength || ELEMENT_SUMMARY[primary]} 这次更像是 ${primary}号 的高位倾向，不急着定死，先当作观察线索。`
       },
       { label: "侧翼倾向", text: wing?.text || "侧翼用于描述主型在日常中更常被调用的辅助方向。" },
       { label: "前三证据", text: `${topText} 是本次最值得优先复核的三项，适合和真实场景一起看。` },
@@ -1489,30 +1489,30 @@ function buildSubtypeReport(ranked, confidence, mode) {
     version: "1.2",
     title: isDual ? `${topLabel.name} / ${secondLabel.name} 双倾向` : `${topLabel.name} 倾向`,
     focus: isDual
-      ? `副型更像 ${topLabel.name} 与 ${secondLabel.name} 的并行排序，建议优先看第一副型和第二副型的组合作用。`
-      : `当前更偏 ${topLabel.full}，可把它当作主型在生活里的优先入口。`,
+      ? `副型更像 ${topLabel.name} 与 ${secondLabel.name} 的并行匹配，建议一起看前两项的组合作用。`
+      : `当前 ${topLabel.full} 匹配度更高，适合结合主型和真实场景观察。`,
     summary_cards: [
-      { label: "第一副型", value: topLabel.name, text: topLabel.line },
-      { label: "第二副型", value: secondLabel ? secondLabel.name : "待观察", text: secondLabel ? secondLabel.line : "第二副型需要结合主型和场景继续观察。" },
-      { label: "判断方式", value: "排序", text: "副型不是单一标签，而是高到低的注意力排序。" }
+      { label: "第一匹配", value: topLabel.name, text: topLabel.line },
+      { label: "第二匹配", value: secondLabel ? secondLabel.name : "待观察", text: secondLabel ? secondLabel.line : "第二匹配需要结合主型和场景继续观察。" },
+      { label: "判断方式", value: "匹配排序", text: "副型不是单一标签，而是一对一、社群、自保三项的高低排序。" }
     ],
     sections: [
-      { label: "副型排序", text: isDual ? `当前前两项是 ${topLabel.name} / ${secondLabel.name}，这两个入口要一起看。` : `当前主入口是 ${topLabel.name}，可优先观察它在日常中的重复性。` },
-      { label: "第一副型特征", text: topLabel.line },
-      { label: "第二副型特征", text: secondLabel ? secondLabel.line : "第二副型暂时没有足够差距，先别急着定。" },
-      { label: "综合作用", text: isDual ? `这两个入口会一起影响你在关系、资源和压力里的反应节奏。` : `这个入口会主要影响你如何处理关系、资源和压力。` },
+      { label: "副型匹配", text: isDual ? `当前前两项是 ${topLabel.name} / ${secondLabel.name}，建议一起看。` : `当前 ${topLabel.name} 匹配较高，可观察它在日常中的重复性。` },
+      { label: "第一匹配特征", text: topLabel.line },
+      { label: "第二匹配特征", text: secondLabel ? secondLabel.line : "第二项暂时没有足够差距，先别急着定。" },
+      { label: "综合作用", text: isDual ? `这两项会一起影响你在关系、资源和压力里的反应节奏。` : `这项倾向会影响你如何处理关系、资源和压力。` },
       { label: "下一步观察", text: "回看最近半年里最稳定的选择：你更常先找人、先找深度连接，还是先稳住资源和节奏。" }
     ],
     user_analysis: [
-      { label: "副型排序", text: isDual ? `${topLabel.name} / ${secondLabel.name}` : topLabel.name },
-      { label: "第一副型", text: topLabel.line },
-      { label: "第二副型", text: secondLabel ? secondLabel.line : "第二副型暂时不够清晰。" },
-      { label: "使用方式", text: "把副型当成主型的生活接口，不要单独定论。" },
+      { label: "副型匹配", text: isDual ? `${topLabel.name} / ${secondLabel.name}` : topLabel.name },
+      { label: "第一匹配", text: topLabel.line },
+      { label: "第二匹配", text: secondLabel ? secondLabel.line : "第二项暂时不够清晰。" },
+      { label: "使用方式", text: "把副型当成主型的生活补充，不要单独定论。" },
       { label: "下一步观察", text: "回看最近半年里最稳定的选择：你更常先找人、先找深度连接，还是先稳住资源和节奏。" }
     ],
     teacher_prompts: [
       "副型需要按排序看，不要只追一个单一标签。",
-      "优先核对第一副型和第二副型在真实场景里的组合动作。",
+      "优先核对第一匹配和第二匹配在真实场景里的组合动作。",
       "如果两项接近，先保留双倾向，再看近期行为证据。"
     ],
     caution: "副型结果用于补充主型解读精度，不替代主型判断。"
@@ -1525,21 +1525,21 @@ function buildChildSubtypeReport(topLabel, secondLabel, confidence) {
     version: "1.2-child",
     title: isDual ? `${topLabel.name} / ${secondLabel.name} 双倾向观察` : `${topLabel.name}少儿倾向观察`,
     focus: isDual
-      ? `孩子在 ${topLabel.name} 与 ${secondLabel.name} 两个入口上都较明显，建议结合年龄、学校环境和家庭互动继续观察。`
-      : `本次更支持孩子偏向 ${topLabel.full} 入口。少儿结果更受发展阶段和环境影响，适合用于亲子沟通，不用于固定标签。`,
+      ? `孩子在 ${topLabel.name} 与 ${secondLabel.name} 两项匹配上都较明显，建议结合年龄、学校环境和家庭互动继续观察。`
+      : `本次更支持孩子在 ${topLabel.full} 上匹配较高。少儿结果更受发展阶段和环境影响，适合用于亲子沟通，不用于固定标签。`,
     summary_cards: [
-      { label: "第一副型", value: topLabel.name, text: topLabel.line },
+      { label: "第一匹配", value: topLabel.name, text: topLabel.line },
       { label: "家庭观察", value: isDual ? "双倾向" : "单倾向", text: "少儿副型优先用于亲子理解，不用于固定定义。" },
       { label: "使用建议", value: "沟通", text: "重点看最近三个月的家庭互动和学校环境变化。" }
     ],
     sections: [
-      { label: "孩子的注意力入口", text: topLabel.line },
+      { label: "孩子的高匹配项", text: topLabel.line },
       { label: "家庭互动", text: "当孩子状态不稳时，先观察TA是在找归属感、重要连接，还是稳定节奏和身体安全感。" },
       { label: "亲子沟通", text: "比起纠正表现，更适合先翻译需求：TA此刻需要被看见、被靠近，还是需要边界和休息。" },
       { label: "教育提醒", text: "少儿结果只能作为阶段性观察，不建议把某个副型当作孩子长期不变的性格标签。" }
     ],
     user_analysis: [
-      { label: "孩子的注意力入口", text: topLabel.line },
+      { label: "孩子的高匹配项", text: topLabel.line },
       { label: "家长可以怎么看", text: "先把结果当作理解孩子需求的线索：TA可能更在意归属、重要关系，或稳定节奏与边界。" },
       { label: "亲子沟通提醒", text: "当孩子出现退缩、黏人、争取关注或节奏变慢时，先观察背后的安全感、被理解感和自主空间需求。" }
     ],
@@ -1637,7 +1637,7 @@ function buildCombinedReport(main, subtype) {
   return {
     version: "1.3",
     title: `可能 ${primary}号 · ${subtypeText}`,
-    focus: `可能主型先看 ${primary}号，侧翼倾向先看 ${wing?.label || "待复核"}，副型看 ${subtypeText}。主型用于观察长期动机，副型解释这个动机最常进入生活的入口。`,
+    focus: `可能主型先看 ${primary}号，侧翼倾向先看 ${wing?.label || "待复核"}，副型看 ${subtypeText}。主型用于观察长期动机，副型补充一对一、社群、自保的匹配倾向。`,
     main_code: main.verification_code,
     subtype_code: subtype.verification_code,
     summary_cards: [
@@ -1648,7 +1648,7 @@ function buildCombinedReport(main, subtype) {
     sections: [
       { label: "可能主型概览", text: `${USER_ANALYSIS[primary]?.strength || ELEMENT_SUMMARY[primary]} 这部分用于观察你长期反复想守住什么。` },
       { label: "侧翼倾向", text: wing?.text || "侧翼用于解释主型在日常中的偏好方向。" },
-      { label: "副型排序", text: mixedSubtype ? `前两项是 ${subtypeLabel.name} / ${secondLabel.name}，建议一起看。` : `副型当前更偏 ${subtypeLabel.name}。` },
+      { label: "副型匹配", text: mixedSubtype ? `前两项是 ${subtypeLabel.name} / ${secondLabel.name}，建议一起看。` : `副型当前更偏 ${subtypeLabel.name}。` },
       { label: "关系与职场", text: `关系：${RELATION_STYLE[primary]} 职场：${WORK_STYLE[primary]}` },
       { label: "压力姿势", text: `${PRESSURE_STYLE[primary]} 副型会进一步影响你先稳哪一块。` },
       { label: "下一步探索", text: `${USER_ANALYSIS[primary]?.next || "建议结合真实场景继续观察。"}` }
@@ -1662,8 +1662,8 @@ function buildCombinedReport(main, subtype) {
     teacher_prompts: [
       `先核对${primary}号是否真的是核心动机，而不是近期状态、角色要求或理想形象。`,
       mixedSubtype
-        ? `再核对${subtypeLabel.name} / ${secondLabel.name} 是否是长期稳定入口，而不是短期状态。`
-        : `再核对${subtypeLabel.name} 是否是长期稳定入口，而不是短期状态。`,
+        ? `再核对${subtypeLabel.name} / ${secondLabel.name} 是否是长期稳定倾向，而不是短期状态。`
+        : `再核对${subtypeLabel.name} 是否是长期稳定倾向，而不是短期状态。`,
       "老师可以先按主型、侧翼、副型三层一起问，不要拆成互相打架的三套结论。"
     ],
     caution: flags.length
@@ -4623,9 +4623,9 @@ function teamSampleNote(count) {
 }
 
 function teamSubtypeSampleNote(count) {
-  if (count <= 4) return `还差 ${Math.max(0, 5 - count)} 人亮起入口排序。`;
+  if (count <= 4) return `还差 ${Math.max(0, 5 - count)} 人亮起匹配图。`;
   if (count <= 7) return "可以看趋势，建议结合团队场景。";
-  return "样本稳定，可以看入口排序。";
+  return "样本稳定，可以看匹配排序。";
 }
 
 function checkAdmin(req, reqUrl, roles = null) {
@@ -5089,7 +5089,7 @@ function teamSubtypeReportSvg(summary) {
     <g>
       <rect x="78" y="438" width="924" height="270" rx="28" class="card"/>
       <text x="118" y="530" class="empty-title">已有 ${summary.member_count} / 5 人匿名提交</text>
-      <text x="118" y="588" class="note">再来 ${Math.max(0, 5 - Number(summary.member_count || 0))} 人，入口排序就亮。</text>
+      <text x="118" y="588" class="note">再来 ${Math.max(0, 5 - Number(summary.member_count || 0))} 人，匹配图就亮。</text>
       <text x="118" y="640" class="metric-sub">当前先收集匿名样本。</text>
     </g>
   `;
@@ -5136,13 +5136,13 @@ function teamSubtypeReportSvg(summary) {
       <text x="108" y="326" class="pill-title">匿名样本</text>
       <text x="108" y="365" class="pill-text">${summary.member_count} 人</text>
       <rect x="397" y="285" width="286" height="102" rx="20" class="card"/>
-      <text x="427" y="326" class="pill-title">主导入口</text>
+      <text x="427" y="326" class="pill-title">高匹配项</text>
       <text x="427" y="365" class="pill-text">${escapeXml(dominant)}</text>
       <rect x="716" y="285" width="286" height="102" rx="20" class="card"/>
-      <text x="746" y="326" class="pill-title">分化入口</text>
+      <text x="746" y="326" class="pill-title">分化项</text>
       <text x="746" y="365" class="pill-text">${escapeXml(hasConclusion ? split : "暂不判断")}</text>
     </g>
-    <text x="78" y="420" class="section">${hasConclusion ? "团队副型入口均值 / 分化" : "团队副型收集中"}</text>
+    <text x="78" y="420" class="section">${hasConclusion ? "团队副型匹配均值 / 分化" : "团队副型收集中"}</text>
     ${rowSvg}
     <g>
       <rect x="78" y="860" width="924" height="120" rx="20" class="card"/>
@@ -5567,9 +5567,9 @@ function publicTeamSubtypeSubmission(result) {
     report: {
       version: "1.0",
       title: "已计入团队副型汇总",
-      focus: "本次为匿名团队副型测试，只进入团队层面的注意力入口统计。",
+      focus: "本次为匿名团队副型测试，只进入团队层面的副型匹配统计。",
       summary_cards: [
-        { label: "提交状态", value: "已匿名计入", text: "页面不展示个人副型排序。" },
+        { label: "提交状态", value: "已匿名计入", text: "页面不展示个人匹配排序。" },
         { label: "团队", value: result.team?.name || "团队", text: "老师端查看团队层面的汇总结果。" },
         { label: "隐私", value: "匿名汇总", text: "不把个人副型明细作为结果页公开。" }
       ],
